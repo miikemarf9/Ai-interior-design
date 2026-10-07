@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkAuthRateLimit } from "@/lib/security/rate-limit";
 import {
   applySessionCookie,
   canonicalOwnerKey,
@@ -24,6 +25,13 @@ export async function POST(request: Request) {
 
   const email = normalizeEmail(body.email || "");
   const password = body.password || "";
+  const rate = await checkAuthRateLimit({ request, action: "login", identity: email, limit: 8 });
+  if (!rate.allowed) {
+    return NextResponse.json({ error: rate.configured ? "Too many sign-in attempts. Try again later." : "Account security is not configured." }, {
+      status: rate.configured ? 429 : 503,
+      headers: rate.retryAfterSeconds ? { "Retry-After": String(rate.retryAfterSeconds) } : undefined,
+    });
+  }
   const sql = getCatalogDb();
 
   const rows = await sql.query(
