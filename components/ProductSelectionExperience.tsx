@@ -278,7 +278,7 @@ export function ProductSelectionExperience() {
           </p>
         </div>
         {approved ? (
-          <button className="button buttonSecondary briefNextDisabled" type="button" disabled>Image generation comes next</button>
+          <Link className="button buttonLight" href="/render">Continue to generation · 1 credit</Link>
         ) : (
           <button
             className="button buttonLight"
