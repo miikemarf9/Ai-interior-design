@@ -209,3 +209,21 @@ Status vocabulary is explicit:
 - `insufficient`
 
 Missing evidence is never treated as a pass.
+
+
+## Stage 12 growth engine
+
+Apply `growth_schema_neon.sql` after the Stage 11 verification schema.
+
+It adds:
+- `growth_collections`
+- `growth_publications`
+- `growth_collection_publications`
+- `growth_recovery_candidates`
+- marketing-email consent/opt-out timestamps on `customer_accounts`
+
+A room is never indexed merely because it exists. `growth_publications` is the editorial/publication boundary, and publication requires an active room share plus a persisted Verified Room record.
+
+The six initial SEO collections are seeded by the migration. Each defaults to a minimum of 3 published rooms before search indexing.
+
+Abandoned-design recovery is consent-gated and emits CRM outbox events rather than sending marketing from Roomfound directly.
