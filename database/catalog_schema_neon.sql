@@ -355,22 +355,4 @@ create index product_images_variant_idx on public.product_images (variant_id, so
 create index catalog_sync_runs_source_started_idx on public.catalog_sync_runs (source_id, started_at desc);
 create index catalog_quality_open_idx on public.catalog_quality_issues (severity, created_at desc) where resolved_at is null;
 
-create or replace function public.set_updated_at()
-returns trigger
-language plpgsql
-security invoker
-set search_path = pg_catalog
-as 'begin new.updated_at = now(); return new; end;';
-
-create trigger retailers_set_updated_at before update on public.retailers
-for each row execute function public.set_updated_at();
-create trigger brands_set_updated_at before update on public.brands
-for each row execute function public.set_updated_at();
-create trigger products_set_updated_at before update on public.products
-for each row execute function public.set_updated_at();
-create trigger product_variants_set_updated_at before update on public.product_variants
-for each row execute function public.set_updated_at();
-create trigger retailer_offers_set_updated_at before update on public.retailer_offers
-for each row execute function public.set_updated_at();
-create trigger catalog_sources_set_updated_at before update on public.catalog_sources
-for each row execute function public.set_updated_at();
+-- Neon Stage 5: updated_at is maintained explicitly by application/import writes.
