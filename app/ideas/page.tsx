@@ -28,6 +28,9 @@ export default async function IdeasPage(){
       <section className="growthCollectionGrid shellWide">
         {collections.map((collection)=>(
           <Link className="growthCollectionCard" href={`/ideas/${collection.slug}`} key={collection.slug}>
+            {collection.featuredImageUrl ? (
+              <div className="growthCollectionVisual"><img src={collection.featuredImageUrl} alt="" /></div>
+            ) : null}
             <span>{collection.eyebrow || "Living-room ideas"}</span>
             <h2>{collection.title}</h2>
             <p>{collection.intro}</p>
