@@ -11,7 +11,6 @@ export function Header() {
         <a href="#verified-room">Verified Room</a>
       </nav>
       <div className="headerActions">
-        <Link className="textLink" href="/style-guide">About</Link>
         <Link className="button buttonPrimary buttonCompact" href="/design">Design my room</Link>
       </div>
     </header>
