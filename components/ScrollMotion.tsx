@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 export function ScrollMotion() {
   useEffect(() => {
+    document.documentElement.classList.add('reveal-ready');
     const items = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'));
 
     if (!items.length || typeof IntersectionObserver === 'undefined') {
