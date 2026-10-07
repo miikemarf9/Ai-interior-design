@@ -98,6 +98,31 @@ Current live-data dependency:
 - Stage 6 deliberately returns an honest empty state until reviewed real products are promoted.
 
 ## Stage 7 — Image generation + credit enforcement
+Status: implemented; production credit activation waits for verified accounts in Stage 10.
+
+Implemented:
+- Durable original-room asset upload
+- Private server-side image asset delivery
+- OpenAI image-edit engine using the original room + approved real product references
+- Pinned `gpt-image-2.5-sunburst-2026-09-08` default
+- Prompt versioning (`room-render-v1`)
+- Room geometry / retained-furniture / measurement / product constraints
+- Real-product revalidation immediately before rendering
+- Maximum 15 product references + original room (16 image inputs total)
+- Atomic one-credit spend before provider invocation
+- Immutable credit ledger
+- Explicit balance cache with non-negative enforcement
+- Idempotent render-spend keys to prevent double-click double charging
+- Successful regeneration costs another credit
+- Provider/technical failures are logged and automatically refunded
+- Provider + model + prompt + product IDs + duration + usage + calculated cost logging
+- Result/failure state persisted per generation
+- Customer-facing “Editing your brief — Free” vs “Generate your room — 1 credit” boundary
+- Development wallet mode guarded by server environment flag and disabled by default
+
+Pre-public dependency:
+- Stage 10 verified accounts must replace development-session ownership before public paid rendering.
+- Binary assets should move from Postgres bytea to dedicated object storage before meaningful scale.
 ## Stage 8 — Designed-room experience
 ## Stage 9 — Affiliate commerce
 ## Stage 10 — Accounts + saved homes
