@@ -1,17 +1,10 @@
-import { mkdir, access, writeFile } from 'node:fs/promises';
+import { mkdir, access, writeFile, readFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import path from 'node:path';
-import part0 from '../lib/hero-image/part0.ts';
-import part1 from '../lib/hero-image/part1.ts';
-import part2 from '../lib/hero-image/part2.ts';
-import part3 from '../lib/hero-image/part3.ts';
-import part4 from '../lib/hero-image/part4.ts';
-import part5 from '../lib/hero-image/part5.ts';
-import part6 from '../lib/hero-image/part6.ts';
-import part7 from '../lib/hero-image/part7.ts';
 
 const outputDir = path.join(process.cwd(), 'public', 'images');
 const outputFile = path.join(outputDir, 'homepage-hero.webp');
+const legacyDir = path.join(process.cwd(), 'lib', 'hero-image');
 
 await mkdir(outputDir, { recursive: true });
 
@@ -19,7 +12,13 @@ try {
   await access(outputFile, constants.F_OK);
   console.log('Using static public/images/homepage-hero.webp');
 } catch {
-  const encoded = [part0, part1, part2, part3, part4, part5, part6, part7].join('');
-  await writeFile(outputFile, Buffer.from(encoded, 'base64'));
+  const parts = [];
+  for (let index = 0; index < 8; index += 1) {
+    const source = await readFile(path.join(legacyDir, `part${index}.ts`), 'utf8');
+    const match = source.match(/export default ['"`]([A-Za-z0-9+/=]+)['"`];?/);
+    if (!match) throw new Error(`Could not read legacy hero image part ${index}`);
+    parts.push(match[1]);
+  }
+  await writeFile(outputFile, Buffer.from(parts.join(''), 'base64'));
   console.log('Created public/images/homepage-hero.webp from the legacy hero asset.');
 }
