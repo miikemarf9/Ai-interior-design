@@ -44,7 +44,7 @@ export function HomeHeroImage() {
           <span>Pendant light</span><strong>£165</strong>
         </div>
         <div className="heroPrice heroPriceSofa">
-          <strong>£1,295</strong>
+          <span>Curved sofa</span><strong>£1,295</strong>
         </div>
         <div className="heroPrice heroPriceTable">
           <span>Coffee table</span><strong>£245</strong>
