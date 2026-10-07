@@ -4,6 +4,7 @@ import { BeforeAfter } from '@/components/BeforeAfter';
 import { ProductHotspots } from '@/components/ProductHotspots';
 import { BudgetShowcase } from '@/components/BudgetShowcase';
 import { ScrollMotion } from '@/components/ScrollMotion';
+import { RoomfoundPillars } from '@/components/RoomfoundPillars';
 import { site } from '@/lib/site';
 
 const heroImage =
@@ -31,6 +32,8 @@ export default function HomePage() {
           <span>04 Shop the pieces</span>
         </div>
       </section>
+
+      <RoomfoundPillars />
 
       <section className="reimaginedSection shellWide" id="reimagined" data-reveal>
         <div className="sectionHeading splitHeading">
