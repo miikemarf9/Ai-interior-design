@@ -1,6 +1,6 @@
 # Stage 5 — curated UK product catalogue
 
-This directory defines the commerce catalogue without coupling it to the existing Grab&Book Supabase project.
+This directory defines the commerce catalogue on a dedicated Neon/Postgres project, independent of Grab&Book.
 
 ## Core rule
 
@@ -21,15 +21,17 @@ That means a price or stock change does not rewrite the underlying product.
 
 ## Apply order
 
-When the dedicated interior Supabase project exists:
+Production is Neon project `small-glitter-35907125` in AWS London.
 
-1. Apply `catalog_schema.sql`.
+For a fresh Neon environment:
+
+1. Apply `catalog_schema_neon.sql`.
 2. Apply `catalog_seed_taxonomy.sql`.
 3. Run `catalog_verification.sql`.
-4. Run Supabase Security and Performance Advisors.
-5. Generate TypeScript database types from the live project and replace the temporary catalogue types where appropriate.
+4. Verify table/index counts and query performance.
+5. Configure server-side `DATABASE_URL`.
 
-Do not apply these files to the existing Grab&Book project.
+`catalog_schema.sql` is retained as the original Supabase-oriented version for history/reference.
 
 ## Catalogue scope
 
@@ -84,14 +86,14 @@ The schema deliberately supports incomplete draft records so feed ingestion does
 
 This matters later for Verified Room because the visual checker needs to know which real reference images correspond to the exact variant/offer.
 
-## Public access
+## Application access
 
-Catalogue tables use RLS. Anonymous and authenticated users are granted **SELECT only** on curated/active catalogue records.
+The Neon catalogue is server-side by default. The browser does not receive a database credential.
 
-Import/sync history, quality issues and price history are not publicly exposed.
+Customer-facing catalogue endpoints should query Neon from trusted Next.js/server code and return only curated, active records required by the UI.
 
-All catalogue mutations should come from trusted backend/feed-processing code, never directly from a public browser client.
+Import/sync history, quality issues and price history remain backend concerns. All catalogue mutations should come from trusted backend/feed-processing code, never directly from a public browser client.
 
 ## Feed secrets
 
-Do not store private affiliate/API credentials in `catalog_sources.public_config` or any catalogue row. Put secrets in the deployment/Supabase secret store and keep only non-secret source configuration in Postgres.
+Do not store private affiliate/API credentials in `catalog_sources.public_config` or any catalogue row. Put secrets in the deployment environment/secret store and keep only non-secret source configuration in Postgres.
