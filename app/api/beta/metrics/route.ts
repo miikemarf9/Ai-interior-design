@@ -170,8 +170,106 @@ export async function GET(request:Request){
       `select
         count(*)::int as events,
         count(distinct session_key) filter (where session_key is not null)::int as analytics_sessions,
-        count(*) filter (where event_name='page_view')::int as page_views
-       from public.analytics_events`,
+        count(*) filter (where event_name='page_view')::int as page_views,
+        count(*) filter (where event_name='web_vital' and properties->>'name'='LCP')::int as lcp_samples,
+        count(*) filter (where event_name='web_vital' and properties->>'name'='INP')::int as inp_samples,
+        count(*) filter (where event_name='web_vital' and properties->>'name'='CLS')::int as cls_samples,
+        percentile_cont(0.75) within group (order by (properties->>'value')::numeric)
+          filter (where event_name='web_vital' and properties->>'name'='LCP') as p75_lcp_ms,
+        percentile_cont(0.75) within group (order by (properties->>'value')::numeric)
+          filter (where event_name='web_vital' and properties->>'name'='INP') as p75_inp_ms,
+        percentile_cont(0.75) within group (order by (properties->>'value')::numeric)
+          filter (where event_name='web_vital' and properties->>'name'='CLS') as p75_cls
+       from public.analytics_events
+       where properties->>'value' is null
+          or (properties->>'value') ~ '^-?[0-9]+(\\.[0-9]+)?
+  ]);
+
+  const fx=Number(process.env.AI_COST_USD_TO_GBP_RATE || "");
+  const config={
+    canonicalSiteUrl:configured(process.env.NEXT_PUBLIC_SITE_URL),
+    database:Boolean(process.env.DATABASE_URL),
+    openAi:Boolean(process.env.OPENAI_API_KEY),
+    authRateLimiting:authRateLimitConfigured(),
+    transactionalEmail:Boolean(process.env.RESEND_API_KEY && process.env.AUTH_FROM_EMAIL && process.env.APP_URL),
+    privacyContact:Boolean(process.env.NEXT_PUBLIC_PRIVACY_EMAIL),
+    retentionCron:Boolean(process.env.PRIVACY_RETENTION_CRON_SECRET),
+    commerceSync:Boolean(process.env.COMMERCE_SYNC_SECRET),
+    growthAdmin:Boolean(process.env.GROWTH_ADMIN_SECRET),
+    growthRecovery:Boolean(process.env.GROWTH_CRON_SECRET),
+    economicsFx:Number.isFinite(fx) && fx>0,
+    finalLegalReview:process.env.LEGAL_REVIEW_COMPLETE==="true",
+    controlledBeta:process.env.BETA_CONTROLLED_ACCESS==="true",
+    betaSignupCode:Boolean(process.env.BETA_SIGNUP_CODE),
+  };
+
+  const renders=renderRows[0] as any;
+  const catalogue=catalogueRows[0] as any;
+  const auth=authRows[0] as any;
+  const commerce=commerceRows[0] as any;
+  const analytics=analyticsRows[0] as any;
+  const minSelectableProducts=Math.max(20,Number(process.env.BETA_MIN_SELECTABLE_PRODUCTS || 100) || 100);
+  const attempts=(Number(renders.succeeded)||0)+(Number(renders.failed)||0);
+  const renderFailureRate=attempts
+    ? Number(renders.failed)/attempts
+    : 0;
+
+  const blockers:string[]=[];
+  if(!config.canonicalSiteUrl) blockers.push("Set the canonical production URL.");
+  if(!config.database) blockers.push("DATABASE_URL is missing.");
+  if(!config.openAi) blockers.push("OPENAI_API_KEY is missing.");
+  if(!config.authRateLimiting) blockers.push("AUTH_RATE_LIMIT_SECRET is missing.");
+  if(!config.transactionalEmail) blockers.push("Transactional account email is not fully configured.");
+  if(!config.privacyContact) blockers.push("Publish a privacy contact.");
+  if(!config.retentionCron) blockers.push("Configure the privacy-retention job secret.");
+  if(!config.economicsFx) blockers.push("Set AI_COST_USD_TO_GBP_RATE so room economics are comparable in GBP.");
+  if(!config.finalLegalReview) blockers.push("Final UK legal/data-protection review is not marked complete.");
+  if(!config.controlledBeta) blockers.push("Controlled beta access is not enabled.");
+  if(config.controlledBeta && !config.betaSignupCode) blockers.push("Controlled beta signup code is missing.");
+  if(Number(auth.negative_wallets)>0) blockers.push("A design-credit wallet has a negative balance.");
+  if(Number(auth.wallet_ledger_mismatches)>0) blockers.push("A credit wallet balance does not match its immutable ledger.");
+  if(Number(auth.duplicate_signup_grants)>0) blockers.push("A wallet has more than one signup credit grant.");
+  if(Number(renders.stuck_processing)>0) blockers.push("At least one render is stuck in processing.");
+  if(attempts>=10 && renderFailureRate>0.1) blockers.push("Render failure rate is above the 10% beta threshold.");
+  if(Number(catalogue.stale_active_offers)>0) blockers.push("Active retailer offers are older than the 7-day beta freshness threshold.");
+  if(Number(catalogue.selectable_curated_variants)<minSelectableProducts) {
+    blockers.push(`Only ${catalogue.selectable_curated_variants || 0} selectable curated variants are live; beta minimum is ${minSelectableProducts}.`);
+  }
+  if(Number(analytics.lcp_samples)>=20 && Number(analytics.p75_lcp_ms)>2500) blockers.push("p75 LCP is above 2.5 seconds.");
+  if(Number(analytics.inp_samples)>=20 && Number(analytics.p75_inp_ms)>200) blockers.push("p75 INP is above 200 ms.");
+  if(Number(analytics.cls_samples)>=20 && Number(analytics.p75_cls)>0.1) blockers.push("p75 CLS is above 0.1.");
+  if(process.env.BETA_REQUIRE_AFFILIATE !== "false" && Number(commerce.active_affiliate_programs)<1) {
+    blockers.push("No active affiliate programme is available for commercial beta validation.");
+  }
+
+  return NextResponse.json({
+    generatedAt:new Date().toISOString(),
+    beta:{
+      market:"United Kingdom",
+      roomScope:"living_room",
+      access:"controlled",
+      paidCreditCheckout:false,
+      launchReady:blockers.length===0,
+      blockers,
+    },
+    config,
+    funnel:funnelRows[0],
+    renders:{...renders,failure_rate:renderFailureRate},
+    catalogue,
+    auth,
+    privacy:privacyRows[0],
+    unitEconomics:economicsRows[0],
+    commerce,
+    thresholds:{
+      minSelectableProducts,
+      requireAffiliate:process.env.BETA_REQUIRE_AFFILIATE!=="false",
+      maxRenderFailureRate:0.1,
+      maxOfferAgeDays:7,
+    },
+    analytics,
+  });
+}
+`,
       [],
     ),
   ]);
