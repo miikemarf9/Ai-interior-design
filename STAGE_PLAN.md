@@ -28,19 +28,29 @@ Status: complete.
 - Responsive/mobile treatment
 
 ## Stage 3 — Design my room intake
-Status: next.
+Status: complete.
 
-- Photo upload
-- Keep / replace
-- Image-led style selection
-- Colour/material preferences
-- Dislikes
-- Room use / functional needs
-- Budget
-- Measurements
-- Creative freedom
+- Real room photo upload + preview
+- Photograph guidance + example-room demo path
+- Keep / replace categories
+- Image-led multi-select style discovery
+- Colour + material preferences
+- Free-text dislikes / exclusions
+- Lifestyle and functional requirements
+- Whole-room budget slider + presets
+- Optional room measurements
+- Creative-freedom control
+- Local draft persistence for answers
+- Final pre-AI review screen
+- Explicit free boundary before Stage 4
 
 ## Stage 4 — AI design brief
+Status: next.
+
+- Convert Stage 3 intake into a structured written design brief
+- Let the customer edit and approve it for free
+- No image credit used until a later render action
+
 ## Stage 5 — UK product database
 ## Stage 6 — Product intelligence
 ## Stage 7 — Image generation + credits
