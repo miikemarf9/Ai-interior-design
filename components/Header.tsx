@@ -8,6 +8,7 @@ export function Header() {
       <nav className="desktopNav" aria-label="Primary navigation">
         <a href="#reimagined">How it works</a>
         <a href="#shop-room">Shop the room</a>
+        <Link href="/ideas">Ideas</Link>
         <a href="#verified-room">Verified Room</a>
       </nav>
       <div className="headerActions">
