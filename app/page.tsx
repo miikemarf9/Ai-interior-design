@@ -17,7 +17,7 @@ export default function HomePage() {
       <section className="homeHero">
         <img
           className="homeHeroImage"
-          src="/api/assets/roomfound-hero"
+          src="/images/homepage-hero.webp"
           alt="Warm, high-end contemporary living room in golden natural light"
           fetchPriority="high"
           decoding="async"
