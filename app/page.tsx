@@ -7,8 +7,6 @@ import { ScrollMotion } from '@/components/ScrollMotion';
 import { RoomfoundPillars } from '@/components/RoomfoundPillars';
 import { site } from '@/lib/site';
 
-const heroImage =
-  'https://images.unsplash.com/photo-1761330439741-3dcf41ee766b?auto=format&fit=crop&q=88&w=2200';
 
 export default function HomePage() {
   return (
@@ -17,19 +15,29 @@ export default function HomePage() {
       <ScrollMotion />
 
       <section className="homeHero">
-        <img className="homeHeroImage" src={heroImage} alt="Warm contemporary living room with natural textures" fetchPriority="high" decoding="async" />
+        <img
+          className="homeHeroImage"
+          src="/api/assets/roomfound-hero"
+          alt="Warm, high-end contemporary living room in golden natural light"
+          fetchPriority="high"
+          decoding="async"
+        />
         <div className="homeHeroShade" />
         <div className="homeHeroContent shellWide">
-          <p className="eyebrow eyebrowLight heroLine heroLineOne">Your room · real products · one clear budget</p>
-          <h1 className="heroLine heroLineTwo">{site.proposition}</h1>
-          <p className="heroLine heroLineThree">Upload a photo of your living room and tell us what you want to change. We’ll redesign it around your style, space and budget using furniture you can actually buy.</p>
-          <Link className="button buttonLight heroLine heroLineFour" href="/design">Design my room</Link>
+          <p className="eyebrow eyebrowLight heroLine heroLineOne">Your room · real products · UK prices</p>
+          <h1 className="heroLine heroLineTwo">
+            Design a room<br />
+            you can actually<br />
+            buy.
+          </h1>
+          <p className="heroLine heroLineThree">Upload a photo of your room. We’ll design around your space, style and budget using furniture you can actually buy.</p>
+          <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Design my room</Link>
         </div>
         <div className="heroProof shellWide">
-          <span>01 Share your room</span>
-          <span>02 Set your style &amp; budget</span>
-          <span>03 See your design</span>
-          <span>04 Shop the pieces</span>
+          <span>01 Upload your room</span>
+          <span>02 Set your brief</span>
+          <span>03 See the design</span>
+          <span>04 Shop the room</span>
         </div>
       </section>
 
