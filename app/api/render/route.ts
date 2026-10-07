@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import { getCurrentAccount } from "@/lib/auth";
 import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
 import type { ProductSelection } from "@/lib/catalog/selection";
 import { getCatalogDb } from "@/lib/catalog/neon";
@@ -149,7 +150,8 @@ async function existingGeneration(generationId: string) {
 
 export async function POST(request: Request) {
   const body = await request.json() as RenderRequest;
-  const ownerKey = body.ownerKey || "";
+  const account = await getCurrentAccount();
+  const ownerKey = account?.ownerKey || body.ownerKey || "";
   const designId = body.designId || "";
   const requestId = body.requestId || "";
 
@@ -250,7 +252,7 @@ export async function POST(request: Request) {
         return NextResponse.json({
           generationId,
           resultAssetId: prior.result_asset_id,
-          resultUrl: `/api/assets/${prior.result_asset_id}?ownerKey=${encodeURIComponent(ownerKey)}`,
+          resultUrl: account ? `/api/assets/${prior.result_asset_id}` : `/api/assets/${prior.result_asset_id}?ownerKey=${encodeURIComponent(ownerKey)}`,
           balance: spend.balance,
           reused: true,
           costUsdMicros: prior.cost_usd_micros,
@@ -372,7 +374,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       generationId,
       resultAssetId,
-      resultUrl: `/api/assets/${resultAssetId}?ownerKey=${encodeURIComponent(ownerKey)}`,
+      resultUrl: account ? `/api/assets/${resultAssetId}` : `/api/assets/${resultAssetId}?ownerKey=${encodeURIComponent(ownerKey)}`,
       balance: spend.balance,
       renderCreditsUsed: 1,
       provider: "openai",

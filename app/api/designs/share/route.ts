@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getCurrentAccount } from "@/lib/auth";
 import { getCatalogDb } from "@/lib/catalog/neon";
 
 export const runtime = "nodejs";
@@ -18,7 +19,8 @@ export async function POST(request: Request) {
     generationId?: string;
   };
 
-  const ownerKey = body.ownerKey || "";
+  const account = await getCurrentAccount();
+  const ownerKey = account?.ownerKey || body.ownerKey || "";
   const designId = body.designId || "";
   const generationId = body.generationId || "";
 
@@ -35,7 +37,10 @@ export async function POST(request: Request) {
       join public.room_designs d on d.id = g.design_id
       where g.id = $1::uuid
         and g.design_id = $2::uuid
-        and d.owner_key = $3
+        and (
+          ($4::uuid is not null and d.account_id=$4::uuid)
+          or d.owner_key = $3
+        )
         and g.status = 'succeeded'
         and g.result_asset_id is not null
       limit 1
@@ -58,7 +63,7 @@ export async function POST(request: Request) {
     union all
     select share_token::text from inserted
     limit 1`,
-    [generationId, designId, ownerKey],
+    [generationId, designId, ownerKey, account?.id ?? null],
   ) as Array<{ share_token: string }>;
 
   const token = rows[0]?.share_token;

@@ -6,7 +6,12 @@ import type { IntakeForBrief } from "@/lib/brief";
 import type { ProductAlternative, ProductSelection, ProposedProduct, SelectionCandidate } from "@/lib/catalog/selection";
 import { applyPendingAlternative, hotspotForProduct, type DesignedRoomPayload } from "@/lib/room-experience";
 
-type ExperiencePayload = DesignedRoomPayload & { intake?: IntakeForBrief };
+type ExperiencePayload = DesignedRoomPayload & {
+  intake?: IntakeForBrief;
+  ownerKey?: string;
+  roomName?: string;
+  originalAssetId?: string | null;
+};
 
 type LiveOffer = {
   id: string;
@@ -69,7 +74,13 @@ function roomTitle(title: string) {
   return /^your\b/i.test(cleaned) ? cleaned : `Your ${cleaned}`;
 }
 
-export function DesignedRoomExperience({ shareToken }: { shareToken?: string }) {
+export function DesignedRoomExperience({
+  shareToken,
+  designId,
+}: {
+  shareToken?: string;
+  designId?: string;
+}) {
   const shared = Boolean(shareToken);
   const [data, setData] = useState<ExperiencePayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,6 +110,8 @@ export function DesignedRoomExperience({ shareToken }: { shareToken?: string }) 
 
         if (shareToken) {
           endpoint = `/api/shared-room/${encodeURIComponent(shareToken)}`;
+        } else if (designId) {
+          endpoint = `/api/account/rooms/${encodeURIComponent(designId)}`;
         } else {
           const runtimeRaw = window.localStorage.getItem("roomfound-design-runtime-v1");
           const runtime = runtimeRaw
@@ -118,6 +131,21 @@ export function DesignedRoomExperience({ shareToken }: { shareToken?: string }) 
         if (cancelled) return;
 
         setData(payload);
+
+        if (!shared && payload.ownerKey) {
+          const runtimeRaw = window.localStorage.getItem("roomfound-design-runtime-v1");
+          const runtime = runtimeRaw ? JSON.parse(runtimeRaw) as Record<string, unknown> : {};
+          window.localStorage.setItem(
+            "roomfound-design-runtime-v1",
+            JSON.stringify({
+              ...runtime,
+              ownerKey: payload.ownerKey,
+              designId: payload.designId,
+              roomAssetId: payload.originalAssetId ?? runtime.roomAssetId,
+              photoName: payload.roomName ?? runtime.photoName,
+            }),
+          );
+        }
 
         if (!shared) {
           window.localStorage.setItem(
@@ -141,7 +169,7 @@ export function DesignedRoomExperience({ shareToken }: { shareToken?: string }) 
 
     load();
     return () => { cancelled = true; };
-  }, [shareToken, shared]);
+  }, [shareToken, designId, shared]);
 
   useEffect(() => {
     if (!drawerSlot) return;
