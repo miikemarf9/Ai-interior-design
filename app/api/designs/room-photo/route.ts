@@ -20,10 +20,10 @@ async function ensureDesign(ownerKey: string, requestedDesignId?: string | null)
 
   if (requestedDesignId && validUuid(requestedDesignId)) {
     const existing = await sql.query(
-      \`select id::text as id
+      `select id::text as id
        from public.room_designs
        where id=$1::uuid and owner_key=$2
-       limit 1\`,
+       limit 1`,
       [requestedDesignId, ownerKey],
     ) as Array<{ id: string }>;
 
@@ -31,9 +31,9 @@ async function ensureDesign(ownerKey: string, requestedDesignId?: string | null)
   }
 
   const created = await sql.query(
-    \`insert into public.room_designs (owner_key, status)
+    `insert into public.room_designs (owner_key, status)
      values ($1, 'intake')
-     returning id::text as id\`,
+     returning id::text as id`,
     [ownerKey],
   ) as Array<{ id: string }>;
 
@@ -50,7 +50,7 @@ async function saveExternalExample(ownerKey: string, designId: string | null, ur
   const id = await ensureDesign(ownerKey, designId);
 
   const rows = await sql.query(
-    \`with asset as (
+    `with asset as (
       insert into public.design_assets (
         design_id, asset_kind, mime_type, byte_size, external_url,
         storage_backend, metadata
@@ -65,7 +65,7 @@ async function saveExternalExample(ownerKey: string, designId: string | null, ur
     set original_room_asset_id=a.id, status='intake', updated_at=now()
     from asset a
     where d.id=$1::uuid
-    returning a.id::text as asset_id\`,
+    returning a.id::text as asset_id`,
     [id, url],
   ) as Array<{ asset_id: string }>;
 
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
       const result = await saveExternalExample(body.ownerKey, body.designId ?? null, body.exampleUrl);
       return NextResponse.json({
         ...result,
-        url: \`/api/assets/\${result.assetId}\`,
+        url: `/api/assets/${result.assetId}`,
       });
     }
 
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
     const sql = getCatalogDb();
 
     const rows = await sql.query(
-      \`with asset as (
+      `with asset as (
         insert into public.design_assets (
           design_id, asset_kind, mime_type, byte_size, data,
           sha256, storage_backend, metadata
@@ -133,14 +133,14 @@ export async function POST(request: Request) {
       set original_room_asset_id=a.id, status='intake', updated_at=now()
       from asset a
       where d.id=$1::uuid
-      returning a.id::text as asset_id\`,
+      returning a.id::text as asset_id`,
       [designId, file.type, file.size, base64, sha256, file.name],
     ) as Array<{ asset_id: string }>;
 
     return NextResponse.json({
       designId,
       assetId: rows[0].asset_id,
-      url: \`/api/assets/\${rows[0].asset_id}\`,
+      url: `/api/assets/${rows[0].asset_id}`,
     });
   } catch (error) {
     console.error("Room photo upload failed", error);
