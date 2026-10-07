@@ -14,7 +14,7 @@ export default function HomePage() {
       <Header />
 
       <section className="homeHero">
-        <img className="homeHeroImage" src={heroImage} alt="Warm contemporary living room with natural textures" />
+        <img className="homeHeroImage" src={heroImage} alt="Warm contemporary living room with natural textures" fetchPriority="high" decoding="async" />
         <div className="homeHeroShade" />
         <div className="homeHeroContent shellWide">
           <p className="eyebrow eyebrowLight">Your room · real products · UK prices</p>
@@ -57,6 +57,8 @@ export default function HomePage() {
           <img
             src="https://images.unsplash.com/photo-1726090401458-7abb00f7450c?auto=format&fit=crop&q=84&w=1800"
             alt="Characterful living room with fireplace and existing architectural features"
+            loading="lazy"
+            decoding="async"
           />
           <span className="keepTag keepFireplace"><i /> Keep the fireplace</span>
           <span className="keepTag keepFloor"><i /> Keep the floor</span>
@@ -87,7 +89,7 @@ export default function HomePage() {
       <section className="verifiedSection" id="verified-room">
         <div className="shellWide verifiedGrid">
           <div className="verifiedTitle">
-            <p className="eyebrow eyebrowLight">Future trust layer</p>
+            <p className="eyebrow eyebrowLight">Trust layer</p>
             <h2>Verified<br />Room.</h2>
             <p>Before you spend serious money, the design should be checked against the products and the room behind it.</p>
           </div>
@@ -105,7 +107,7 @@ export default function HomePage() {
               <div><span>Room measurements</span><strong className="warn">More data needed</strong></div>
               <div><span>Visual representation</span><strong className="warn">Confidence check</strong></div>
             </div>
-            <p className="verificationNote">Verified Room will communicate confidence and warnings, not make unsupported “guaranteed to fit” claims.</p>
+            <p className="verificationNote">Verified Room communicates confidence and warnings rather than making unsupported “guaranteed to fit” claims.</p>
           </div>
         </div>
       </section>
@@ -115,6 +117,8 @@ export default function HomePage() {
           <img
             src="https://images.unsplash.com/photo-1771888703723-01d85da1dae1?auto=format&fit=crop&q=84&w=1800"
             alt="Finished warm contemporary living room"
+            loading="lazy"
+            decoding="async"
           />
           <span className="roomCostBadge">Complete room · £1,782</span>
         </div>
@@ -139,6 +143,8 @@ export default function HomePage() {
           src="https://images.unsplash.com/photo-1761330439741-3dcf41ee766b?auto=format&fit=crop&q=86&w=2200"
           alt=""
           aria-hidden="true"
+          loading="lazy"
+          decoding="async"
         />
         <div className="finalDesignShade" />
         <div className="finalDesignContent shell">
