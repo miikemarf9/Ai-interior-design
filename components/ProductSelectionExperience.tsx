@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
 import type { ProductAlternative, ProductSelection, ProposedProduct, SelectionCandidate } from "@/lib/catalog/selection";
+import { trackRoomfound } from "@/components/PrivacyAnalytics";
 
 type SavedBrief = {
   brief?: DesignBrief;
@@ -160,6 +161,7 @@ export function ProductSelectionExperience() {
     if (!selection) return;
     setApproved(true);
     saveSelection(selection, true);
+    trackRoomfound("products_approved",{productCount:selection.products.length,totalMinor:selection.totalMinor});
   }
 
   const budgetState = useMemo(() => {
