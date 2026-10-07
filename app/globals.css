@@ -1021,3 +1021,27 @@ p { line-height: 1.65; }
   .pendingSwapBar button { width:100%; }
   .renderResultPayoff { align-items:flex-start; flex-direction:column; }
 }
+
+
+/* Stage 9 — affiliate commerce */
+.liveRetailerOffers { margin-top: 30px; border-top: 1px solid var(--line-strong); }
+.liveRetailerHeading { min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.liveRetailerHeading span { font-family: var(--display); font-size: 24px; }
+.liveRetailerHeading small { color: var(--muted); font-size: 8px; }
+.offerLoading { margin: 0; padding: 18px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+.liveRetailerRow { min-height: 78px; display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center; border-top: 1px solid var(--line); }
+.liveRetailerRow > div strong { display: block; margin-bottom: 4px; font-size: 11px; }
+.liveRetailerRow > div small { color: var(--muted); font-size: 8px; }
+.liveRetailerRow > strong { font-family: var(--display); font-size: 20px; font-weight: 400; }
+.liveRetailerRow > a { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 999px; font-size: 9px; font-weight: 700; }
+.noLiveRetailer { padding: 18px 0; border-top: 1px solid var(--line); }
+.noLiveRetailer strong { display: block; margin-bottom: 6px; font-size: 11px; }
+.noLiveRetailer p { margin: 0; color: var(--muted); font-size: 9px; }
+.drawerSwapToggle { width: 100%; min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 0; text-align: left; }
+.drawerSwapToggle span { font-family: var(--display); font-size: 24px; }
+.drawerSwapToggle small { color: var(--muted); font-size: 8px; }
+
+@media (max-width: 620px) {
+  .liveRetailerRow { grid-template-columns: 1fr auto; padding: 13px 0; }
+  .liveRetailerRow > a { grid-column: 1 / -1; justify-self: stretch; }
+}

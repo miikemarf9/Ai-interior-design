@@ -77,7 +77,7 @@ See `CREDIT_POLICY.md`.
 
 ## Current stage
 
-Stages 1–8 are implemented.
+Stages 1–9 are implemented.
 
 Stage 5 is deployed to the dedicated Neon project `small-glitter-35907125` in AWS London. Stage 6 is wired to the live catalogue and deliberately refuses to invent products. The remaining pre-render dependency is approved affiliate-feed access so real products can be staged, reviewed and promoted.
 
@@ -125,3 +125,19 @@ GitHub Actions runs `npm run typecheck` and `npm run build` on pushes to `main` 
 The finished room is separated from the technical generation interface. The owner gets a full-screen room, before/after comparison, product hotspots, persistent room total, a product drawer and staged cheaper/similar/premium swaps.
 
 Public share tokens expose the finished render and safe design/product data only. They never expose the original room photograph or owner key.
+
+
+## Stage 9 affiliate commerce
+
+Retailer CTAs route through `/go/[offerId]`. The server resolves the current database offer, records the click, appends Roomfound's Awin `clickref` to an approved affiliate URL and redirects.
+
+Tracked funnel:
+- product viewed
+- swap alternatives viewed
+- retailer clicked
+- expected commission / expected revenue where programme KPIs are known
+- Awin conversion status and actual commission where supplied
+
+A product remains a canonical product/variant even if one retailer changes price or becomes unavailable. The designed-room drawer loads current offers for the variant and can show another retailer without deleting the product from the design.
+
+Awin programme and transaction sync remain inactive until `AWIN_API_TOKEN`, `AWIN_PUBLISHER_ID` and `COMMERCE_SYNC_SECRET` are configured.

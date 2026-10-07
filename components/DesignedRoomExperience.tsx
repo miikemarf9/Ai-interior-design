@@ -8,6 +8,26 @@ import { applyPendingAlternative, hotspotForProduct, type DesignedRoomPayload } 
 
 type ExperiencePayload = DesignedRoomPayload & { intake?: IntakeForBrief };
 
+type LiveOffer = {
+  id: string;
+  retailer_name: string;
+  retailer_slug: string;
+  price_minor: number;
+  compare_at_price_minor: number | null;
+  availability: string;
+  uk_delivery_status: string;
+  delivery_price_minor: number | null;
+  delivery_min_days: number | null;
+  delivery_max_days: number | null;
+  last_checked_at: string;
+  affiliate_tracked: boolean;
+  network: string | null;
+  advertiser_id: string | null;
+  publisher_id: string | null;
+  expected_commission_minor: number | null;
+  expected_revenue_minor: number | null;
+};
+
 function money(minor: number) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -27,6 +47,23 @@ function availabilityLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function deliveryLabel(offer: LiveOffer) {
+  if (offer.delivery_price_minor === 0) return "Free delivery";
+  if (offer.delivery_price_minor !== null) return `${money(offer.delivery_price_minor)} delivery`;
+  if (offer.delivery_min_days !== null && offer.delivery_max_days !== null) {
+    return `${offer.delivery_min_days}–${offer.delivery_max_days} days`;
+  }
+  return "UK delivery";
+}
+
+function getCommerceSession() {
+  const existing = window.localStorage.getItem("roomfound-commerce-session-v1");
+  if (existing && /^[a-zA-Z0-9_-]{16,100}$/.test(existing)) return existing;
+  const created = crypto.randomUUID();
+  window.localStorage.setItem("roomfound-commerce-session-v1", created);
+  return created;
+}
+
 function roomTitle(title: string) {
   const cleaned = title.replace(/\s+direction$/i, "").trim();
   return /^your\b/i.test(cleaned) ? cleaned : `Your ${cleaned}`;
@@ -42,6 +79,13 @@ export function DesignedRoomExperience({ shareToken }: { shareToken?: string }) 
   const [drawerSlot, setDrawerSlot] = useState<string | null>(null);
   const [pendingChanges, setPendingChanges] = useState<Record<string, ProductAlternative>>({});
   const [shareLabel, setShareLabel] = useState("Share");
+  const [commerceSession, setCommerceSession] = useState("");
+  const [liveOffers, setLiveOffers] = useState<LiveOffer[]>([]);
+  const [offersLoading, setOffersLoading] = useState(false);
+
+  useEffect(() => {
+    setCommerceSession(getCommerceSession());
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,6 +157,48 @@ export function DesignedRoomExperience({ shareToken }: { shareToken?: string }) 
     [data, drawerSlot],
   );
 
+  useEffect(() => {
+    if (!activeProduct || !data || !commerceSession) {
+      setLiveOffers([]);
+      return;
+    }
+
+    let cancelled = false;
+    const selected = activeProduct.selected;
+
+    void fetch("/api/commerce/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        eventType: "product_viewed",
+        sessionKey: commerceSession,
+        designId: data.designId,
+        generationId: data.generationId,
+        shareToken: shareToken || null,
+        productId: selected.productId,
+        variantId: selected.variantId,
+        offerId: selected.offer.id,
+        surface: shared ? "shared_room_drawer" : "designed_room_drawer",
+      }),
+    }).catch(() => undefined);
+
+    setOffersLoading(true);
+    fetch(`/api/commerce/offers?variantId=${encodeURIComponent(selected.variantId)}`, { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json() as { offers?: LiveOffer[] };
+        if (!cancelled) setLiveOffers(response.ok && Array.isArray(payload.offers) ? payload.offers : []);
+      })
+      .catch(() => {
+        if (!cancelled) setLiveOffers([]);
+      })
+      .finally(() => {
+        if (!cancelled) setOffersLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [activeProduct, commerceSession, data, shareToken, shared]);
+
   const pendingSelection = useMemo(() => {
     if (!data) return null;
     return Object.entries(pendingChanges).reduce(
@@ -134,6 +220,43 @@ export function DesignedRoomExperience({ shareToken }: { shareToken?: string }) 
       delete next[slot];
       return next;
     });
+  }
+
+  function trackSwapViews(product: ProposedProduct) {
+    if (!data || !commerceSession) return;
+
+    product.alternatives.forEach((alternative) => {
+      const candidate = alternative.candidate;
+      void fetch("/api/commerce/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        keepalive: true,
+        body: JSON.stringify({
+          eventType: "swap_viewed",
+          sessionKey: commerceSession,
+          designId: data.designId,
+          generationId: data.generationId,
+          shareToken: shareToken || null,
+          productId: candidate.productId,
+          variantId: candidate.variantId,
+          offerId: candidate.offer.id,
+          alternativeKind: alternative.kind,
+          surface: shared ? "shared_room_swap" : "designed_room_swap",
+        }),
+      }).catch(() => undefined);
+    });
+  }
+
+  function retailerHref(offerId: string) {
+    if (!data) return "#";
+    const params = new URLSearchParams({
+      session: commerceSession || crypto.randomUUID(),
+      designId: data.designId,
+      generationId: data.generationId,
+      surface: shared ? "shared_room_drawer" : "designed_room_drawer",
+    });
+    if (shareToken) params.set("shareToken", shareToken);
+    return `/go/${offerId}?${params.toString()}`;
   }
 
   function prepareUpdatedRender() {
@@ -351,9 +474,14 @@ export function DesignedRoomExperience({ shareToken }: { shareToken?: string }) 
 
       {activeProduct ? (
         <ProductDrawer
+          key={activeProduct.slot}
           product={activeProduct}
           pending={pendingChanges[activeProduct.slot]}
           shared={shared}
+          liveOffers={liveOffers}
+          offersLoading={offersLoading}
+          retailerHref={retailerHref}
+          onViewSwaps={() => trackSwapViews(activeProduct)}
           onClose={() => setDrawerSlot(null)}
           onChoose={(alternative) => chooseAlternative(activeProduct, alternative)}
           onRemovePending={() => removePending(activeProduct.slot)}
@@ -378,6 +506,10 @@ function ProductDrawer({
   product,
   pending,
   shared,
+  liveOffers,
+  offersLoading,
+  retailerHref,
+  onViewSwaps,
   onClose,
   onChoose,
   onRemovePending,
@@ -385,11 +517,22 @@ function ProductDrawer({
   product: ProposedProduct;
   pending?: ProductAlternative;
   shared: boolean;
+  liveOffers: LiveOffer[];
+  offersLoading: boolean;
+  retailerHref: (offerId: string) => string;
+  onViewSwaps: () => void;
   onClose: () => void;
   onChoose: (alternative: ProductAlternative) => void;
   onRemovePending: () => void;
 }) {
   const selected = product.selected;
+  const [showSwaps, setShowSwaps] = useState(false);
+  const displayPrice = liveOffers[0]?.price_minor ?? selected.offer.priceMinor;
+
+  function openSwaps() {
+    if (!showSwaps) onViewSwaps();
+    setShowSwaps((value) => !value);
+  }
 
   return (
     <div className="productDrawerBackdrop" role="presentation" onMouseDown={onClose}>
@@ -412,12 +555,12 @@ function ProductDrawer({
         <div className="productDrawerIdentity">
           <small>{selected.brandName || selected.offer.retailerName}</small>
           <h2>{candidateName(selected)}</h2>
-          <strong>{money(selected.offer.priceMinor)}</strong>
+          <strong>{liveOffers.length > 1 ? "From " : ""}{money(displayPrice)}</strong>
         </div>
 
         <div className="productDrawerFacts">
-          <div><span>Retailer</span><strong>{selected.offer.retailerName}</strong></div>
-          <div><span>Availability</span><strong>{availabilityLabel(selected.offer.availability)}</strong></div>
+          <div><span>Retailers</span><strong>{offersLoading ? "Checking…" : liveOffers.length ? `${liveOffers.length} live UK offer${liveOffers.length === 1 ? "" : "s"}` : "No live offer right now"}</strong></div>
+          <div><span>Availability</span><strong>{liveOffers[0] ? availabilityLabel(liveOffers[0].availability) : availabilityLabel(selected.offer.availability)}</strong></div>
           <div>
             <span>Dimensions</span>
             <strong>
@@ -431,14 +574,38 @@ function ProductDrawer({
 
         <p className="productDrawerReason">{product.reasons.slice(0, 3).join(" ")}</p>
 
-        <a
-          className="button buttonPrimary productRetailerButton"
-          href={selected.offer.affiliateUrl || selected.offer.productUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          View at {selected.offer.retailerName}
-        </a>
+        <div className="liveRetailerOffers">
+          <div className="liveRetailerHeading">
+            <span>Where to buy</span>
+            <small>Current retailer offers</small>
+          </div>
+
+          {offersLoading ? <p className="offerLoading">Checking current price and availability…</p> : null}
+
+          {!offersLoading && liveOffers.map((offer) => (
+            <div className="liveRetailerRow" key={offer.id}>
+              <div>
+                <strong>{offer.retailer_name}</strong>
+                <small>{availabilityLabel(offer.availability)} · {deliveryLabel(offer)}</small>
+              </div>
+              <strong>{money(offer.price_minor)}</strong>
+              <a
+                href={retailerHref(offer.id)}
+                target="_blank"
+                rel="sponsored noopener"
+              >
+                View at retailer
+              </a>
+            </div>
+          ))}
+
+          {!offersLoading && liveOffers.length === 0 ? (
+            <div className="noLiveRetailer">
+              <strong>The product stays in your design.</strong>
+              <p>Its retailer offer is currently unavailable. Roomfound will show another retailer here when the same variant has a live UK offer.</p>
+            </div>
+          ) : null}
+        </div>
 
         {pending && !shared ? (
           <div className="drawerPendingChoice">
@@ -450,8 +617,11 @@ function ProductDrawer({
 
         {!shared ? (
           <div className="drawerSwaps">
-            <div className="drawerSwapHeading"><span>Swap</span><small>Free until you generate again</small></div>
-            {(["cheaper", "similar", "premium"] as const).map((kind) => {
+            <button className="drawerSwapToggle" type="button" onClick={openSwaps}>
+              <span>Swap this product</span>
+              <small>{showSwaps ? "Hide alternatives" : "Cheaper · similar · premium"}</small>
+            </button>
+            {showSwaps ? (["cheaper", "similar", "premium"] as const).map((kind) => {
               const alternative = product.alternatives.find((item) => item.kind === kind);
               const label = kind === "cheaper" ? "Cheaper" : kind === "similar" ? "Similar" : "Premium";
 
@@ -474,7 +644,7 @@ function ProductDrawer({
                   ) : <div className="drawerNoAlternative">No strong live alternative yet</div>}
                 </div>
               );
-            })}
+            }) : null}
           </div>
         ) : null}
       </aside>
