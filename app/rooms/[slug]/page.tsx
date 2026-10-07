@@ -19,7 +19,7 @@ export async function generateMetadata({
   if(!room) return {};
   const base=siteUrl();
   return {
-    title:`${room.title} | Shop the room | Roomfound`,
+    title:{absolute:`${room.title} | Shop the room | Roomfound`},
     description:room.excerpt,
     alternates:{canonical:`${base}/rooms/${room.slug}`},
     robots:{index:room.verificationStatus!=="failed",follow:true},
