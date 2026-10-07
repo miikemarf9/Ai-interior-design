@@ -190,3 +190,22 @@ The original browser `owner_key` remains only as a bridge for anonymous pre-sign
 Verified accounts receive the one-time signup credit grant through the existing immutable credit ledger.
 
 CRM integration uses an outbox pattern. Roomfound remains the source of truth for account and room ownership; Grab&Book can consume lifecycle events later through an authenticated ingestion endpoint without Roomfound writing directly into Grab&Book's tables.
+
+
+## Stage 11 Verified Room
+
+Apply `verified_room_schema_neon.sql` after the Stage 10 account schema.
+
+It adds:
+- `room_verifications` — one versioned evidence record per generation
+- `room_product_verifications` — exact product/variant/offer evidence and uncertainty per selected product
+
+Live retailer evidence and generated-image evidence are deliberately separated. Visual comparison can be cached for the immutable generation while price/availability checks can be refreshed.
+
+Status vocabulary is explicit:
+- `verified`
+- `warning`
+- `failed`
+- `insufficient`
+
+Missing evidence is never treated as a pass.

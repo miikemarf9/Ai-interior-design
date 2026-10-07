@@ -5,12 +5,15 @@ import { useEffect, useMemo, useState } from "react";
 import type { IntakeForBrief } from "@/lib/brief";
 import type { ProductAlternative, ProductSelection, ProposedProduct, SelectionCandidate } from "@/lib/catalog/selection";
 import { applyPendingAlternative, hotspotForProduct, type DesignedRoomPayload } from "@/lib/room-experience";
+import { VerifiedRoomPanel } from "@/components/VerifiedRoomPanel";
+import type { RoomVerification } from "@/lib/verification/types";
 
 type ExperiencePayload = DesignedRoomPayload & {
   intake?: IntakeForBrief;
   ownerKey?: string;
   roomName?: string;
   originalAssetId?: string | null;
+  verification?: RoomVerification | null;
 };
 
 type LiveOffer = {
@@ -93,6 +96,8 @@ export function DesignedRoomExperience({
   const [commerceSession, setCommerceSession] = useState("");
   const [liveOffers, setLiveOffers] = useState<LiveOffer[]>([]);
   const [offersLoading, setOffersLoading] = useState(false);
+  const [verification, setVerification] = useState<RoomVerification | null>(null);
+  const [verificationLoading, setVerificationLoading] = useState(false);
 
   useEffect(() => {
     setCommerceSession(getCommerceSession());
@@ -131,6 +136,7 @@ export function DesignedRoomExperience({
         if (cancelled) return;
 
         setData(payload);
+        if (payload.verification) setVerification(payload.verification);
 
         if (!shared && payload.ownerKey) {
           const runtimeRaw = window.localStorage.getItem("roomfound-design-runtime-v1");
@@ -170,6 +176,46 @@ export function DesignedRoomExperience({
     load();
     return () => { cancelled = true; };
   }, [shareToken, designId, shared]);
+
+  useEffect(() => {
+    if (!data || shared) return;
+
+    let cancelled = false;
+    setVerificationLoading(true);
+
+    let ownerKey = data.ownerKey || "";
+    if (!ownerKey) {
+      try {
+        const runtimeRaw = window.localStorage.getItem("roomfound-design-runtime-v1");
+        const runtime = runtimeRaw ? JSON.parse(runtimeRaw) as { ownerKey?: string } : {};
+        ownerKey = runtime.ownerKey || "";
+      } catch {
+        ownerKey = "";
+      }
+    }
+
+    fetch("/api/verified-room", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        designId: data.designId,
+        generationId: data.generationId,
+        ownerKey,
+      }),
+    })
+      .then(async (response) => {
+        const payload = await response.json() as { verification?: RoomVerification };
+        if (!cancelled && response.ok && payload.verification) {
+          setVerification(payload.verification);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setVerificationLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [data, shared]);
 
   useEffect(() => {
     if (!drawerSlot) return;
@@ -451,6 +497,8 @@ export function DesignedRoomExperience({
           <div><span>Total</span><strong>{money(data.selection.totalMinor)}</strong></div>
         </div>
       </section>
+
+      <VerifiedRoomPanel verification={verification} loading={verificationLoading} />
 
       <section className="roomProductsSection">
         <div className="roomProductsIntro">
