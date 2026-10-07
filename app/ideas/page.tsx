@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { listGrowthCollections } from "@/lib/growth";
 
+export const dynamic="force-dynamic";
+
 export async function generateMetadata():Promise<Metadata>{
   const collections=await listGrowthCollections();
   const hasRooms=collections.some((collection)=>collection.roomCount>0);
