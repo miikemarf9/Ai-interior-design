@@ -41,6 +41,25 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en-GB">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (() => {
+            const navigation = performance.getEntriesByType('navigation')[0];
+            if (location.pathname !== '/' || navigation?.type !== 'reload') return;
+            history.scrollRestoration = 'manual';
+            if (location.hash) history.replaceState(history.state, '', location.pathname + location.search);
+            const reset = () => window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            reset();
+            window.addEventListener('pageshow', () => {
+              reset();
+              requestAnimationFrame(reset);
+            }, { once: true });
+            window.addEventListener('pagehide', () => {
+              history.scrollRestoration = 'auto';
+            }, { once: true });
+          })();
+        ` }} />
+      </head>
       <body className={`${displayFont.variable} ${sansFont.variable}`}>
         <a className="skipLink" href="#roomfound-main">Skip to main content</a>
         <div id="roomfound-main">{children}</div>

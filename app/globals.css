@@ -2311,3 +2311,59 @@ p { line-height: 1.58; }
     animation: none !important;
   }
 }
+
+/* Product examples appear only when the loaded hero has finished its drift. */
+.heroPrices { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.heroPricesCaption, .heroPrice {
+  position: absolute;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity .8s ease, transform .8s ease, visibility 0s linear .8s;
+}
+.heroPrices.isVisible .heroPrice, .heroPrices.isVisible .heroPricesCaption {
+  opacity: 1; visibility: visible; transform: translateY(0);
+  transition-delay: var(--price-delay, 0s);
+}
+.heroPricesCaption {
+  right: 5%; top: 8%; margin: 0; padding: 6px 10px;
+  color: #fffaf2; background: rgba(26,22,18,.65); border-radius: 3px;
+  font-size: 10px; letter-spacing: .07em;
+}
+.heroPrice {
+  min-width: 128px; padding: 12px 16px; border-radius: 5px;
+  background: rgba(255,250,242,.94); color: #29241e;
+  border: 1px solid rgba(255,255,255,.65);
+  box-shadow: 0 8px 28px rgba(26,22,18,.12);
+}
+.heroPrice::before {
+  content: ''; position: absolute; left: -17px; top: 24px;
+  width: 7px; height: 7px; border-radius: 50%; background: #fffaf2;
+  box-shadow: 0 0 0 4px rgba(255,250,242,.22);
+}
+.heroPrice span { display: block; font-size: 10px; line-height: 1.5; }
+.heroPrice strong { display: block; margin-top: 3px; font-size: 19px; font-weight: 600; line-height: 1.2; }
+.heroPricePendant { left: 66%; top: 23%; --price-delay: .15s; }
+.heroPriceSofa { right: 6%; top: 52%; --price-delay: .4s; }
+.heroPriceTable { left: 60%; top: 75%; --price-delay: .65s; }
+@media (max-width: 1100px) {
+  .homeHeroContent { padding-bottom: 240px; }
+  .heroPrices {
+    inset: auto 5% 100px; display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; max-width: 520px; margin-left: auto;
+  }
+  .heroPricesCaption { position: static; grid-column: 1 / -1; justify-self: end; }
+  .heroPrice { position: static; min-width: 0; padding: 10px 12px; }
+  .heroPrice::before { display: none; }
+}
+@media (max-width: 680px) {
+  .homeHeroContent { padding-bottom: 260px; }
+  .heroPrices { bottom: 125px; max-width: none; }
+  .heroPricesCaption { justify-self: start; font-size: 9px; }
+  .heroPrice { padding: 10px; }
+  .heroPrice span { font-size: 9px; }
+  .heroPrice strong { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .heroPrice, .heroPricesCaption { transition: none; transform: none; }
+}
