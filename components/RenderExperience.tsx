@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
 import type { ProductSelection } from "@/lib/catalog/selection";
+import { trackRoomfound } from "@/components/PrivacyAnalytics";
 
 type CreditState = {
   balance: number;
@@ -97,6 +98,7 @@ export function RenderExperience() {
 
     setGenerating(true);
     setError("");
+    trackRoomfound("render_started",{productCount:selection.products.length});
 
     try {
       const response = await fetch("/api/render", {
@@ -118,13 +120,15 @@ export function RenderExperience() {
         if (typeof data.balance === "number" && credits) {
           setCredits({ ...credits, balance: data.balance });
         }
-        if (data.code === "RENDER_FAILED_REFUNDED") {
+        if (data.code === "RENDER_FAILED_REFUNDED" || data.code === "RENDER_TIMEOUT_REFUNDED") {
           await loadCredits(runtime.ownerKey);
         }
+        trackRoomfound("render_failed",{code:data.code || "unknown"});
         throw new Error(data.error || "The room could not be generated.");
       }
 
       setResult(data);
+      trackRoomfound("render_succeeded",{generationId:data.generationId,durationMs:data.durationMs});
       setCredits((current) => current ? { ...current, balance: data.balance } : current);
     } catch (err) {
       setError(err instanceof Error ? err.message : "The room could not be generated.");

@@ -191,6 +191,8 @@ export async function refundFailedGeneration(args: {
     totalTokens: number | null;
     costUsdMicros: number | null;
   };
+  costGbpMinor?: number | null;
+  costFxUsdGbp?: number | null;
 }) {
   const sql = getCatalogDb();
   const refundKey = `render-refund:${args.generationId}`;
@@ -209,7 +211,9 @@ export async function refundFailedGeneration(args: {
         input_image_tokens = $8,
         output_image_tokens = $9,
         total_tokens = $10,
-        cost_usd_micros = $11
+        cost_usd_micros = $11,
+        cost_gbp_minor = $12,
+        cost_fx_usd_gbp = $13
       where id = $1::uuid
       returning wallet_id, design_id
     ),
@@ -246,6 +250,8 @@ export async function refundFailedGeneration(args: {
       args.usage?.outputImageTokens ?? null,
       args.usage?.totalTokens ?? null,
       args.usage?.costUsdMicros ?? null,
+      args.costGbpMinor ?? null,
+      args.costFxUsdGbp ?? null,
     ],
   );
 }

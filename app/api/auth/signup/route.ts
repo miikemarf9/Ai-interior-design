@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkAuthRateLimit } from "@/lib/security/rate-limit";
 import {
   applySessionCookie,
   createSession,
@@ -23,11 +24,26 @@ export async function POST(request: Request) {
     password?: string;
     displayName?: string;
     ownerKey?: string;
+    inviteCode?: string;
   };
 
   const email = normalizeEmail(body.email || "");
   const password = body.password || "";
   const displayName = (body.displayName || "").trim().slice(0, 80) || null;
+
+  const rate = await checkAuthRateLimit({ request, action: "signup", identity: email, limit: 5 });
+  if (!rate.allowed) {
+    return NextResponse.json({ error: rate.configured ? "Too many account attempts. Try again later." : "Account security is not configured." }, {
+      status: rate.configured ? 429 : 503,
+      headers: rate.retryAfterSeconds ? { "Retry-After": String(rate.retryAfterSeconds) } : undefined,
+    });
+  }
+
+  const controlledBeta = process.env.BETA_CONTROLLED_ACCESS === "true";
+  const expectedInviteCode = process.env.BETA_SIGNUP_CODE || "";
+  if (controlledBeta && (!expectedInviteCode || body.inviteCode !== expectedInviteCode)) {
+    return NextResponse.json({ error: "A valid beta access code is required." }, { status: 403 });
+  }
 
   if (!/^\S+@\S+\.\S+$/.test(email)) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });

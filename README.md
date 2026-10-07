@@ -79,7 +79,7 @@ See `CREDIT_POLICY.md`.
 
 ## Current stage
 
-Stages 1–12 are implemented.
+Stages 1–13 are implemented.
 
 Stage 5 is deployed to the dedicated Neon project `small-glitter-35907125` in AWS London. Stage 6 is wired to the live catalogue and deliberately refuses to invent products. The remaining pre-render dependency is approved affiliate-feed access so real products can be staged, reviewed and promoted.
 
@@ -218,3 +218,35 @@ Public SEO pages expose the finished room only. The customer's original room pho
 The social generator supports Pinterest 2:3, Instagram 4:5, vertical Story/Reel 9:16 and Facebook landscape outputs.
 
 Abandoned-design recovery uses a protected scanner and never assumes consent. Only a verified account with explicit marketing-email consent and no opt-out can generate a `design_abandoned` event in the existing Grab&Book CRM outbox.
+
+
+## Stage 13 beta hardening
+
+The application now has a controlled-beta launch gate rather than treating a successful build as permission to launch.
+
+Implemented:
+- invite-code controlled signup
+- database-backed auth rate limiting
+- production security headers
+- bounded AI image-provider timeout with existing one-credit refund semantics
+- GBP AI-cost snapshots per generation
+- per-room AI cost vs expected/pending/approved affiliate revenue view
+- protected beta launch/health metrics endpoint
+- credit wallet vs immutable-ledger consistency checks
+- selectable-product and affiliate-programme commercial gates
+- first-party analytics behind explicit analytics consent
+- consented Core Web Vitals reporting
+- privacy data export
+- privacy request workflow
+- retention cleanup endpoint
+- separate marketing-email consent
+- Privacy, Cookies and Beta Terms pages
+- explicit AI visualisation limitations
+- explicit affiliate disclosures
+- global loading, error and not-found states
+- focus-visible and skip-link accessibility
+- keyboard-close/focus handling for product drawers
+- controlled beta feedback capture
+- high-severity production dependency audit in CI
+
+See `BETA_LAUNCH.md` for the remaining deployment, inventory, affiliate, legal and real-device gates.

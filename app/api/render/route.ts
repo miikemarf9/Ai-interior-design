@@ -4,7 +4,7 @@ import { getCurrentAccount } from "@/lib/auth";
 import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
 import type { ProductSelection } from "@/lib/catalog/selection";
 import { getCatalogDb } from "@/lib/catalog/neon";
-import { calculateImageCost } from "@/lib/render/cost";
+import { calculateImageCost, snapshotGbpCost } from "@/lib/render/cost";
 import {
   ensureRenderWallet,
   refundFailedGeneration,
@@ -183,6 +183,7 @@ export async function POST(request: Request) {
   const startedAt = Date.now();
   let providerRequestId: string | null = null;
   let measuredUsage = calculateImageCost(null);
+  let gbpCost = snapshotGbpCost(null);
 
   try {
     const roomAsset = await getRoomAsset(designId, ownerKey);
@@ -281,6 +282,9 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
+      signal: AbortSignal.timeout(
+        Math.max(10_000, Math.min(170_000, Number(process.env.OPENAI_IMAGE_TIMEOUT_MS || 150_000))),
+      ),
       body: JSON.stringify({
         model,
         images,
@@ -298,6 +302,7 @@ export async function POST(request: Request) {
     providerRequestId = response.headers.get("x-request-id");
     const payload = await response.json() as OpenAIImageResponse;
     measuredUsage = calculateImageCost(payload.usage);
+    gbpCost = snapshotGbpCost(measuredUsage.costUsdMicros);
 
     if (!response.ok) {
       throw new Error(payload.error?.message || `OpenAI image edit failed with HTTP ${response.status}.`);
@@ -337,7 +342,9 @@ export async function POST(request: Request) {
           output_image_tokens=$9,
           total_tokens=$10,
           cost_usd_micros=$11,
-          duration_ms=$12,
+          cost_gbp_minor=$12,
+          cost_fx_usd_gbp=$13,
+          duration_ms=$14,
           completed_at=now()
         from asset a
         where g.id=$5::uuid
@@ -362,6 +369,8 @@ export async function POST(request: Request) {
         measuredUsage.outputImageTokens,
         measuredUsage.totalTokens,
         measuredUsage.costUsdMicros,
+        gbpCost.costGbpMinor,
+        gbpCost.usdToGbpRate,
         durationMs,
       ],
     ) as Array<{ asset_id: string }>;
@@ -381,21 +390,28 @@ export async function POST(request: Request) {
       model,
       promptVersion: RENDER_PROMPT_VERSION,
       costUsdMicros: measuredUsage.costUsdMicros,
+      costGbpMinor: gbpCost.costGbpMinor,
+      costFxUsdGbp: gbpCost.usdToGbpRate,
       durationMs,
     });
   } catch (error) {
     const durationMs = Date.now() - startedAt;
     const reason = error instanceof Error ? error.message : "Render failed.";
+    const timedOut = error instanceof Error
+      && (error.name === "TimeoutError" || error.name === "AbortError");
+    gbpCost = snapshotGbpCost(measuredUsage.costUsdMicros);
 
     if (generationId) {
       try {
         await refundFailedGeneration({
           generationId,
           reason,
-          failureCode: "RENDER_FAILED",
+          failureCode: timedOut ? "PROVIDER_TIMEOUT" : "RENDER_FAILED",
           durationMs,
           providerRequestId,
           usage: measuredUsage,
+          costGbpMinor: gbpCost.costGbpMinor,
+          costFxUsdGbp: gbpCost.usdToGbpRate,
         });
       } catch (refundError) {
         console.error("Render refund logging failed", refundError);
@@ -407,7 +423,9 @@ export async function POST(request: Request) {
       error: generationId
         ? "The render failed and the design credit has been returned."
         : reason,
-      code: generationId ? "RENDER_FAILED_REFUNDED" : "RENDER_FAILED",
+      code: generationId
+        ? (timedOut ? "RENDER_TIMEOUT_REFUNDED" : "RENDER_FAILED_REFUNDED")
+        : (timedOut ? "RENDER_TIMEOUT" : "RENDER_FAILED"),
       generationId,
     }, { status: 500 });
   }

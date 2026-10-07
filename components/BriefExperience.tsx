@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DesignBrief, IntakeForBrief } from '@/lib/brief';
+import { trackRoomfound } from '@/components/PrivacyAnalytics';
 import { creditPolicy } from '@/lib/credits';
 
 type BriefSource = 'ai' | 'preview';
@@ -152,6 +153,7 @@ export function BriefExperience() {
     if (!brief) return;
     setApproved(true);
     saveBrief(brief, source, true);
+    trackRoomfound("brief_approved");
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 

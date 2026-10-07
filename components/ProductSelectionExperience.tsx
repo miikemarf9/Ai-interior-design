@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
 import type { ProductAlternative, ProductSelection, ProposedProduct, SelectionCandidate } from "@/lib/catalog/selection";
+import { trackRoomfound } from "@/components/PrivacyAnalytics";
 
 type SavedBrief = {
   brief?: DesignBrief;
@@ -35,6 +36,7 @@ export function ProductSelectionExperience() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [approved, setApproved] = useState(false);
+  const [designId, setDesignId] = useState("");
   const started = useRef(false);
 
   useEffect(() => {
@@ -43,6 +45,13 @@ export function ProductSelectionExperience() {
 
     const intakeRaw = window.localStorage.getItem("roomfound-intake-v1");
     const briefRaw = window.localStorage.getItem("roomfound-brief-v1");
+    try {
+      const runtimeRaw = window.localStorage.getItem("roomfound-design-runtime-v1");
+      const runtime = runtimeRaw ? JSON.parse(runtimeRaw) as { designId?: string } : {};
+      setDesignId(runtime.designId || "");
+    } catch {
+      setDesignId("");
+    }
 
     if (!intakeRaw || !briefRaw) {
       setLoading(false);
@@ -152,6 +161,7 @@ export function ProductSelectionExperience() {
     if (!selection) return;
     setApproved(true);
     saveSelection(selection, true);
+    trackRoomfound("products_approved",{productCount:selection.products.length,totalMinor:selection.totalMinor});
   }
 
   const budgetState = useMemo(() => {
@@ -250,6 +260,7 @@ export function ProductSelectionExperience() {
             product={product}
             index={index}
             onSwap={(alternative) => swapProduct(product.slot, alternative)}
+            designId={designId}
           />
         ))}
       </section>
@@ -298,10 +309,12 @@ function ProductCard({
   product,
   index,
   onSwap,
+  designId,
 }: {
   product: ProposedProduct;
   index: number;
   onSwap: (alternative: ProductAlternative) => void;
+  designId: string;
 }) {
   const [open, setOpen] = useState(false);
   const item = product.selected;
@@ -310,7 +323,7 @@ function ProductCard({
     <article className="selectedProductCard">
       <div className="selectedProductIndex">{String(index + 1).padStart(2, "0")}</div>
       <div className="selectedProductImage">
-        {item.image ? <img src={item.image.url} alt={item.image.altText || item.productName} /> : <div className="imagePending">Image pending</div>}
+        {item.image ? <img src={item.image.url} alt={item.image.altText || item.productName} loading="lazy" decoding="async" /> : <div className="imagePending">Image pending</div>}
         <span>{product.slotLabel}</span>
       </div>
       <div className="selectedProductMain">
@@ -337,7 +350,14 @@ function ProductCard({
           <button type="button" className="textButton" onClick={() => setOpen((value) => !value)}>
             {open ? "Hide alternatives" : "Change this product"}
           </button>
-          <a className="textButton" href={item.offer.affiliateUrl || item.offer.productUrl} target="_blank" rel="noreferrer">View retailer</a>
+          <a
+            className="textButton"
+            href={`/go/${item.offer.id}?surface=pre_render_selection${designId ? `&designId=${encodeURIComponent(designId)}` : ""}`}
+            target="_blank"
+            rel="sponsored noopener"
+          >
+            View retailer · affiliate
+          </a>
         </div>
 
         {open ? (

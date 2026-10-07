@@ -227,3 +227,21 @@ A room is never indexed merely because it exists. `growth_publications` is the e
 The six initial SEO collections are seeded by the migration. Each defaults to a minimum of 3 published rooms before search indexing.
 
 Abandoned-design recovery is consent-gated and emits CRM outbox events rather than sending marketing from Roomfound directly.
+
+
+## Stage 13 beta launch
+
+Apply `beta_launch_schema_neon.sql` after the Stage 12 growth schema.
+
+It adds:
+- `analytics_events`
+- `privacy_requests`
+- `beta_feedback`
+- `security_rate_limits`
+- account analytics-consent timestamps
+- render GBP-cost snapshot fields
+- `beta_room_economics` view
+
+Optional analytics remains separate from operational commerce/design records. The analytics endpoint does not intentionally retain raw client IP addresses. Auth abuse-prevention keys are HMAC hashes and are pruned by the protected retention job.
+
+`beta_room_economics` keeps expected, pending and approved affiliate revenue separate so expected commission modelling cannot be mistaken for realised revenue.

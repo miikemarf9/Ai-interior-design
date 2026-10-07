@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { AccountPrivacyControls } from "@/components/AccountPrivacyControls";
 
 type AccountPayload = {
   account: {
@@ -16,6 +17,10 @@ type AccountPayload = {
     verificationStatus: string;
   };
   primaryHomeId: string;
+  preferences: {
+    marketingEmails: boolean;
+    analyticsAccountConsent: boolean;
+  };
   rooms: Array<{
     id: string;
     homeId: string | null;
@@ -110,7 +115,10 @@ export function AccountExperience() {
         password: String(form.get("password") || ""),
         ownerKey: typeof runtime.ownerKey === "string" ? runtime.ownerKey : undefined,
       };
-      if (authMode === "signup") body.displayName = String(form.get("displayName") || "");
+      if (authMode === "signup") {
+        body.displayName = String(form.get("displayName") || "");
+        body.inviteCode = String(form.get("inviteCode") || "");
+      }
 
       const response = await fetch(authMode === "signup" ? "/api/auth/signup" : "/api/auth/login", {
         method: "POST",
@@ -265,15 +273,23 @@ export function AccountExperience() {
                 <span className="microLabel">{authMode === "signup" ? "Create your Roomfound account" : "Welcome back"}</span>
                 <h2>{authMode === "signup" ? "Keep every room in one place." : "Open your saved rooms."}</h2>
                 {authMode === "signup" ? (
-                  <label><span>Name</span><input name="displayName" autoComplete="name" placeholder="Optional" /></label>
+                  <>
+                    <label><span>Name</span><input name="displayName" autoComplete="name" placeholder="Optional" /></label>
+                    {process.env.NEXT_PUBLIC_BETA_CONTROLLED_ACCESS === "true" ? (
+                      <label>
+                        <span>Beta access code</span>
+                        <input name="inviteCode" autoComplete="off" required />
+                      </label>
+                    ) : null}
+                  </>
                 ) : null}
                 <label><span>Email</span><input name="email" type="email" autoComplete="email" required /></label>
                 <label><span>Password</span><input name="password" type="password" autoComplete={authMode === "signup" ? "new-password" : "current-password"} minLength={10} required /></label>
               </>
             )}
 
-            {error ? <p className="accountFormError">{error}</p> : null}
-            {notice ? <p className="accountFormNotice">{notice}</p> : null}
+            {error ? <p className="accountFormError" role="alert">{error}</p> : null}
+            {notice ? <p className="accountFormNotice" role="status">{notice}</p> : null}
 
             <button className="button buttonPrimary" type="submit" disabled={busy}>
               {busy ? "Working…" : authMode === "signup" ? "Create account" : authMode === "forgot" ? "Send reset link" : "Sign in"}
@@ -330,6 +346,10 @@ export function AccountExperience() {
 
       {notice ? <p className="accountDashboardNotice shellWide">{notice}</p> : null}
       {error ? <p className="accountDashboardError shellWide">{error}</p> : null}
+
+      <section className="shellWide">
+        <AccountPrivacyControls initialMarketingEmails={payload.preferences.marketingEmails} />
+      </section>
 
       <section className="savedRooms shellWide">
         <div className="savedRoomsHeading">
