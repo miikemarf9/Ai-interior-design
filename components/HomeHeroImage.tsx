@@ -39,16 +39,11 @@ export function HomeHeroImage() {
         onLoad={() => setLoaded(true)}
       />
       <div className={`heroPrices${showPrices ? ' isVisible' : ''}`} aria-hidden={!showPrices}>
-        <svg className="heroDemoCursor" viewBox="0 0 28 36" aria-hidden="true" focusable="false">
-          <path d="M3 2v27l7-7 6 12 5-2-6-12h10L3 2Z" fill="#fffaf2" stroke="#29241e" strokeWidth="1.5" strokeLinejoin="round" />
-        </svg>
         <p className="heroPricesCaption">Example room prices</p>
         <div className="heroPrice heroPricePendant">
           <span>Pendant light</span><strong>£165</strong>
         </div>
         <div className="heroPrice heroPriceSofa">
-          <span>Curved sofa</span>
-          <span className="heroPriceQualities">Soft silhouette<br />Textured upholstery</span>
           <strong>£1,295</strong>
         </div>
         <div className="heroPrice heroPriceTable">
