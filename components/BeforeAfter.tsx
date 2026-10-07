@@ -35,7 +35,7 @@ export function BeforeAfter() {
           onChange={(event) => setPosition(Number(event.target.value))}
         />
       </div>
-      <p className="demoNote">Illustrative transformation preview · your design starts with your own photograph.</p>
+      <p className="demoNote">Example transformation · your design starts with a photo of your own room.</p>
     </div>
   );
 }
