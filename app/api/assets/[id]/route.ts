@@ -12,13 +12,13 @@ export async function GET(
 
   try {
     const rows = await sql.query(
-      \`select
+      `select
         mime_type,
         external_url,
         case when data is null then null else encode(data,'base64') end as base64
        from public.design_assets
        where id=$1::uuid
-       limit 1\`,
+       limit 1`,
       [id],
     ) as Array<{
       mime_type: string;
