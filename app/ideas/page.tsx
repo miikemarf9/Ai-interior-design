@@ -7,7 +7,7 @@ export async function generateMetadata():Promise<Metadata>{
   const collections=await listGrowthCollections();
   const hasRooms=collections.some((collection)=>collection.roomCount>0);
   return {
-    title:"Living-room ideas built from real rooms | Roomfound",
+    title:{absolute:"Living-room ideas built from real rooms | Roomfound"},
     description:"Explore living-room ideas built from real Roomfound designs, real UK products and visible room totals.",
     robots:{index:hasRooms,follow:true},
   };
