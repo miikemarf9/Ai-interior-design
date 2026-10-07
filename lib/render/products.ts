@@ -23,7 +23,7 @@ export async function getVerifiedRenderProducts(
 
   const sql = getCatalogDb();
   const rows = await sql.query(
-    \`with requested as (
+    `with requested as (
       select *
       from jsonb_to_recordset($1::jsonb) as x(
         position integer,
@@ -81,7 +81,7 @@ export async function getVerifiedRenderProducts(
       order by image.is_primary desc, (image.variant_id = v.id) desc, image.sort_order asc
       limit 1
     ) pi on true
-    order by req.position asc\`,
+    order by req.position asc`,
     [JSON.stringify(requested)],
   ) as Array<{
     position: number;
