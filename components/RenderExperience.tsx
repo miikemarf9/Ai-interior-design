@@ -73,7 +73,7 @@ export function RenderExperience() {
 
   async function loadCredits(ownerKey: string) {
     try {
-      const response = await fetch(\`/api/credits/status?ownerKey=\${encodeURIComponent(ownerKey)}\`, {
+      const response = await fetch(`/api/credits/status?ownerKey=${encodeURIComponent(ownerKey)}`, {
         cache: "no-store",
       });
       const data = await response.json();
@@ -199,7 +199,7 @@ export function RenderExperience() {
             </div>
           </div>
           <div className="renderOriginalImage">
-            <img src={\`/api/assets/\${runtime?.roomAssetId}\`} alt="Original customer room" />
+            <img src={`/api/assets/${runtime?.roomAssetId}`} alt="Original customer room" />
             <span>Original photograph</span>
           </div>
         </div>
