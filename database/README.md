@@ -153,3 +153,19 @@ The current asset backend is explicitly marked `postgres_bytea_mvp`. It is suita
 Apply `room_experience_schema_neon.sql` after `render_schema_neon.sql` for a fresh environment.
 
 `room_shares` creates a revocable public token for one successful generation. Shared APIs expose the finished render and safe design/product data only. They do not expose the original room photograph or `owner_key`.
+
+
+## Stage 9 affiliate commerce
+
+Apply `affiliate_commerce_schema_neon.sql` after the Stage 8 schema for a fresh environment.
+
+Tables:
+- `affiliate_programs` — programme IDs, membership state, commission range and Awin KPIs
+- `commerce_events` — product views, swap views and retailer clicks
+- `affiliate_clicks` — exact clickref attribution plus expected economics at click time
+- `affiliate_conversions` — pending/approved/declined/deleted transaction states from the network
+- `affiliate_sync_runs` — programme and transaction import audit
+
+Roomfound uses the canonical product/variant as the stable object and retailer offers as replaceable commercial destinations. Price or availability changes therefore do not delete the designed product.
+
+Expected revenue is nullable by design. It is only populated when Awin supplies programme economics. Awin EPC is preferred when available; otherwise the fallback estimate uses commission rate × conversion rate × approval percentage.

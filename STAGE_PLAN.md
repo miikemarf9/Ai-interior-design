@@ -143,6 +143,35 @@ Implemented:
 - Original room photograph and owner key are never exposed through sharing
 - Native Web Share with clipboard fallback
 ## Stage 9 — Affiliate commerce
+Status: implemented; real commission validation waits for approved publisher/programme access.
+
+Implemented:
+- First-party commerce event tracking
+- Product-view event when a product drawer is opened
+- Swap-view event only when cheaper/similar/premium alternatives are opened
+- Server-side retailer-click event before leaving Roomfound
+- Stable Roomfound commerce session key
+- Current retailer offers resolved live from the variant, not frozen to the render snapshot
+- Same product can remain available through another retailer offer if one retailer changes price or drops out
+- `/go/[offerId]` first-party redirect
+- Roomfound click reference appended to Awin affiliate destinations
+- Exact design / generation / product / variant / offer / retailer attribution per click
+- Affiliate network, advertiser ID and publisher ID captured where available
+- Sale-value snapshot captured at click time
+- Expected commission captured when programme commission terms are known
+- Expected revenue per click uses Awin EPC where available, otherwise programme conversion + approval + commission estimates
+- Awin programme-details sync endpoint
+- Awin transaction sync endpoint with maximum 31-day window
+- Pending / approved / declined / deleted conversion states
+- Conversion reconciliation back to Roomfound clickref
+- Raw affiliate transaction payload retained for audit
+- Internal commercial-validation metrics endpoint
+- No invented commission or conversion numbers before Awin supplies programme data
+
+External dependency:
+- Awin publisher approval / API token / publisher ID.
+- Retailer programme approval and authorized affiliate destinations.
+- Once credentials exist, sync programme terms before interpreting expected revenue.
 ## Stage 10 — Accounts + saved homes
 ## Stage 11 — Verified Room V1
 ## Stage 12 — Growth engine
