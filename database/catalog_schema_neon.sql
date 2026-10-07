@@ -1,5 +1,5 @@
 -- Stage 5: curated UK living-room commerce catalogue
--- Designed for Neon/Postgres. Application catalogue access is server-side; Supabase-specific roles, grants, policies and RLS are intentionally omitted.
+-- Designed for Neon/Postgres. Application catalogue access is server-side. Supabase-specific roles, grants, policies and RLS are intentionally omitted.
 -- Product identity is deliberately separate from retailer offers.
 
 create type public.retailer_status as enum ('active', 'paused', 'disabled');
