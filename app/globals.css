@@ -697,3 +697,96 @@ p { line-height: 1.65; }
 @media (prefers-reduced-motion: reduce) {
   .briefLoadingLine i { animation: none; width: 100%; }
 }
+
+
+/* Stage 6 — Product intelligence */
+.productSelectionPage { min-height: 100vh; background: var(--ivory); }
+.productSelectionExperience { padding: 72px 0 120px; }
+.selectionLoading, .selectionMissing, .selectionEmpty { min-height: calc(100vh - 82px); display: flex; flex-direction: column; justify-content: center; padding-block: 80px; }
+.selectionLoading h1, .selectionMissing h1, .selectionEmpty h1 { max-width: 920px; margin-bottom: 26px; font-size: clamp(52px, 6.7vw, 96px); }
+.selectionLoading > p:last-child, .selectionMissing > p, .selectionEmpty > p { max-width: 680px; color: var(--muted); }
+.selectionEmptyFacts { width: min(680px, 100%); margin: 34px 0; border-top: 1px solid var(--line-strong); }
+.selectionEmptyFacts > div { min-height: 54px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); font-size: 12px; }
+.selectionEmptyFacts span { color: var(--muted); }
+
+.selectionHero { display: grid; grid-template-columns: 1fr 320px; gap: 90px; align-items: start; padding-bottom: 74px; }
+.selectionHero > div:first-child { max-width: 850px; }
+.selectionHero h1 { margin-bottom: 26px; font-size: clamp(58px, 7vw, 102px); }
+.selectionHero > div:first-child > p:last-child { max-width: 720px; color: var(--muted); font-size: 15px; }
+.selectionBudget { padding-top: 22px; border-top: 1px solid var(--line-strong); }
+.selectionBudget > strong { display: block; margin: 17px 0 14px; font-family: var(--display); font-size: 34px; font-weight: 400; }
+.selectionBudget > strong small { color: var(--muted); font-family: inherit; font-size: 18px; font-weight: 400; }
+.selectionBudgetBar { height: 4px; overflow: hidden; background: var(--line); }
+.selectionBudgetBar i { display: block; height: 100%; background: var(--forest); }
+.selectionBudget > p { margin: 10px 0 24px; color: var(--muted); font-size: 10px; }
+.selectionBudget > p.isOver { color: #8f493d; }
+.selectionBudget > div:last-child { min-height: 44px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 10px; }
+.selectionBudget > div:last-child span { color: var(--muted); }
+
+.selectionPrinciple { display: grid; grid-template-columns: 150px 1fr; gap: 30px; padding: 34px 0; border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong); }
+.selectionPrinciple span { color: var(--clay); font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.selectionPrinciple p { max-width: 780px; margin: 0; font-family: var(--display); font-size: clamp(25px, 3vw, 40px); line-height: 1.15; letter-spacing: -.025em; }
+
+.selectedProducts { border-bottom: 1px solid var(--line-strong); }
+.selectedProductCard { display: grid; grid-template-columns: 48px 270px 1fr; gap: 30px; padding: 44px 0; border-bottom: 1px solid var(--line); }
+.selectedProductCard:last-child { border-bottom: 0; }
+.selectedProductIndex { padding-top: 5px; color: var(--clay); font-size: 9px; font-weight: 700; }
+.selectedProductImage { min-height: 250px; position: relative; overflow: hidden; background: var(--bone); }
+.selectedProductImage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.selectedProductImage > span { position: absolute; left: 12px; bottom: 12px; z-index: 1; padding: 7px 9px; background: rgba(251,250,247,.92); font-size: 9px; font-weight: 700; }
+.imagePending { min-height: 250px; display: grid; place-items: center; color: var(--muted); font-size: 10px; }
+.selectedProductMain { min-width: 0; }
+.selectedProductHeading { display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: start; }
+.selectedProductHeading small { display: block; margin-bottom: 7px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.selectedProductHeading h2 { margin: 0; font-size: clamp(30px, 3.3vw, 48px); }
+.selectedProductHeading > strong { padding-top: 4px; font-family: var(--display); font-size: 26px; font-weight: 400; }
+.selectedProductMeta { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
+.selectedProductMeta span { padding: 6px 8px; border: 1px solid var(--line); color: var(--muted); font-size: 9px; font-weight: 700; }
+.selectedProductWhy { max-width: 730px; margin: 0; color: var(--muted); font-size: 12px; }
+.selectedProductActions { display: flex; gap: 22px; margin-top: 22px; }
+.selectedProductActions .textButton { color: var(--ink); text-decoration: none; }
+
+.productAlternatives { margin-top: 30px; border-top: 1px solid var(--line-strong); }
+.alternativeRow { min-height: 74px; display: grid; grid-template-columns: 150px 1fr auto; gap: 24px; align-items: center; border-bottom: 1px solid var(--line); }
+.alternativeRow > span { color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.alternativeRow > div { min-width: 0; }
+.alternativeRow strong { display: block; margin-bottom: 3px; font-size: 12px; }
+.alternativeRow small { color: var(--muted); font-size: 10px; }
+.alternativeRow button { border: 0; border-bottom: 1px solid var(--line-strong); background: transparent; padding: 3px 0; font-size: 10px; font-weight: 700; }
+.alternativeUnavailable { color: var(--muted); font-size: 10px; }
+
+.selectionContext { display: grid; grid-template-columns: .85fr 1.15fr; gap: 80px; margin-top: 105px; padding: 60px 0; border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong); }
+.selectionContext h2 { max-width: 520px; margin-bottom: 0; }
+.selectionContextRows > div { min-height: 58px; display: grid; grid-template-columns: 145px 1fr; gap: 24px; align-items: center; border-bottom: 1px solid var(--line); }
+.selectionContextRows > div:first-child { border-top: 1px solid var(--line); }
+.selectionContextRows span { color: var(--muted); font-size: 10px; }
+.selectionContextRows strong { font-size: 11px; line-height: 1.5; }
+
+.selectionApproval { display: grid; grid-template-columns: 1fr auto; gap: 60px; align-items: end; margin-top: 72px; padding: 58px; background: var(--forest-dark); color: white; }
+.selectionApproval.isApproved { background: #314637; }
+.selectionApproval h2 { margin: 11px 0 15px; font-size: clamp(48px, 5.2vw, 72px); }
+.selectionApproval p { max-width: 690px; margin: 0; color: rgba(255,255,255,.65); font-size: 12px; }
+
+@media (max-width: 900px) {
+  .selectionHero, .selectionContext { grid-template-columns: 1fr; gap: 45px; }
+  .selectionBudget { max-width: 520px; }
+  .selectedProductCard { grid-template-columns: 36px 220px 1fr; gap: 22px; }
+  .selectionApproval { grid-template-columns: 1fr; gap: 35px; }
+  .selectionApproval .button { justify-self: start; }
+}
+
+@media (max-width: 680px) {
+  .productSelectionExperience { width: min(100% - 30px, 1180px); padding-top: 48px; }
+  .selectionHero h1 { font-size: clamp(50px, 14.5vw, 72px); }
+  .selectionPrinciple { grid-template-columns: 1fr; gap: 12px; }
+  .selectedProductCard { grid-template-columns: 1fr; gap: 18px; padding-block: 34px; }
+  .selectedProductIndex { padding: 0; }
+  .selectedProductImage { min-height: 330px; }
+  .selectedProductHeading { grid-template-columns: 1fr; gap: 12px; }
+  .selectedProductHeading > strong { padding: 0; }
+  .alternativeRow { grid-template-columns: 1fr auto; gap: 10px 18px; padding: 14px 0; }
+  .alternativeRow > span { grid-column: 1 / -1; }
+  .selectionContext { margin-top: 75px; padding-block: 45px; }
+  .selectionContextRows > div { grid-template-columns: 100px 1fr; }
+  .selectionApproval { padding: 38px 22px; }
+}
