@@ -10,7 +10,7 @@ export async function GET() {
   if (!account) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 
   const sql = getCatalogDb();
-  const [credits, homeId, rooms] = await Promise.all([
+  const [credits, homeId, rooms, preferences] = await Promise.all([
     accountCreditBalance(account.id),
     ensurePrimaryHome(account.id),
     sql.query(
@@ -38,6 +38,17 @@ export async function GET() {
       ) latest on true
       where d.account_id=$1::uuid
       order by d.updated_at desc`,
+      [account.id],
+    ),
+    sql.query(
+      `select
+        marketing_email_consent_at::text,
+        marketing_email_opted_out_at::text,
+        analytics_consent_at::text,
+        analytics_opted_out_at::text
+       from public.customer_accounts
+       where id=$1::uuid
+       limit 1`,
       [account.id],
     ),
   ]);
@@ -72,6 +83,12 @@ export async function GET() {
     },
     credits,
     primaryHomeId: homeId,
+    preferences: {
+      marketingEmails: Boolean((preferences as Array<any>)[0]?.marketing_email_consent_at)
+        && !(preferences as Array<any>)[0]?.marketing_email_opted_out_at,
+      analyticsAccountConsent: Boolean((preferences as Array<any>)[0]?.analytics_consent_at)
+        && !(preferences as Array<any>)[0]?.analytics_opted_out_at,
+    },
     rooms: mapped,
   });
 }
