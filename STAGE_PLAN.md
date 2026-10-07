@@ -285,3 +285,51 @@ External dependencies:
 - Real SEO pages start indexing only after real rooms are published.
 - Abandoned-design campaigns remain dormant until a UI captures explicit marketing consent and Grab&Book has the receiving campaign workflow.
 ## Stage 13 — Beta hardening + launch
+Status: engineering implemented; controlled UK beta remains blocked until live launch gates pass.
+
+Implemented:
+- Mobile-first hardening and touch-target cleanup
+- Global loading / recoverable error / not-found states
+- Below-fold image lazy loading and decoding hints
+- Skip link and consistent focus-visible styling
+- Product drawer Escape-close, initial close-button focus and background scroll lock
+- First-party optional analytics behind explicit consent
+- Operational funnel from durable design/commerce state
+- Consented funnel events for brief, products, render and sharing
+- Consented Core Web Vitals (LCP / INP / CLS)
+- AI provider timeout
+- Existing failed-render credit refund retained for timeout/provider failures
+- USD AI cost + explicit GBP snapshot per render
+- Per-room unit-economics view
+- Protected launch dashboard at `/api/beta/metrics`
+- Render failure-rate/stuck-render gates
+- Stock freshness / selectable inventory gates
+- Affiliate programme gate
+- Pre-render retailer links routed through Stage 9 live-offer guard
+- Affiliate disclosure at retailer decision points
+- Authentication rate limiting without storing raw IP addresses
+- Controlled-beta invite-code signup
+- Credit wallet / immutable-ledger reconciliation gate
+- Duplicate signup-grant gate
+- Privacy data export
+- Access/deletion/correction/restriction/objection request workflow
+- 13-month optional-analytics retention cleanup
+- Separate marketing-email and analytics consent records
+- Privacy / Cookies / Beta Terms pages
+- Explicit visualisation-accuracy and Verified Room limitations
+- Security headers
+- Beta feedback capture
+- Next 15.5.27 Maintenance LTS pin + patched PostCSS override
+- CI high-severity production dependency audit
+- Full manual real-device/provider launch checklist in `BETA_LAUNCH.md`
+
+Controlled-beta launch blockers remain until satisfied:
+- production domain/environment secrets
+- verified transactional email sender
+- enough curated live UK products
+- active affiliate programme if commercial validation is required
+- real OpenAI end-to-end render smoke tests
+- device/browser/accessibility QA on deployed build
+- published privacy contact
+- final UK legal/data-protection review
+- live launch dashboard returns `launchReady=true`
