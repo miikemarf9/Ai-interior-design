@@ -130,6 +130,11 @@ export function DesignIntake() {
   const [photoName, setPhotoName] = useState('');
   const [complete, setComplete] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const [ownerKey, setOwnerKey] = useState('');
+  const [designId, setDesignId] = useState('');
+  const [roomAssetId, setRoomAssetId] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -140,8 +145,30 @@ export function DesignIntake() {
         if (parsed.state) setState(parsed.state);
         setStep(0);
       }
+
+      const runtimeRaw = window.localStorage.getItem('roomfound-design-runtime-v1');
+      const runtime = runtimeRaw
+        ? JSON.parse(runtimeRaw) as { ownerKey?: string; designId?: string; roomAssetId?: string; photoName?: string }
+        : {};
+
+      const nextOwnerKey = runtime.ownerKey || crypto.randomUUID();
+      setOwnerKey(nextOwnerKey);
+
+      if (runtime.designId) setDesignId(runtime.designId);
+      if (runtime.roomAssetId) {
+        setRoomAssetId(runtime.roomAssetId);
+        setPhotoUrl(`/api/assets/${runtime.roomAssetId}`);
+      }
+      if (runtime.photoName) setPhotoName(runtime.photoName);
+
+      window.localStorage.setItem(
+        'roomfound-design-runtime-v1',
+        JSON.stringify({ ...runtime, ownerKey: nextOwnerKey }),
+      );
     } catch {
-      // Keep the intake usable if local storage is unavailable.
+      const nextOwnerKey = crypto.randomUUID();
+      setOwnerKey(nextOwnerKey);
+      window.localStorage.setItem('roomfound-design-runtime-v1', JSON.stringify({ ownerKey: nextOwnerKey }));
     }
     setHydrated(true);
   }, []);
@@ -163,23 +190,102 @@ export function DesignIntake() {
   }, [step]);
 
   const canContinue = useMemo(() => {
-    if (step === 0) return Boolean(photoUrl);
+    if (step === 0) return Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto);
     if (step === 3) return state.styles.length > 0;
     return true;
   }, [step, photoUrl, state.styles.length]);
 
-  function handlePhoto(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (photoUrl.startsWith('blob:')) URL.revokeObjectURL(photoUrl);
-    setPhotoUrl(URL.createObjectURL(file));
-    setPhotoName(file.name);
+  function saveRuntime(next: { ownerKey: string; designId: string; roomAssetId: string; photoName: string }) {
+    window.localStorage.setItem('roomfound-design-runtime-v1', JSON.stringify(next));
+    setOwnerKey(next.ownerKey);
+    setDesignId(next.designId);
+    setRoomAssetId(next.roomAssetId);
+    setPhotoName(next.photoName);
+    setPhotoUrl(`/api/assets/${next.roomAssetId}`);
   }
 
-  function useExampleRoom() {
+  async function handlePhoto(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setPhotoError('');
+    setUploadingPhoto(true);
+
+    const preview = URL.createObjectURL(file);
     if (photoUrl.startsWith('blob:')) URL.revokeObjectURL(photoUrl);
-    setPhotoUrl('https://images.unsplash.com/photo-1753911372198-50b1b254ad4d?auto=format&fit=crop&q=84&w=1600');
+    setPhotoUrl(preview);
+    setPhotoName(file.name);
+
+    try {
+      const key = ownerKey || crypto.randomUUID();
+      const form = new FormData();
+      form.set('ownerKey', key);
+      if (designId) form.set('designId', designId);
+      form.set('file', file);
+
+      const response = await fetch('/api/designs/room-photo', {
+        method: 'POST',
+        body: form,
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.assetId || !data.designId) {
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      saveRuntime({
+        ownerKey: key,
+        designId: data.designId,
+        roomAssetId: data.assetId,
+        photoName: file.name,
+      });
+    } catch (error) {
+      setPhotoError(error instanceof Error ? error.message : 'The room photograph could not be stored.');
+      setDesignId('');
+      setRoomAssetId('');
+    } finally {
+      URL.revokeObjectURL(preview);
+      setUploadingPhoto(false);
+    }
+  }
+
+  async function useExampleRoom() {
+    const exampleUrl = 'https://images.unsplash.com/photo-1753911372198-50b1b254ad4d?auto=format&fit=crop&q=84&w=1600';
+    setPhotoError('');
+    setUploadingPhoto(true);
+    setPhotoUrl(exampleUrl);
     setPhotoName('Example living room');
+
+    try {
+      const key = ownerKey || crypto.randomUUID();
+      const response = await fetch('/api/designs/room-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ownerKey: key,
+          designId: designId || null,
+          exampleUrl,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.assetId || !data.designId) {
+        throw new Error(data.error || 'Example room could not be stored.');
+      }
+
+      saveRuntime({
+        ownerKey: key,
+        designId: data.designId,
+        roomAssetId: data.assetId,
+        photoName: 'Example living room',
+      });
+    } catch (error) {
+      setPhotoError(error instanceof Error ? error.message : 'Example room could not be stored.');
+      setDesignId('');
+      setRoomAssetId('');
+    } finally {
+      setUploadingPhoto(false);
+    }
   }
 
   function next() {
@@ -211,6 +317,13 @@ export function DesignIntake() {
     setComplete(false);
     setStep(0);
     window.localStorage.removeItem('roomfound-intake-v1');
+    window.localStorage.removeItem('roomfound-brief-v1');
+    window.localStorage.removeItem('roomfound-product-selection-v1');
+    const key = ownerKey || crypto.randomUUID();
+    window.localStorage.setItem('roomfound-design-runtime-v1', JSON.stringify({ ownerKey: key }));
+    setDesignId('');
+    setRoomAssetId('');
+    setPhotoError('');
   }
 
   return (
@@ -288,11 +401,13 @@ export function DesignIntake() {
                     <span className="uploadEmpty">
                       <i>＋</i>
                       <strong>Upload your living room</strong>
-                      <small>JPG, PNG or HEIC · one clear wide-angle view</small>
+                      <small>JPG, PNG or WebP · one clear wide-angle view · max 8 MB</small>
                     </span>
                   )}
                 </button>
-                <input ref={fileInput} className="visuallyHidden" type="file" accept="image/*" onChange={handlePhoto} />
+                <input ref={fileInput} className="visuallyHidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhoto} />
+                {uploadingPhoto ? <p className="photoUploadState">Securing your room photograph…</p> : null}
+                {photoError ? <p className="photoUploadError">{photoError}</p> : null}
                 <aside className="photoGuidance">
                   <span className="microLabel">For the best first design</span>
                   <div><strong>01</strong><p>Stand far enough back to show as much of the room as possible.</p></div>
