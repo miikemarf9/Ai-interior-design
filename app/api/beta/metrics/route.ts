@@ -79,6 +79,22 @@ export async function GET(request:Request){
           from public.product_variants v
           join public.products p on p.id=v.product_id
           where p.status='active' and p.is_curated and v.status='active'
+            and exists (
+              select 1 from public.retailer_offers live
+              join public.retailers r on r.id=live.retailer_id
+              where live.variant_id=v.id
+                and live.is_active
+                and live.currency='GBP'
+                and live.availability in ('in_stock','low_stock','preorder')
+                and live.uk_delivery_status in ('available','restricted')
+                and r.status='active' and r.ships_to_uk
+            )
+        ) as selectable_curated_variants,
+        (
+          select count(*)::int
+          from public.product_variants v
+          join public.products p on p.id=v.product_id
+          where p.status='active' and p.is_curated and v.status='active'
             and not exists (
               select 1 from public.retailer_offers live
               join public.retailers r on r.id=live.retailer_id
@@ -181,6 +197,8 @@ export async function GET(request:Request){
   const renders=renderRows[0] as any;
   const catalogue=catalogueRows[0] as any;
   const auth=authRows[0] as any;
+  const commerce=commerceRows[0] as any;
+  const minSelectableProducts=Math.max(20,Number(process.env.BETA_MIN_SELECTABLE_PRODUCTS || 100) || 100);
   const attempts=(Number(renders.succeeded)||0)+(Number(renders.failed)||0);
   const renderFailureRate=attempts
     ? Number(renders.failed)/attempts
@@ -204,6 +222,12 @@ export async function GET(request:Request){
   if(Number(renders.stuck_processing)>0) blockers.push("At least one render is stuck in processing.");
   if(attempts>=10 && renderFailureRate>0.1) blockers.push("Render failure rate is above the 10% beta threshold.");
   if(Number(catalogue.stale_active_offers)>0) blockers.push("Active retailer offers are older than the 7-day beta freshness threshold.");
+  if(Number(catalogue.selectable_curated_variants)<minSelectableProducts) {
+    blockers.push(`Only ${catalogue.selectable_curated_variants || 0} selectable curated variants are live; beta minimum is ${minSelectableProducts}.`);
+  }
+  if(process.env.BETA_REQUIRE_AFFILIATE !== "false" && Number(commerce.active_affiliate_programs)<1) {
+    blockers.push("No active affiliate programme is available for commercial beta validation.");
+  }
 
   return NextResponse.json({
     generatedAt:new Date().toISOString(),
@@ -222,7 +246,13 @@ export async function GET(request:Request){
     auth,
     privacy:privacyRows[0],
     unitEconomics:economicsRows[0],
-    commerce:commerceRows[0],
+    commerce,
+    thresholds:{
+      minSelectableProducts,
+      requireAffiliate:process.env.BETA_REQUIRE_AFFILIATE!=="false",
+      maxRenderFailureRate:0.1,
+      maxOfferAgeDays:7,
+    },
     analytics:analyticsRows[0],
   });
 }
