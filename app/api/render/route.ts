@@ -250,7 +250,7 @@ export async function POST(request: Request) {
         return NextResponse.json({
           generationId,
           resultAssetId: prior.result_asset_id,
-          resultUrl: `/api/assets/${prior.result_asset_id}`,
+          resultUrl: `/api/assets/${prior.result_asset_id}?ownerKey=${encodeURIComponent(ownerKey)}`,
           balance: spend.balance,
           reused: true,
           costUsdMicros: prior.cost_usd_micros,
@@ -372,7 +372,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       generationId,
       resultAssetId,
-      resultUrl: `/api/assets/${resultAssetId}`,
+      resultUrl: `/api/assets/${resultAssetId}?ownerKey=${encodeURIComponent(ownerKey)}`,
       balance: spend.balance,
       renderCreditsUsed: 1,
       provider: "openai",
