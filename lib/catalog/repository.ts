@@ -141,6 +141,7 @@ export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]
       and p.is_curated
     order by p.curation_score desc, v.quality_score desc
     limit 1200`,
+    [],
   ) as CandidateRow[];
 
   return rows.map((row) => ({
