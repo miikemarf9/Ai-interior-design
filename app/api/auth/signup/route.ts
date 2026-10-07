@@ -24,6 +24,7 @@ export async function POST(request: Request) {
     password?: string;
     displayName?: string;
     ownerKey?: string;
+    inviteCode?: string;
   };
 
   const email = normalizeEmail(body.email || "");
@@ -36,6 +37,12 @@ export async function POST(request: Request) {
       status: rate.configured ? 429 : 503,
       headers: rate.retryAfterSeconds ? { "Retry-After": String(rate.retryAfterSeconds) } : undefined,
     });
+  }
+
+  const controlledBeta = process.env.BETA_CONTROLLED_ACCESS === "true";
+  const expectedInviteCode = process.env.BETA_SIGNUP_CODE || "";
+  if (controlledBeta && (!expectedInviteCode || body.inviteCode !== expectedInviteCode)) {
+    return NextResponse.json({ error: "A valid beta access code is required." }, { status: 403 });
   }
 
   if (!/^\S+@\S+\.\S+$/.test(email)) {
