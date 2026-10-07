@@ -20,7 +20,7 @@ export async function generateMetadata({
   const base=siteUrl();
   const first=collection.rooms[0];
   return {
-    title:collection.metaTitle,
+    title:{absolute:collection.metaTitle},
     description:collection.metaDescription,
     alternates:{canonical:`${base}/ideas/${collection.slug}`},
     robots:{index:collection.indexable,follow:true},
