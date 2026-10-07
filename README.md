@@ -36,13 +36,14 @@ DATABASE_URL=postgresql://...
 
 Never expose `DATABASE_URL` in browser code. Catalogue queries and imports should run through trusted server-side application code.
 
-The Neon-native schema is `database/catalog_schema_neon.sql`; taxonomy and verification SQL live alongside it in `database/`.
+The Neon-native schema is `database/catalog_schema_neon.sql`; taxonomy and verification SQL live alongside it in `database/`. Affiliate rows first land in `catalog_feed_candidates`, where they remain invisible to customers until explicitly promoted.
 
 ## Current routes
 
 - `/` — premium consumer homepage
 - `/design` — 10-step Design My Room consultation
 - `/brief` — free editable written design brief
+- `/products` — real-product proposal, alternatives and pre-render approval
 - `/style-guide` — internal design system
 
 ## Product catalogue principle
@@ -73,6 +74,20 @@ See `CREDIT_POLICY.md`.
 
 ## Current stage
 
-Stages 1–5 are implemented.
+Stages 1–6 are implemented.
 
-Stage 5 is deployed to the dedicated Neon project `small-glitter-35907125` in AWS London. The live catalogue currently contains the structured taxonomy and is ready for curated retailer/product ingestion.
+Stage 5 is deployed to the dedicated Neon project `small-glitter-35907125` in AWS London. Stage 6 is wired to the live catalogue and deliberately refuses to invent products. The remaining pre-render dependency is approved affiliate-feed access so real products can be staged, reviewed and promoted.
+
+
+## Affiliate feed ingestion
+
+The first production feed path is Awin.
+
+- Wayfair UK advertiser ID: `72067`
+- The Range advertiser ID: `5238`
+- Feed rows are normalized and quality-scored before entering the quarantine table.
+- Nothing becomes selectable automatically.
+- Reviewed candidates are promoted into the canonical product / variant / offer model.
+- Images and affiliate deep links come from the authorized product feed rather than retailer-page scraping.
+
+See `database/AWIN_FEEDS.md`.
