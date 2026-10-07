@@ -1956,3 +1956,131 @@ p { line-height: 1.58; }
     transform: none;
   }
 }
+
+
+/* Compact static Roomfound differentiators */
+.roomfoundPillars {
+  padding: 84px 0 76px;
+  background: #f6f1e8;
+}
+.roomfoundPillarsInner {
+  width: min(1120px, calc(100% - 56px));
+  margin: 0 auto;
+}
+.roomfoundPillarsIntro {
+  display: block;
+  margin: 0 0 44px;
+  text-align: center;
+}
+.roomfoundPillarsIntro .eyebrow {
+  margin-bottom: 12px;
+}
+.roomfoundPillarsIntro h2 {
+  max-width: 760px;
+  margin: 0 auto;
+  font-size: clamp(40px, 4.2vw, 62px);
+  line-height: .95;
+  font-weight: 500;
+}
+.roomfoundPillarsIntro h2 em {
+  color: var(--gold) !important;
+  font-style: italic;
+  font-weight: 500;
+}
+.roomfoundPillarGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 0;
+  gap: 46px;
+}
+.roomfoundPillar {
+  min-height: 0;
+  display: block;
+  padding: 0;
+  border: 0;
+  text-align: center;
+  background: transparent;
+  overflow: visible;
+}
+.roomfoundPillar::before,
+.roomfoundPillarArrow {
+  display: none !important;
+}
+.roomfoundPillarMark {
+  width: 92px;
+  height: 64px;
+  margin: 0 auto 24px;
+  color: var(--ink);
+  transform: none !important;
+  transition: none;
+}
+.roomfoundPillarMark svg {
+  stroke-width: 1.15;
+}
+.roomfoundPillarMark .pillarAccentLine {
+  stroke: var(--gold);
+  stroke-width: 1.45;
+}
+.roomfoundPillar h3 {
+  margin: 0 0 8px;
+  font-size: clamp(31px, 2.7vw, 42px);
+  line-height: .96;
+  font-weight: 500;
+}
+.roomfoundPillar h3 em {
+  color: var(--gold);
+  font-style: italic;
+  font-weight: 500;
+}
+.roomfoundPillar p {
+  max-width: 285px;
+  min-height: 0;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.65;
+}
+.roomfoundPillar:hover::before {
+  opacity: 0;
+}
+.roomfoundPillar:hover .roomfoundPillarMark {
+  transform: none;
+}
+
+.titleGold,
+.splitHeading h2 em.titleGold {
+  color: var(--gold) !important;
+}
+
+@media (max-width: 760px) {
+  .roomfoundPillars {
+    padding: 68px 0 60px;
+  }
+  .roomfoundPillarsInner {
+    width: min(100% - 34px, 1120px);
+  }
+  .roomfoundPillarsIntro {
+    margin-bottom: 38px;
+  }
+  .roomfoundPillarsIntro h2 {
+    font-size: clamp(42px, 12.5vw, 58px);
+  }
+  .roomfoundPillarGrid {
+    grid-template-columns: 1fr;
+    gap: 42px;
+  }
+  .roomfoundPillar {
+    padding: 0 12px;
+  }
+  .roomfoundPillarMark {
+    width: 84px;
+    height: 58px;
+    margin-bottom: 20px;
+  }
+  .roomfoundPillar h3 {
+    font-size: 36px;
+  }
+  .roomfoundPillar p {
+    max-width: 320px;
+  }
+}
