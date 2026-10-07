@@ -2094,11 +2094,13 @@ p { line-height: 1.58; }
 }
 
 .homeHeroImage {
-  object-position: center center;
+  object-position: 50% 50%;
   opacity: 0;
-  transform: scale(1.025);
+  transform: scale(1.018);
+  transform-origin: 72% 24%;
   filter: saturate(.97) blur(1px);
-  animation: roomfoundCleanHeroFade 3.05s cubic-bezier(.22,1,.36,1) forwards;
+  will-change: transform, object-position, opacity, filter;
+  animation: roomfoundHeroDrift 20s cubic-bezier(.18,.72,.24,1) forwards;
 }
 
 .homeHeroShade {
@@ -2182,20 +2184,23 @@ p { line-height: 1.58; }
   letter-spacing: .12em;
 }
 
-@keyframes roomfoundCleanHeroFade {
+@keyframes roomfoundHeroDrift {
   0% {
     opacity: 0;
-    transform: scale(1.035);
+    transform: scale(1.018);
+    object-position: 50% 50%;
     filter: saturate(.92) blur(2px);
   }
 
-  42% {
-    opacity: .74;
+  14% {
+    opacity: 1;
+    filter: saturate(1) blur(0);
   }
 
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1.085);
+    object-position: 66% 31%;
     filter: saturate(1) blur(0);
   }
 }
@@ -2229,7 +2234,9 @@ p { line-height: 1.58; }
   }
 
   .homeHeroImage {
-    object-position: 61% center;
+    object-position: 61% 50%;
+    transform-origin: 76% 30%;
+    animation-name: roomfoundHeroDriftMobile;
   }
 
   .homeHeroShade {
@@ -2271,6 +2278,28 @@ p { line-height: 1.58; }
 
   .heroProof span {
     font-size: 8px;
+  }
+}
+
+
+@keyframes roomfoundHeroDriftMobile {
+  0% {
+    opacity: 0;
+    transform: scale(1.015);
+    object-position: 61% 50%;
+    filter: saturate(.92) blur(2px);
+  }
+
+  14% {
+    opacity: 1;
+    filter: saturate(1) blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1.065);
+    object-position: 68% 38%;
+    filter: saturate(1) blur(0);
   }
 }
 
