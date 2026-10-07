@@ -73,6 +73,11 @@ export function CookieConsent(){
     const secure=window.location.protocol==="https:" ? "; Secure" : "";
     document.cookie=`roomfound_consent=${value}; Max-Age=15552000; Path=/; SameSite=Lax${secure}`;
     setVisible(false);
+    void fetch("/api/account/preferences",{
+      method:"PATCH",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({analytics:value==="analytics"}),
+    }).catch(()=>undefined);
     if(value==="analytics") void send("page_view",{consent:"just_granted"});
   }
 
