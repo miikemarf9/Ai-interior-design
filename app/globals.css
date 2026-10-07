@@ -2369,3 +2369,8 @@ p { line-height: 1.58; }
 @media (prefers-reduced-motion: reduce) {
   .heroPrice, .heroPricesCaption { transition: none; transform: none; }
 }
+
+
+/* Static before/after comparison supplied for the Roomfound homepage. */
+.beforeAfterStatic { width: 100%; }
+.beforeAfterComposite { display: block; width: 100%; height: auto; }
