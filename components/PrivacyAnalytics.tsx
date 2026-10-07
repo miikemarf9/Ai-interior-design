@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from "next/navigation";
+import { useReportWebVitals } from "next/web-vitals";
 import { useEffect, useState } from "react";
 
 declare global {
@@ -49,6 +50,17 @@ async function send(eventName:string,properties:Record<string,unknown>={}){
 
 export function AnalyticsClient(){
   const pathname=usePathname();
+
+  useReportWebVitals((metric)=>{
+    if(["LCP","INP","CLS"].includes(metric.name)){
+      void send("web_vital",{
+        name:metric.name,
+        value:metric.value,
+        rating:metric.rating,
+        id:metric.id,
+      });
+    }
+  });
 
   useEffect(()=>{
     window.roomfoundTrack=(eventName,properties)=>{void send(eventName,properties);};
