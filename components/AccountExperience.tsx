@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { AccountPrivacyControls } from "@/components/AccountPrivacyControls";
 
 type AccountPayload = {
   account: {
@@ -16,6 +17,10 @@ type AccountPayload = {
     verificationStatus: string;
   };
   primaryHomeId: string;
+  preferences: {
+    marketingEmails: boolean;
+    analyticsAccountConsent: boolean;
+  };
   rooms: Array<{
     id: string;
     homeId: string | null;
@@ -272,8 +277,8 @@ export function AccountExperience() {
               </>
             )}
 
-            {error ? <p className="accountFormError">{error}</p> : null}
-            {notice ? <p className="accountFormNotice">{notice}</p> : null}
+            {error ? <p className="accountFormError" role="alert">{error}</p> : null}
+            {notice ? <p className="accountFormNotice" role="status">{notice}</p> : null}
 
             <button className="button buttonPrimary" type="submit" disabled={busy}>
               {busy ? "Working…" : authMode === "signup" ? "Create account" : authMode === "forgot" ? "Send reset link" : "Sign in"}
@@ -330,6 +335,10 @@ export function AccountExperience() {
 
       {notice ? <p className="accountDashboardNotice shellWide">{notice}</p> : null}
       {error ? <p className="accountDashboardError shellWide">{error}</p> : null}
+
+      <section className="shellWide">
+        <AccountPrivacyControls initialMarketingEmails={payload.preferences.marketingEmails} />
+      </section>
 
       <section className="savedRooms shellWide">
         <div className="savedRoomsHeading">
