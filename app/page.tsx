@@ -36,7 +36,7 @@ export default function HomePage() {
         <div className="sectionHeading splitHeading">
           <div>
             <p className="eyebrow">Start with your space</p>
-            <h2>Your room.<br /><em>Seen differently.</em></h2>
+            <h2><em className="titleGold">Your room.</em><br /><span>Seen differently.</span></h2>
           </div>
           <p>No blank canvas required. We start with the room you already have and design around the things you want to keep.</p>
         </div>
@@ -45,8 +45,8 @@ export default function HomePage() {
 
       <section className="actualRoomSection" id="shop-room">
         <div className="shellWide actualRoomIntro" data-reveal>
-          <p className="eyebrow eyebrowLight">Designed to be shoppable</p>
-          <h2>A room you can<br />actually recreate.</h2>
+          <p className="eyebrow">Designed to be shoppable</p>
+          <h2><em className="titleGold">A room you can</em><br /><span>actually recreate.</span></h2>
           <p>Every recommended piece links back to a real product, with price, dimensions, retailer details and availability where we can verify them.</p>
         </div>
         <div className="shellWide" data-reveal>
@@ -69,7 +69,7 @@ export default function HomePage() {
         </div>
         <div className="keepCopy">
           <p className="eyebrow">Make it yours</p>
-          <h2>Keep what you love.<br />Change what you don’t.</h2>
+          <h2><em className="titleGold">Keep what you love.</em><br /><span>Change what you don’t.</span></h2>
           <p>Tell us what stays, what can go and what the room needs to work around. The design starts with your life, not a showroom.</p>
           <Link className="textArrowLink" href="/design">Start with my room <span>→</span></Link>
         </div>
@@ -80,7 +80,7 @@ export default function HomePage() {
           <div className="sectionHeading budgetHeading">
             <div>
               <p className="eyebrow">Designed around your budget</p>
-              <h2>Set the spend.<br />Then shape the room.</h2>
+              <h2><em className="titleGold">Set the spend.</em><br /><span>Then shape the room.</span></h2>
             </div>
             <p>Choose the budget for the whole room first. We can then balance the sofa, lighting, tables, rug and finishing pieces around it.</p>
           </div>
@@ -91,8 +91,8 @@ export default function HomePage() {
       <section className="verifiedSection" id="verified-room">
         <div className="shellWide verifiedGrid" data-reveal>
           <div className="verifiedTitle">
-            <p className="eyebrow eyebrowLight">Before you buy</p>
-            <h2>Check the details.<br />Not just the look.</h2>
+            <p className="eyebrow">Before you buy</p>
+            <h2><em className="titleGold">Check the details.</em><br /><span>Not just the look.</span></h2>
             <p>Verified Room shows what we can confirm about the products and your space, and flags anything that still needs checking.</p>
           </div>
 
@@ -126,7 +126,7 @@ export default function HomePage() {
         </div>
         <div className="wholeRoomCopy">
           <p className="eyebrow">See the full cost</p>
-          <h2>One room.<br />One clear total.</h2>
+          <h2><em className="titleGold">One room.</em><br /><span>One clear total.</span></h2>
           <div className="roomPriceList">
             <div><span>Sofa</span><strong>£899</strong></div>
             <div><span>Chair</span><strong>£349</strong></div>
@@ -150,7 +150,7 @@ export default function HomePage() {
         <div className="finalDesignShade" />
         <div className="finalDesignContent shell">
           <p className="eyebrow eyebrowLight">Your room is the starting point</p>
-          <h2>See what it<br />could become.</h2>
+          <h2 className="imageEditorialTitle"><em>See what it</em><br /><span>could become.</span></h2>
           <Link className="button buttonLight" href="/design">Design my room</Link>
         </div>
       </section>
