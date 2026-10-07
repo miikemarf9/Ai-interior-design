@@ -41,12 +41,12 @@ const changeItems = ['Sofa', 'Armchairs', 'Coffee table', 'Side tables', 'TV uni
 const styles = [
   {
     name: 'Contemporary',
-    image: 'https://st.hzcdn.com/simgs/bf21909001f91fd2_9-5090/home-design.jpg',
+    image: 'https://images.unsplash.com/photo-1781249144361-0b0b085f9da1?auto=format&fit=crop&q=82&w=1000',
     note: 'Clean lines, confident shapes, warm detail',
   },
   {
     name: 'Warm minimal',
-    image: 'https://media.rightmove.co.uk/property-photo/6556ad94d/87752943/6556ad94de61b0b9379da0bad05aec28.jpeg',
+    image: 'https://images.unsplash.com/photo-1698047736474-3c1e5a0d3526?auto=format&fit=crop&q=82&w=1000',
     note: 'Soft neutrals, texture, uncluttered forms',
   },
   {
@@ -56,7 +56,7 @@ const styles = [
   },
   {
     name: 'Mid-century',
-    image: 'https://cdn.mos.cms.futurecdn.net/AadCNvAL53oTEg89thvFBQ.jpg',
+    image: 'https://images.unsplash.com/photo-1781249144372-e76e32526473?auto=format&fit=crop&q=82&w=1000',
     note: 'Warm timber, low profiles, graphic accents',
   },
   {
@@ -71,7 +71,7 @@ const styles = [
   },
   {
     name: 'Colourful',
-    image: 'https://www.comparehomecover.co.uk/images/modern/insurance_107.jpg',
+    image: 'https://images.unsplash.com/photo-1643148636639-c4f28543a5cc?auto=format&fit=crop&q=82&w=1000',
     note: 'Expressive colour, playful but still considered',
   },
 ];
@@ -138,7 +138,7 @@ export function DesignIntake() {
       if (stored) {
         const parsed = JSON.parse(stored) as { state?: IntakeState; step?: number };
         if (parsed.state) setState(parsed.state);
-        if (typeof parsed.step === 'number') setStep(Math.min(parsed.step, 9));
+        setStep(0);
       }
     } catch {
       // Keep the intake usable if local storage is unavailable.
