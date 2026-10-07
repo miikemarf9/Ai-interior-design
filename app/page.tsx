@@ -129,7 +129,7 @@ export default function HomePage() {
             <div><span>Lighting</span><strong>£155</strong></div>
           </div>
           <div className="roomGrandTotal"><span>Room total</span><strong>£1,782</strong></div>
-          <button className="button buttonPrimary" type="button">Explore this room</button>
+          <Link className="button buttonPrimary" href="#shop-room">Explore this room</Link>
           <p className="futureBuy">Later: <strong>Buy this room</strong></p>
         </div>
       </section>
@@ -149,7 +149,7 @@ export default function HomePage() {
       </section>
 
       <footer className="siteFooter shellWide">
-        <span>{site.name} · working name</span>
+        <span>{site.name}</span>
         <span>UK living-room MVP</span>
         <span>Real room → real products → better buying confidence</span>
       </footer>
