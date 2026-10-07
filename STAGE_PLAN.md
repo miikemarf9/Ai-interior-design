@@ -22,9 +22,10 @@ Status: implemented.
 - Purchase-earned credit architecture
 
 ## Stage 5 — Real UK product database
-Status: schema complete; awaiting dedicated Supabase project + live feeds.
+Status: live on Neon; ready for curated retailer/product ingestion.
 
 Implemented:
+- Dedicated Neon/Postgres project in AWS London
 - Canonical retailers and brands
 - Product → variant → retailer-offer separation
 - Retailer SKU and external product IDs
@@ -41,24 +42,31 @@ Implemented:
 - Feed/source records + sync-run audit
 - Catalogue quality issues
 - Curation and quality scores
-- Explicit RLS + read-only public catalogue grants
-- Indexes for Stage 6 selection filters
+- 53 production indexes for selection and freshness queries
 - Initial living-room taxonomy seeds
 - TypeScript catalogue domain types
 - Catalogue quality-scoring helper
+- Neon-native schema at `database/catalog_schema_neon.sql`
+- Server-side Neon connection helper
+
+Live production verification:
+- 18 catalogue tables
+- 18 categories
+- 8 styles
+- 17 materials
+- 17 colours
+- 0 products / offers until curated feeds are ingested
 
 Live-data target:
 - Start with 500–2,000 curated living-room products.
 - Do not bulk-publish poor feed records.
 - Only curated, active records become customer-visible.
 
-Deployment requirement:
-- Create a separate interior-commerce Supabase project.
-- Apply `database/catalog_schema.sql`.
-- Apply `database/catalog_seed_taxonomy.sql`.
-- Run `database/catalog_verification.sql`.
-- Run Supabase Security + Performance Advisors.
-- Generate live TypeScript DB types.
+Security model:
+- `DATABASE_URL` stays server-side.
+- No public browser database credential.
+- Catalogue mutations and feed ingestion run through trusted backend code.
+- Public catalogue APIs will expose only the fields/records deliberately returned by the application.
 
 ## Stage 6 — Product intelligence
 Status: next after live catalogue project/data connection.
