@@ -2245,3 +2245,60 @@ p { line-height: 1.58; }
     animation: none !important;
   }
 }
+
+
+/* Roomfound hero composition — static asset workflow */
+.homeHeroContent {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: clamp(38px, 5vh, 72px);
+}
+.homeHeroContent .eyebrow {
+  width: fit-content;
+  margin-bottom: 18px;
+  padding-left: 2px;
+  font-size: 9px;
+  line-height: 1.35;
+  letter-spacing: .19em;
+  text-shadow: 0 1px 18px rgba(0,0,0,.24);
+}
+.homeHeroContent h1 {
+  width: min(610px, 44vw);
+  margin-bottom: 22px;
+}
+.homeHeroContent > p:not(.eyebrow) {
+  max-width: 475px;
+  margin-bottom: 27px;
+}
+.homeHeroShade {
+  background:
+    linear-gradient(90deg,
+      rgba(18,14,10,.70) 0%,
+      rgba(18,14,10,.52) 19%,
+      rgba(18,14,10,.28) 34%,
+      rgba(18,14,10,.08) 50%,
+      rgba(18,14,10,0) 64%
+    ),
+    linear-gradient(0deg,
+      rgba(14,11,8,.34) 0%,
+      rgba(14,11,8,.08) 34%,
+      rgba(14,11,8,0) 60%
+    );
+}
+@media (max-width: 1000px) {
+  .homeHeroContent h1 { width: min(620px, 67vw); }
+}
+@media (max-width: 680px) {
+  .homeHeroContent {
+    justify-content: flex-start;
+    padding-top: 72px;
+  }
+  .homeHeroContent .eyebrow {
+    max-width: 270px;
+    margin-bottom: 15px;
+    line-height: 1.5;
+  }
+  .homeHeroContent h1 { width: 100%; }
+}
