@@ -264,7 +264,7 @@ export function DesignIntake() {
               <h2>Create my design brief</h2>
               <p>The written brief will be editable before any image generation uses a design credit.</p>
             </div>
-            <button className="button buttonPrimary" type="button" disabled title="Stage 4 is built next">Stage 4 comes next</button>
+            <button className="button buttonPrimary" type="button" onClick={() => window.location.assign('/brief')}>Create my design brief · Free</button>
           </div>
 
           <div className="intakeReviewActions">
