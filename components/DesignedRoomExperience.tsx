@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { IntakeForBrief } from "@/lib/brief";
 import type { ProductAlternative, ProductSelection, ProposedProduct, SelectionCandidate } from "@/lib/catalog/selection";
 import { applyPendingAlternative, hotspotForProduct, type DesignedRoomPayload } from "@/lib/room-experience";
@@ -9,6 +9,7 @@ import { VerifiedRoomPanel } from "@/components/VerifiedRoomPanel";
 import type { RoomVerification } from "@/lib/verification/types";
 import { trackRoomfound } from "@/components/PrivacyAnalytics";
 import { GrowthShareCards } from "@/components/GrowthShareCards";
+import { BetaFeedback } from "@/components/BetaFeedback";
 
 type ExperiencePayload = DesignedRoomPayload & {
   intake?: IntakeForBrief;
@@ -430,11 +431,11 @@ export function DesignedRoomExperience({
       </header>
 
       <section className="roomHero" aria-label={title}>
-        <img className="roomAfterImage" src={data.resultUrl} alt={title} />
+        <img className="roomAfterImage" src={data.resultUrl} alt={title} fetchPriority="high" decoding="async" />
 
         {originalAvailable ? (
           <div className="roomBeforeLayer" style={{ clipPath: `inset(0 ${100 - compare}% 0 0)` }}>
-            <img src={data.originalUrl || ""} alt="Room before redesign" />
+            <img src={data.originalUrl || ""} alt="Room before redesign" decoding="async" />
           </div>
         ) : null}
 
@@ -505,6 +506,8 @@ export function DesignedRoomExperience({
 
       {!shared ? <GrowthShareCards designId={data.designId} /> : null}
 
+      {!shared ? <BetaFeedback designId={data.designId} /> : null}
+
       <section className="roomProductsSection">
         <div className="roomProductsIntro">
           <p className="eyebrow">Shop the room</p>
@@ -519,7 +522,7 @@ export function DesignedRoomExperience({
               <button className="roomProductCard" type="button" key={product.slot} onClick={() => setDrawerSlot(product.slot)}>
                 <div className="roomProductImage">
                   {product.selected.image ? (
-                    <img src={product.selected.image.url} alt={product.selected.image.altText || product.selected.productName} />
+                    <img src={product.selected.image.url} alt={product.selected.image.altText || product.selected.productName} loading="lazy" decoding="async" />
                   ) : <span>Image pending</span>}
                   <i>{String(index + 1).padStart(2, "0")}</i>
                 </div>
@@ -608,7 +611,17 @@ function ProductDrawer({
 }) {
   const selected = product.selected;
   const [showSwaps, setShowSwaps] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const displayPrice = liveOffers[0]?.price_minor ?? selected.offer.priceMinor;
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   function openSwaps() {
     if (!showSwaps) onViewSwaps();
@@ -626,11 +639,11 @@ function ProductDrawer({
       >
         <div className="productDrawerTop">
           <span>{product.slotLabel}</span>
-          <button type="button" onClick={onClose} aria-label="Close product drawer">×</button>
+          <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Close product drawer">×</button>
         </div>
 
         <div className="productDrawerImage">
-          {selected.image ? <img src={selected.image.url} alt={selected.image.altText || selected.productName} /> : <span>Image pending</span>}
+          {selected.image ? <img src={selected.image.url} alt={selected.image.altText || selected.productName} loading="lazy" decoding="async" /> : <span>Image pending</span>}
         </div>
 
         <div className="productDrawerIdentity">
@@ -658,7 +671,7 @@ function ProductDrawer({
         <div className="liveRetailerOffers">
           <div className="liveRetailerHeading">
             <span>Where to buy</span>
-            <small>Current retailer offers</small>
+            <small>Current offers · affiliate links may earn Roomfound a commission</small>
           </div>
 
           {offersLoading ? <p className="offerLoading">Checking current price and availability…</p> : null}
@@ -713,7 +726,7 @@ function ProductDrawer({
                     <>
                       <div className="drawerAlternativeImage">
                         {alternative.candidate.image ? (
-                          <img src={alternative.candidate.image.url} alt={alternative.candidate.image.altText || alternative.candidate.productName} />
+                          <img src={alternative.candidate.image.url} alt={alternative.candidate.image.altText || alternative.candidate.productName} loading="lazy" decoding="async" />
                         ) : null}
                       </div>
                       <div>
