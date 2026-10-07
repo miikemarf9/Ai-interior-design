@@ -20,7 +20,7 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
           else lower(trim(both '-' from regexp_replace(c.brand_name, '[^A-Za-z0-9]+', '-', 'g')))
         end as brand_slug,
         lower(trim(both '-' from regexp_replace(c.title, '[^A-Za-z0-9]+', '-', 'g')))
-          || '-' || substr(md5(c.external_product_id),1,8) as generated_slug
+          || '-' || substr(md5(r.slug || ':' || c.external_product_id),1,8) as generated_slug
       from public.catalog_feed_candidates c
       join public.retailers r on r.id = c.retailer_id
       where c.id = $1::uuid
@@ -165,11 +165,18 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
     ),
     category_link as (
       insert into public.product_categories (product_id, category_id, is_primary)
-      select pt.id, cat.id, true
+      select
+        pt.id,
+        cat.id,
+        not exists (
+          select 1
+          from public.product_categories existing
+          where existing.product_id = pt.id and existing.is_primary
+        )
       from candidate c
       join public.categories cat on cat.slug = c.normalized_category_slug and cat.is_active
       cross join product_target pt
-      on conflict (product_id, category_id) do update set is_primary = true
+      on conflict (product_id, category_id) do nothing
       returning product_id
     ),
     style_links as (
