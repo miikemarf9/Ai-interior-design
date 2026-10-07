@@ -157,7 +157,7 @@ export function DesignIntake() {
       if (runtime.designId) setDesignId(runtime.designId);
       if (runtime.roomAssetId) {
         setRoomAssetId(runtime.roomAssetId);
-        setPhotoUrl(`/api/assets/${runtime.roomAssetId}`);
+        setPhotoUrl(`/api/assets/${runtime.roomAssetId}?ownerKey=${encodeURIComponent(nextOwnerKey)}`);
       }
       if (runtime.photoName) setPhotoName(runtime.photoName);
 
@@ -201,7 +201,7 @@ export function DesignIntake() {
     setDesignId(next.designId);
     setRoomAssetId(next.roomAssetId);
     setPhotoName(next.photoName);
-    setPhotoUrl(`/api/assets/${next.roomAssetId}`);
+    setPhotoUrl(`/api/assets/${next.roomAssetId}?ownerKey=${encodeURIComponent(next.ownerKey)}`);
   }
 
   async function handlePhoto(event: ChangeEvent<HTMLInputElement>) {
