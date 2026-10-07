@@ -155,9 +155,27 @@ function shouldSkipForRetention(slot: SlotDefinition, retained: string) {
 
 function buildSlots(intake: IntakeForBrief, brief: DesignBrief) {
   const retained = retainedText(intake, brief);
-  const eligible = SLOT_DEFINITIONS.filter(
-    (slot) => (!slot.minBudget || intake.budget >= slot.minBudget) && !shouldSkipForRetention(slot, retained),
-  );
+  const needs = new Set(intake.uses.map(normalize));
+
+  const eligible = SLOT_DEFINITIONS.filter((slot) => {
+    if (shouldSkipForRetention(slot, retained)) return false;
+
+    const requirementOverride =
+      (slot.category === "armchairs" && needs.has("entertaining"))
+      || (slot.category === "side-tables" && needs.has("entertaining"))
+      || (slot.category === "floor-lamps" && needs.has("reading"))
+      || (slot.category === "storage-cabinets" && needs.has("storage"));
+
+    return requirementOverride || !slot.minBudget || intake.budget >= slot.minBudget;
+  }).map((slot) => {
+    let weight = slot.weight;
+    if (slot.category === "armchairs" && needs.has("entertaining")) weight += 0.05;
+    if (slot.category === "side-tables" && needs.has("entertaining")) weight += 0.02;
+    if (slot.category === "floor-lamps" && needs.has("reading")) weight += 0.03;
+    if (slot.category === "storage-cabinets" && needs.has("storage")) weight += 0.06;
+    if (slot.category === "sofas" && needs.has("tv watching")) weight += 0.04;
+    return { ...slot, weight };
+  });
 
   const totalWeight = eligible.reduce((sum, slot) => sum + slot.weight, 0) || 1;
   return eligible.map((slot) => ({
@@ -211,6 +229,8 @@ function scoreCandidate(
   intake: IntakeForBrief,
   slotBudgetMinor: number,
 ) {
+  if (candidate.offer.priceMinor > slotBudgetMinor) return null;
+
   const wantedStyles = mapped(intake.styles, STYLE_ALIASES);
   const wantedColours = mapped(intake.colours, COLOUR_ALIASES);
   const wantedMaterials = mapped(intake.materials, MATERIAL_ALIASES);
