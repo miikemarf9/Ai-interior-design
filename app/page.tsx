@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import homepageHero from '@/public/images/homepage-hero.webp';
 import { Header } from '@/components/Header';
 import { BeforeAfter } from '@/components/BeforeAfter';
 import { ProductHotspots } from '@/components/ProductHotspots';
@@ -15,9 +17,13 @@ export default function HomePage() {
       <ScrollMotion />
 
       <section className="homeHero">
-        <img
+        <Image
           className="homeHeroImage"
-          src="/images/homepage-hero.webp"
+          src={homepageHero}
+          fill
+          sizes="100vw"
+          priority
+          quality={85}
           alt="Warm, high-end contemporary living room in golden natural light"
           fetchPriority="high"
           decoding="async"
