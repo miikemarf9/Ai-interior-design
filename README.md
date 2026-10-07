@@ -24,20 +24,19 @@ OPENAI_API_KEY=your_key_here
 OPENAI_BRIEF_MODEL=gpt-6-luna
 ```
 
-### Supabase product catalogue
+### Neon product catalogue
 
-Stage 5 defines a dedicated Supabase catalogue. Do **not** apply it to the existing Grab&Book project.
+Stage 5 now runs on a dedicated Neon/Postgres project in AWS London.
 
-Once the separate interior project exists:
+Configure the server-side database connection:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+DATABASE_URL=postgresql://...
 ```
 
-Never expose a Supabase secret/service-role key in browser code.
+Never expose `DATABASE_URL` in browser code. Catalogue queries and imports should run through trusted server-side application code.
 
-The catalogue SQL lives in `database/`.
+The Neon-native schema is `database/catalog_schema_neon.sql`; taxonomy and verification SQL live alongside it in `database/`.
 
 ## Current routes
 
@@ -74,6 +73,6 @@ See `CREDIT_POLICY.md`.
 
 ## Current stage
 
-Stages 1–5 are architected/implemented in the repository.
+Stages 1–5 are implemented.
 
-Stage 5's database schema is intentionally not deployed into the existing Supabase project. A dedicated interior-commerce Supabase project is required before the schema is applied and populated with live retailer data.
+Stage 5 is deployed to the dedicated Neon project `small-glitter-35907125` in AWS London. The live catalogue currently contains the structured taxonomy and is ready for curated retailer/product ingestion.
