@@ -9,55 +9,60 @@ Status: complete.
 ## Stage 3 — Design my room intake
 Status: complete.
 
-- Real room photo upload + preview
-- Keep / replace categories
-- Image-led style discovery
-- Colour + material preferences
-- Dislikes
-- Lifestyle requirements
-- Whole-room budget
-- Optional measurements
-- Creative freedom
-- Final pre-AI review
-
 ## Stage 4 — AI design brief
 Status: implemented.
 
-- Stage 3 → written interior-design proposal
-- Real server-side AI endpoint using the Responses API when configured
-- Safe deterministic preview when no API key exists
-- Individual brief-section editing
-- Natural-language "ask to change something" interaction
-- Approve / unlock design direction
-- 0-credit brief creation and revisions
-- 3-free-render credit policy defined
-- Purchase-earned credit ledger architecture defined
-- No image render is triggered in this stage
+- Structured interior-design proposal
+- Server-side AI endpoint
+- Manual section editing
+- Natural-language brief revisions
+- Design-direction approval
+- Free brief / paid-render boundary
+- 3-free-render credit policy
+- Purchase-earned credit architecture
 
-Production requirement before launch:
-- Add OPENAI_API_KEY securely to the deployment environment
-- Set/confirm OPENAI_BRIEF_MODEL
-- Add authenticated database persistence in the product/account stages
+## Stage 5 — Real UK product database
+Status: schema complete; awaiting dedicated Supabase project + live feeds.
 
-## Stage 5 — UK product database
-Status: next.
+Implemented:
+- Canonical retailers and brands
+- Product → variant → retailer-offer separation
+- Retailer SKU and external product IDs
+- Hierarchical living-room categories
+- Style / material / colour taxonomies
+- Variant dimensions in millimetres
+- Product and variant imagery
+- GBP prices + comparison prices
+- Availability / stock
+- UK delivery status / cost / ETA
+- Product and affiliate URLs
+- Current offer timestamps
+- Append-only price / stock history
+- Feed/source records + sync-run audit
+- Catalogue quality issues
+- Curation and quality scores
+- Explicit RLS + read-only public catalogue grants
+- Indexes for Stage 6 selection filters
+- Initial living-room taxonomy seeds
+- TypeScript catalogue domain types
+- Catalogue quality-scoring helper
 
-- Retailers
-- Canonical products
-- Retailer offers
-- SKU/ID
-- Categories
-- Price/currency
-- Dimensions
-- Colour/material/style tags
-- Room type
-- Imagery
-- Product + affiliate URL
-- Stock / UK delivery
-- Last-updated timestamps
-- AI-selection metadata
+Live-data target:
+- Start with 500–2,000 curated living-room products.
+- Do not bulk-publish poor feed records.
+- Only curated, active records become customer-visible.
+
+Deployment requirement:
+- Create a separate interior-commerce Supabase project.
+- Apply `database/catalog_schema.sql`.
+- Apply `database/catalog_seed_taxonomy.sql`.
+- Run `database/catalog_verification.sql`.
+- Run Supabase Security + Performance Advisors.
+- Generate live TypeScript DB types.
 
 ## Stage 6 — Product intelligence
+Status: next after live catalogue project/data connection.
+
 ## Stage 7 — Image generation + credit enforcement
 ## Stage 8 — Designed-room experience
 ## Stage 9 — Affiliate commerce
