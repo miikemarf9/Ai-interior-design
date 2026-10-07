@@ -7,6 +7,7 @@ import type { ProductAlternative, ProductSelection, ProposedProduct, SelectionCa
 import { applyPendingAlternative, hotspotForProduct, type DesignedRoomPayload } from "@/lib/room-experience";
 import { VerifiedRoomPanel } from "@/components/VerifiedRoomPanel";
 import type { RoomVerification } from "@/lib/verification/types";
+import { GrowthShareCards } from "@/components/GrowthShareCards";
 
 type ExperiencePayload = DesignedRoomPayload & {
   intake?: IntakeForBrief;
@@ -499,6 +500,8 @@ export function DesignedRoomExperience({
       </section>
 
       <VerifiedRoomPanel verification={verification} loading={verificationLoading} />
+
+      {!shared ? <GrowthShareCards designId={data.designId} /> : null}
 
       <section className="roomProductsSection">
         <div className="roomProductsIntro">

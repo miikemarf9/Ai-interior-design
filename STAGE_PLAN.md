@@ -240,4 +240,48 @@ Advanced layer intentionally deferred:
 - scale and proportion reconstruction
 - deeper colour/material divergence analysis
 ## Stage 12 — Growth engine
+Status: implemented; pages deliberately remain noindex until enough real rooms are published.
+
+Implemented:
+- Real-room SEO hub at `/ideas`
+- Semantic topic collections at `/ideas/[slug]`
+- Semantic public rooms at `/rooms/[slug]`
+- Initial collections:
+  - Small living-room ideas
+  - Bay-window living rooms
+  - Living rooms under £1,500
+  - Warm-neutral living rooms
+  - 1930s living rooms
+  - New-build living rooms
+- No 800-word filler requirement
+- Collection pages contain real generated rooms, product counts and room totals
+- Public room pages contain the real finished design and current live product offers
+- Collection pages require at least 3 real published rooms before becoming indexable
+- Empty/thin collections use noindex,follow
+- Editorial publication requires an active public share plus Stored Verified Room evidence
+- Automatic provable tagging for under-£1,500, small-room measurements and warm-neutral palette signals
+- Architectural tags remain editorial unless explicitly evidenced
+- Canonical URLs
+- Dynamic XML sitemap
+- robots.txt
+- Dynamic Open Graph images from real room renders
+- CollectionPage + ItemList JSON-LD
+- Real-room CreativeWork JSON-LD
+- Social creative generator:
+  - Pinterest 2:3
+  - Instagram 4:5
+  - Story/Reel 9:16
+  - Facebook landscape
+- Social creative uses exact original room + finished render + current room total
+- Original room remains owner-authenticated; SEO publication does not expose it
+- Designed-room page exposes share-creative formats
+- Consent-gated abandoned-design scanner
+- Only verified accounts with explicit marketing-email consent can enter recovery
+- Recovery produces a durable `design_abandoned` CRM outbox event
+- Grab&Book remains the eventual campaign executor, not a hard Roomfound dependency
+
+External dependencies:
+- Set `NEXT_PUBLIC_SITE_URL` to the final canonical production domain before indexing.
+- Real SEO pages start indexing only after real rooms are published.
+- Abandoned-design campaigns remain dormant until a UI captures explicit marketing consent and Grab&Book has the receiving campaign workflow.
 ## Stage 13 — Beta hardening + launch

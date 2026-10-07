@@ -79,7 +79,7 @@ See `CREDIT_POLICY.md`.
 
 ## Current stage
 
-Stages 1–11 are implemented.
+Stages 1–12 are implemented.
 
 Stage 5 is deployed to the dedicated Neon project `small-glitter-35907125` in AWS London. Stage 6 is wired to the live catalogue and deliberately refuses to invent products. The remaining pre-render dependency is approved affiliate-feed access so real products can be staged, reviewed and promoted.
 
@@ -194,3 +194,27 @@ Price and availability evidence is refreshed from the live catalogue when the ow
 The visual check uses the Responses API with the final render plus exact product reference images and returns an uncertainty-aware confidence assessment. It does not verify physical fit.
 
 V1 explicitly does not claim to verify clearances, doorway access, circulation, wall placement, exact scale/proportion or colour accuracy under all lighting conditions.
+
+
+## Stage 12 growth engine
+
+The SEO system publishes visual database-backed pages rather than long-form filler.
+
+Routes:
+- `/ideas` — visual discovery hub
+- `/ideas/[slug]` — themed real-room collection
+- `/rooms/[slug]` — one public real design with current live products/prices
+- `/api/growth/social/[designId]/[format]` — owner-authorized social creative
+
+A collection is `noindex,follow` until it has at least 3 published real rooms. The sitemap only includes collections that clear that threshold.
+
+Publishing is editorially protected by `GROWTH_ADMIN_SECRET` and requires:
+1. a successful room generation,
+2. an active public Roomfound share,
+3. a stored Verified Room record.
+
+Public SEO pages expose the finished room only. The customer's original room photo is never published by the SEO system. The owner can separately generate a Before → After → Shop this room social creative.
+
+The social generator supports Pinterest 2:3, Instagram 4:5, vertical Story/Reel 9:16 and Facebook landscape outputs.
+
+Abandoned-design recovery uses a protected scanner and never assumes consent. Only a verified account with explicit marketing-email consent and no opt-out can generate a `design_abandoned` event in the existing Grab&Book CRM outbox.
