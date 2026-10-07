@@ -6,7 +6,6 @@ export function Brand() {
     <Link className="brand" href="/" aria-label={`${site.name} home`}>
       <span className="brandMark" aria-hidden="true">R</span>
       <span className="brandWord">{site.name}</span>
-      {site.workingName ? <span className="workingName">working name</span> : null}
     </Link>
   );
 }
