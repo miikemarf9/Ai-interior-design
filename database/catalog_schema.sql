@@ -317,16 +317,39 @@ create table public.catalog_quality_issues (
 );
 
 create index products_active_curated_idx on public.products (status, is_curated, curation_score desc);
+create unique index product_categories_one_primary_per_product
+  on public.product_categories (product_id)
+  where is_primary;
+
 create index product_categories_category_idx on public.product_categories (category_id, product_id);
 create index product_variants_product_idx on public.product_variants (product_id, status, quality_score desc);
 create index product_variants_dimensions_idx on public.product_variants (width_mm, depth_mm, height_mm);
 create index variant_styles_style_idx on public.variant_styles (style_id, confidence desc, variant_id);
+create unique index variant_materials_one_primary_per_variant
+  on public.variant_materials (variant_id)
+  where is_primary;
+
 create index variant_materials_material_idx on public.variant_materials (material_id, variant_id);
+create unique index variant_colours_one_primary_per_variant
+  on public.variant_colours (variant_id)
+  where is_primary;
+
 create index variant_colours_colour_idx on public.variant_colours (colour_id, variant_id);
+create unique index retailer_offers_product_url_unique
+  on public.retailer_offers (retailer_id, product_url);
+
 create index retailer_offers_variant_idx on public.retailer_offers (variant_id, is_active, availability, price_minor);
 create index retailer_offers_retailer_idx on public.retailer_offers (retailer_id, is_active);
 create index retailer_offers_last_checked_idx on public.retailer_offers (last_checked_at);
 create index offer_price_history_offer_checked_idx on public.offer_price_history (offer_id, checked_at desc);
+create unique index product_images_one_primary_product
+  on public.product_images (product_id)
+  where is_primary and variant_id is null;
+
+create unique index product_images_one_primary_variant
+  on public.product_images (variant_id)
+  where is_primary and variant_id is not null;
+
 create index product_images_product_sort_idx on public.product_images (product_id, is_primary desc, sort_order);
 create index product_images_variant_idx on public.product_images (variant_id, sort_order);
 create index catalog_sync_runs_source_started_idx on public.catalog_sync_runs (source_id, started_at desc);
