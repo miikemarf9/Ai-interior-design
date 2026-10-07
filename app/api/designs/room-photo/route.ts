@@ -90,7 +90,7 @@ export async function POST(request: Request) {
       const result = await saveExternalExample(body.ownerKey, body.designId ?? null, body.exampleUrl);
       return NextResponse.json({
         ...result,
-        url: `/api/assets/${result.assetId}`,
+        url: `/api/assets/${result.assetId}?ownerKey=${encodeURIComponent(body.ownerKey)}`,
       });
     }
 
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       designId,
       assetId: rows[0].asset_id,
-      url: `/api/assets/${rows[0].asset_id}`,
+      url: `/api/assets/${rows[0].asset_id}?ownerKey=${encodeURIComponent(ownerKey)}`,
     });
   } catch (error) {
     console.error("Room photo upload failed", error);
