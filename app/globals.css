@@ -2345,7 +2345,8 @@ p { line-height: 1.58; }
 .heroPrice span { display: block; font-size: 10px; line-height: 1.5; }
 .heroPrice strong { display: block; margin-top: 3px; font-size: 19px; font-weight: 600; line-height: 1.2; }
 .heroPricePendant { left: 68%; top: 8.5%; --price-delay: 0s; }
-.heroPriceSofa { right: 6%; top: 52%; --price-delay: .4s; }\n.heroPriceSofa strong { margin-top: 0; }
+.heroPriceSofa { right: 6%; top: 52%; --price-delay: .4s; }
+.heroPriceSofa strong { margin-top: 0; }
 .heroPriceTable { left: 60%; top: 75%; --price-delay: .65s; }
 @media (max-width: 1100px) {
   .homeHeroContent { padding-bottom: 240px; }
@@ -2367,4 +2368,4 @@ p { line-height: 1.58; }
 }
 @media (prefers-reduced-motion: reduce) {
   .heroPrice, .heroPricesCaption { transition: none; transform: none; }
-}\n
+}
