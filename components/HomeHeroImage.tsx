@@ -6,7 +6,7 @@ import homepageHero from '@/public/images/homepage-hero.webp';
 
 export function HomeHeroImage() {
   const [loaded, setLoaded] = useState(false);
-  const [settled, setSettled] = useState(false);
+  const [pricesReady, setPricesReady] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -17,7 +17,13 @@ export function HomeHeroImage() {
     return () => media.removeEventListener('change', update);
   }, []);
 
-  const showPrices = loaded && (settled || reducedMotion);
+  useEffect(() => {
+    if (!loaded) return;
+    const timer = window.setTimeout(() => setPricesReady(true), 5000);
+    return () => window.clearTimeout(timer);
+  }, [loaded]);
+
+  const showPrices = loaded && (pricesReady || reducedMotion);
   return (
     <>
       <Image
@@ -31,9 +37,6 @@ export function HomeHeroImage() {
         decoding="async"
         style={{ animationPlayState: loaded ? 'running' : 'paused' }}
         onLoad={() => setLoaded(true)}
-        onAnimationEnd={(event) => {
-          if (event.animationName.startsWith('roomfoundHeroDrift')) setSettled(true);
-        }}
       />
       <div className={`heroPrices${showPrices ? ' isVisible' : ''}`} aria-hidden={!showPrices}>
         <p className="heroPricesCaption">Example room prices</p>
