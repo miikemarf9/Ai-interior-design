@@ -99,6 +99,25 @@ export async function GET(request:Request){
         (select count(*) from public.customer_accounts where email_verified_at is not null and status='active')::int as verified_accounts,
         (select count(*) from public.customer_auth_sessions where revoked_at is null and expires_at>now())::int as active_sessions,
         (select count(*) from public.design_credit_wallets where balance < 0)::int as negative_wallets,
+        (
+          select count(*)::int
+          from public.design_credit_wallets w
+          left join lateral (
+            select coalesce(sum(l.amount),0)::int as ledger_balance
+            from public.design_credit_ledger l
+            where l.wallet_id=w.id
+          ) ledger on true
+          where w.balance <> ledger.ledger_balance
+        ) as wallet_ledger_mismatches,
+        (
+          select count(*)::int
+          from public.design_credit_wallets w
+          where (
+            select count(*)
+            from public.design_credit_ledger l
+            where l.wallet_id=w.id and l.event_type='signup_grant'
+          ) > 1
+        ) as duplicate_signup_grants,
         (select coalesce(sum(balance),0) from public.design_credit_wallets where verification_status='verified')::bigint as outstanding_verified_credits`,
       [],
     ),
@@ -155,6 +174,8 @@ export async function GET(request:Request){
     growthRecovery:Boolean(process.env.GROWTH_CRON_SECRET),
     economicsFx:Number.isFinite(fx) && fx>0,
     finalLegalReview:process.env.LEGAL_REVIEW_COMPLETE==="true",
+    controlledBeta:process.env.BETA_CONTROLLED_ACCESS==="true",
+    betaSignupCode:Boolean(process.env.BETA_SIGNUP_CODE),
   };
 
   const renders=renderRows[0] as any;
@@ -175,7 +196,11 @@ export async function GET(request:Request){
   if(!config.retentionCron) blockers.push("Configure the privacy-retention job secret.");
   if(!config.economicsFx) blockers.push("Set AI_COST_USD_TO_GBP_RATE so room economics are comparable in GBP.");
   if(!config.finalLegalReview) blockers.push("Final UK legal/data-protection review is not marked complete.");
+  if(!config.controlledBeta) blockers.push("Controlled beta access is not enabled.");
+  if(config.controlledBeta && !config.betaSignupCode) blockers.push("Controlled beta signup code is missing.");
   if(Number(auth.negative_wallets)>0) blockers.push("A design-credit wallet has a negative balance.");
+  if(Number(auth.wallet_ledger_mismatches)>0) blockers.push("A credit wallet balance does not match its immutable ledger.");
+  if(Number(auth.duplicate_signup_grants)>0) blockers.push("A wallet has more than one signup credit grant.");
   if(Number(renders.stuck_processing)>0) blockers.push("At least one render is stuck in processing.");
   if(attempts>=10 && renderFailureRate>0.1) blockers.push("Render failure rate is above the 10% beta threshold.");
   if(Number(catalogue.stale_active_offers)>0) blockers.push("Active retailer offers are older than the 7-day beta freshness threshold.");
