@@ -45,3 +45,14 @@ Rules:
 ## Principle
 
 People should be able to think, refine and get confident for free. Credits pay for expensive visual generation, not conversation.
+
+
+## Stage 10 enforcement
+
+The verified-account rule is now implemented.
+
+- New accounts start with an unverified account wallet and 0 production render credits.
+- Email verification changes the wallet to `verified`.
+- The account receives the 3-credit signup grant exactly once.
+- The immutable ledger uses a verified-account idempotency key to prevent duplicate signup grants.
+- Anonymous/development wallets are not treated as verified production accounts.

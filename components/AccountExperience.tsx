@@ -286,7 +286,7 @@ export function AccountExperience() {
               <button className="accountTextButton" type="button" onClick={() => setAuthMode("login")}>Back to sign in</button>
             ) : null}
 
-            <p className="accountSecurityNote">Passwords are hashed. Session cookies are HTTP-only. Verification is required before free render credits activate.</p>
+            <p className="accountSecurityNote">Verify your email once to secure saved rooms and activate your free design credits.</p>
           </form>
         </section>
       </main>
@@ -384,10 +384,6 @@ export function AccountExperience() {
         )}
       </section>
 
-      <section className="accountCrmNote shellWide">
-        <span>Behind the scenes</span>
-        <p>Roomfound owns the room and account record. Customer lifecycle events are queued for the Grab&Book CRM bridge instead of duplicating CRM tooling here.</p>
-      </section>
     </main>
   );
 }

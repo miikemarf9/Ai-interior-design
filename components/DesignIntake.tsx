@@ -274,7 +274,7 @@ export function DesignIntake() {
       }
 
       saveRuntime({
-        ownerKey: key,
+        ownerKey: data.ownerKey || key,
         designId: data.designId,
         roomAssetId: data.assetId,
         photoName: 'Example living room',

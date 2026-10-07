@@ -47,6 +47,8 @@ The Neon-native schema is `database/catalog_schema_neon.sql`; taxonomy and verif
 - `/render` — metered image generation using the approved room + real products
 - `/room` — immersive designed-room result, hotspots, product drawer and swaps
 - `/room/share/[token]` — explicit public share view of a finished room
+- `/account` — sign in, verification, design credits and My rooms
+- `/reset-password` — secure password-reset completion
 - `/style-guide` — internal design system
 
 ## Product catalogue principle
@@ -61,7 +63,7 @@ See `database/README.md`.
 
 ## Credit principle
 
-New verified accounts are planned to receive **3 free design credits**.
+New verified accounts receive **3 free design credits**.
 
 - Written brief creation: free
 - Written brief revisions: free
@@ -77,7 +79,7 @@ See `CREDIT_POLICY.md`.
 
 ## Current stage
 
-Stages 1–9 are implemented.
+Stages 1–10 are implemented.
 
 Stage 5 is deployed to the dedicated Neon project `small-glitter-35907125` in AWS London. Stage 6 is wired to the live catalogue and deliberately refuses to invent products. The remaining pre-render dependency is approved affiliate-feed access so real products can be staged, reviewed and promoted.
 
@@ -112,7 +114,7 @@ Production logging records provider, model, prompt version, product IDs, token u
 
 Original room photos and rendered outputs are private server assets. The current MVP uses Postgres bytea storage because Neon branchable object storage is not available in the London region. Move binary assets to dedicated object storage before meaningful scale.
 
-Development credits are intentionally disabled by default. Set `RENDER_ALLOW_DEVELOPMENT_WALLETS=true` only in a private/local environment. Public render credits should remain blocked until Stage 10 verified accounts are connected.
+Development credits remain disabled by default. Stage 10 verified accounts now own production credit wallets and receive the one-time 3-credit signup grant after email verification.
 
 
 ## Continuous integration
@@ -141,3 +143,34 @@ Tracked funnel:
 A product remains a canonical product/variant even if one retailer changes price or becomes unavailable. The designed-room drawer loads current offers for the variant and can show another retailer without deleting the product from the design.
 
 Awin programme and transaction sync remain inactive until `AWIN_API_TOKEN`, `AWIN_PUBLISHER_ID` and `COMMERCE_SYNC_SECRET` are configured.
+
+
+## Stage 10 accounts + saved homes
+
+Roomfound now has native customer accounts backed by Neon:
+
+- email + password sign-up/sign-in
+- scrypt password hashing
+- HTTP-only 30-day session cookies
+- email verification
+- password reset
+- 3-credit grant once the email is verified
+- anonymous room claiming on signup/sign-in
+- account-owned room uploads and private assets
+- `My rooms` dashboard
+- original room photo
+- latest generated design
+- saved brief
+- saved product selection
+- saved room total
+- persistent design-credit balance
+- default `My home` container with schema support for multiple homes later
+- saved rooms can be reopened on another device
+
+Account emails use Resend's HTTP API. Configure `APP_URL`, `RESEND_API_KEY` and `AUTH_FROM_EMAIL` before public verification/reset email delivery.
+
+### Grab&Book CRM bridge
+
+Roomfound does not duplicate CRM functions. Customer lifecycle events are written to `crm_outbox` and linked to a `grabandbook` CRM provider record. A protected sync worker can forward those events once Grab&Book exposes a dedicated authenticated CRM-ingestion endpoint.
+
+Until then the bridge is deliberately dormant rather than writing directly into Grab&Book's internal tables.

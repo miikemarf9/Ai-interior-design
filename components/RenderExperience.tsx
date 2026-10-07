@@ -261,7 +261,7 @@ export function RenderExperience() {
           {blockedByVerification ? (
             <div className="renderBlocked">
               <strong>Account verification required</strong>
-              <p>Your three free render credits are designed to activate once the account is verified. Account authentication is connected in Stage 10.</p>
+              <p>Verify your email in My rooms to activate the 3 free design credits attached to your account.</p>
             </div>
           ) : (
             <button
