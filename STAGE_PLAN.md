@@ -69,7 +69,29 @@ Security model:
 - Public catalogue APIs will expose only the fields/records deliberately returned by the application.
 
 ## Stage 6 — Product intelligence
-Status: next after live catalogue project/data connection.
+Status: implemented; waiting on live retailer/product ingestion for real selection results.
+
+Implemented:
+- Live Neon catalogue query only; no invented fallback products
+- Hard eligibility filters for curated/active products, UK delivery and orderable availability
+- Whole-room budget allocation by furniture slot
+- Retained-item detection so furniture being kept is not re-selected
+- Room-dimension fit checks where measurements exist
+- Weighted scoring for style, colour, materials, budget, dimensions, curation, quality, freshness and availability
+- Proposed furniture set before rendering
+- Per-product match score and selection rationale
+- Cheaper alternative
+- Similar alternative
+- Premium alternative
+- Customer-controlled swaps with whole-room total recalculation
+- Over-budget approval protection
+- Product-set approval stored separately from brief approval
+- 0 render credits used throughout product selection
+- Approved product set becomes the hard input for Stage 7 rendering
+
+Current live-data dependency:
+- The production catalogue currently has taxonomy but no retailer products/offers.
+- Stage 6 deliberately returns an honest empty state until curated real products are ingested.
 
 ## Stage 7 — Image generation + credit enforcement
 ## Stage 8 — Designed-room experience
