@@ -128,3 +128,21 @@ Initial Awin retailer sources configured in production:
 - The Range — advertiser `5238`
 
 Private Awin feed URLs/API keys are never stored in Neon. `catalog_sources.public_config` contains only the environment-variable name expected by the server.
+
+
+## Stage 7 render data
+
+Apply `render_schema_neon.sql` after the catalogue schema for a fresh environment.
+
+It adds:
+- `room_designs`
+- `design_assets`
+- `design_credit_wallets`
+- `design_credit_ledger`
+- `render_generations`
+
+Each generation logs the provider, exact model, prompt version/text, selected product UUIDs, status, OpenAI request ID, token usage, calculated API cost, duration, result asset and failure details.
+
+Credit balance is updated atomically before the provider call. The immutable ledger is the audit trail. Technical/provider failures insert a refund ledger event and restore one credit.
+
+The current asset backend is explicitly marked `postgres_bytea_mvp`. It is suitable for controlled development and early testing, not high-volume image storage.
