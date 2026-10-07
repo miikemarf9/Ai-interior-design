@@ -60,7 +60,10 @@ export async function GET(
       and p.is_curated
       and v.status = 'active'
       and ro.is_active
+      and ro.availability in ('in_stock','low_stock','preorder')
+      and ro.uk_delivery_status in ('available','restricted')
       and r.status = 'active'
+      and r.ships_to_uk
     limit 1`,
     [offerId],
   ) as Array<{
@@ -95,6 +98,19 @@ export async function GET(
       trackingUrl = addAwinClickRef(offer.affiliate_url, clickRef);
     } catch {
       trackingUrl = offer.affiliate_url;
+    }
+  }
+
+  try {
+    const parsed = new URL(trackingUrl);
+    if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Unsupported retailer URL.");
+  } catch {
+    try {
+      const fallback = new URL(offer.product_url);
+      if (!["http:", "https:"].includes(fallback.protocol)) throw new Error("Unsupported retailer URL.");
+      trackingUrl = fallback.toString();
+    } catch {
+      return NextResponse.redirect(new URL("/products?retailer=unavailable", request.url), 302);
     }
   }
 
