@@ -46,7 +46,7 @@ export function ProductHotspots() {
     <div className="hotspotExperience">
       <div className="hotspotRoom">
         <img src={image} alt="Warm contemporary living room with purchasable product hotspots" />
-        <span className="roomDemoFlag">Interactive room demo</span>
+        <span className="roomDemoFlag">Explore the room</span>
 
         {(Object.keys(products) as ProductKey[]).map((key) => (
           <button
@@ -64,8 +64,8 @@ export function ProductHotspots() {
 
         <div className="hotspotCard">
           <div className="hotspotCardTop">
-            <span className="microLabel">Real-product layer</span>
-            <span className="demoData">Illustrative data</span>
+            <span className="microLabel">Product details</span>
+            <span className="demoData">Example</span>
           </div>
           <h3>{product.type}</h3>
           <div className="hotspotPriceRow">
@@ -74,7 +74,7 @@ export function ProductHotspots() {
           </div>
           <p>{product.size}</p>
           <div className="hotspotReason">
-            <span>Selected for this room</span>
+            <span>Why it works here</span>
             <WhyChosen reasons={[...product.reasons]} />
           </div>
         </div>
