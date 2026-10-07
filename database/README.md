@@ -169,3 +169,24 @@ Tables:
 Roomfound uses the canonical product/variant as the stable object and retailer offers as replaceable commercial destinations. Price or availability changes therefore do not delete the designed product.
 
 Expected revenue is nullable by design. It is only populated when Awin supplies programme economics. Awin EPC is preferred when available; otherwise the fallback estimate uses commission rate × conversion rate × approval percentage.
+
+
+## Stage 10 accounts and CRM bridge
+
+Apply `accounts_schema_neon.sql` after the Stage 9 schema for a fresh environment.
+
+It adds:
+- `customer_accounts`
+- `customer_auth_sessions`
+- `customer_auth_tokens`
+- `customer_homes`
+- account/home ownership columns on `room_designs`
+- account linkage on `design_credit_wallets`
+- `crm_contact_links`
+- `crm_outbox`
+
+The original browser `owner_key` remains only as a bridge for anonymous pre-signup work. On signup/sign-in, matching anonymous designs are claimed by the account and moved to the stable account owner key. Authenticated asset access uses the server session, not possession of an owner key URL parameter.
+
+Verified accounts receive the one-time signup credit grant through the existing immutable credit ledger.
+
+CRM integration uses an outbox pattern. Roomfound remains the source of truth for account and room ownership; Grab&Book can consume lifecycle events later through an authenticated ingestion endpoint without Roomfound writing directly into Grab&Book's tables.

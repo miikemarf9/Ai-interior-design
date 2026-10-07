@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getCurrentAccount } from "@/lib/auth";
 import { getCatalogDb } from "@/lib/catalog/neon";
 
 export const runtime = "nodejs";
@@ -8,9 +9,11 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
+  const account = await getCurrentAccount();
   const ownerKey = new URL(request.url).searchParams.get("ownerKey") || "";
+  const validOwnerKey = /^[a-zA-Z0-9_-]{20,100}$/.test(ownerKey);
 
-  if (!/^[a-zA-Z0-9_-]{20,100}$/.test(ownerKey)) {
+  if (!account && !validOwnerKey) {
     return NextResponse.json({ error: "Asset not found." }, { status: 404 });
   }
 
@@ -25,9 +28,12 @@ export async function GET(
        from public.design_assets a
        join public.room_designs d on d.id = a.design_id
        where a.id=$1::uuid
-         and d.owner_key=$2
+         and (
+           ($2::uuid is not null and d.account_id=$2::uuid)
+           or ($3 <> '' and d.owner_key=$3)
+         )
        limit 1`,
-      [id, ownerKey],
+      [id, account?.id ?? null, validOwnerKey ? ownerKey : ""],
     ) as Array<{
       mime_type: string;
       external_url: string | null;
@@ -37,13 +43,8 @@ export async function GET(
     const asset = rows[0];
     if (!asset) return NextResponse.json({ error: "Asset not found." }, { status: 404 });
 
-    if (asset.external_url) {
-      return NextResponse.redirect(asset.external_url, 302);
-    }
-
-    if (!asset.base64) {
-      return NextResponse.json({ error: "Asset has no content." }, { status: 404 });
-    }
+    if (asset.external_url) return NextResponse.redirect(asset.external_url, 302);
+    if (!asset.base64) return NextResponse.json({ error: "Asset has no content." }, { status: 404 });
 
     return new Response(Buffer.from(asset.base64, "base64"), {
       headers: {

@@ -98,7 +98,7 @@ Current live-data dependency:
 - Stage 6 deliberately returns an honest empty state until reviewed real products are promoted.
 
 ## Stage 7 — Image generation + credit enforcement
-Status: implemented; production credit activation waits for verified accounts in Stage 10.
+Status: implemented; production credit activation is now backed by Stage 10 verified accounts.
 
 Implemented:
 - Durable original-room asset upload
@@ -120,8 +120,7 @@ Implemented:
 - Customer-facing “Editing your brief — Free” vs “Generate your room — 1 credit” boundary
 - Development wallet mode guarded by server environment flag and disabled by default
 
-Pre-public dependency:
-- Stage 10 verified accounts must replace development-session ownership before public paid rendering.
+Remaining scale dependency:
 - Binary assets should move from Postgres bytea to dedicated object storage before meaningful scale.
 ## Stage 8 — Designed-room experience
 Status: implemented; becomes fully populated once real catalogue products and renders exist.
@@ -173,6 +172,40 @@ External dependency:
 - Retailer programme approval and authorized affiliate destinations.
 - Once credentials exist, sync programme terms before interpreting expected revenue.
 ## Stage 10 — Accounts + saved homes
+Status: implemented; transactional email delivery requires deployment secrets.
+
+Implemented:
+- Native Roomfound customer accounts
+- Email + password sign-up/sign-in
+- Scrypt password hashing
+- HTTP-only SameSite session cookie
+- 30-day server-side sessions with revocation
+- Email verification token flow
+- Password-reset token flow
+- Verification/reset emails via Resend REST API
+- One-time 3 design-credit grant after verified email
+- Account-linked production credit wallet
+- Anonymous room ownership claimed when signing up or signing in
+- Logged-in room uploads automatically attached to the account
+- Account-authorized private room/render assets
+- `My rooms` dashboard
+- Original photo + current design thumbnails
+- Brief title/direction persisted
+- Product selection + room total persisted
+- Resume unfinished room from its saved stage
+- Open finished room on another device via authenticated design ID
+- Default `My home` record
+- Data model supports multiple homes later without migrating room ownership
+- `crm_contact_links` integration table
+- Durable `crm_outbox` for account/verification/room lifecycle events
+- Protected Roomfound-side Grab&Book bridge worker
+- No direct dependency on Grab&Book internal database/tables
+
+Deployment dependencies:
+- `APP_URL`
+- `RESEND_API_KEY`
+- `AUTH_FROM_EMAIL` using a verified sender/domain
+- Optional future `GRABANDBOOK_CRM_ENDPOINT` + bridge secret once Grab&Book exposes ingestion
 ## Stage 11 — Verified Room V1
 ## Stage 12 — Growth engine
 ## Stage 13 — Beta hardening + launch
