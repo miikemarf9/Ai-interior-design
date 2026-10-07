@@ -115,7 +115,10 @@ export function AccountExperience() {
         password: String(form.get("password") || ""),
         ownerKey: typeof runtime.ownerKey === "string" ? runtime.ownerKey : undefined,
       };
-      if (authMode === "signup") body.displayName = String(form.get("displayName") || "");
+      if (authMode === "signup") {
+        body.displayName = String(form.get("displayName") || "");
+        body.inviteCode = String(form.get("inviteCode") || "");
+      }
 
       const response = await fetch(authMode === "signup" ? "/api/auth/signup" : "/api/auth/login", {
         method: "POST",
@@ -270,7 +273,15 @@ export function AccountExperience() {
                 <span className="microLabel">{authMode === "signup" ? "Create your Roomfound account" : "Welcome back"}</span>
                 <h2>{authMode === "signup" ? "Keep every room in one place." : "Open your saved rooms."}</h2>
                 {authMode === "signup" ? (
-                  <label><span>Name</span><input name="displayName" autoComplete="name" placeholder="Optional" /></label>
+                  <>
+                    <label><span>Name</span><input name="displayName" autoComplete="name" placeholder="Optional" /></label>
+                    {process.env.NEXT_PUBLIC_BETA_CONTROLLED_ACCESS === "true" ? (
+                      <label>
+                        <span>Beta access code</span>
+                        <input name="inviteCode" autoComplete="off" required />
+                      </label>
+                    ) : null}
+                  </>
                 ) : null}
                 <label><span>Email</span><input name="email" type="email" autoComplete="email" required /></label>
                 <label><span>Password</span><input name="password" type="password" autoComplete={authMode === "signup" ? "new-password" : "current-password"} minLength={10} required /></label>
