@@ -111,3 +111,8 @@ Production logging records provider, model, prompt version, product IDs, token u
 Original room photos and rendered outputs are private server assets. The current MVP uses Postgres bytea storage because Neon branchable object storage is not available in the London region. Move binary assets to dedicated object storage before meaningful scale.
 
 Development credits are intentionally disabled by default. Set `RENDER_ALLOW_DEVELOPMENT_WALLETS=true` only in a private/local environment. Public render credits should remain blocked until Stage 10 verified accounts are connected.
+
+
+## Continuous integration
+
+GitHub Actions runs `npm run typecheck` and `npm run build` on pushes to `main` and on pull requests.
