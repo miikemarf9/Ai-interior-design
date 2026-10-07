@@ -59,7 +59,7 @@ function validOwnerKey(value: string) {
 async function getRoomAsset(designId: string, ownerKey: string) {
   const sql = getCatalogDb();
   const rows = await sql.query(
-    \`select
+    `select
       d.id::text as design_id,
       a.id::text as asset_id,
       a.mime_type,
@@ -70,7 +70,7 @@ async function getRoomAsset(designId: string, ownerKey: string) {
      where d.id=$1::uuid
        and d.owner_key=$2
        and a.asset_kind='room_original'
-     limit 1\`,
+     limit 1`,
     [designId, ownerKey],
   ) as Array<{
     design_id: string;
@@ -86,7 +86,7 @@ async function getRoomAsset(designId: string, ownerKey: string) {
   const imageUrl = asset.external_url
     ? asset.external_url
     : asset.base64
-      ? \`data:\${asset.mime_type};base64,\${asset.base64}\`
+      ? `data:${asset.mime_type};base64,${asset.base64}`
       : null;
 
   return imageUrl ? { ...asset, imageUrl } : null;
@@ -101,7 +101,7 @@ async function persistApprovedState(
 ) {
   const sql = getCatalogDb();
   const rows = await sql.query(
-    \`update public.room_designs
+    `update public.room_designs
      set
        intake=$3::jsonb,
        brief=$4::jsonb,
@@ -111,7 +111,7 @@ async function persistApprovedState(
        status='render_ready',
        updated_at=now()
      where id=$1::uuid and owner_key=$2
-     returning id::text as id\`,
+     returning id::text as id`,
     [
       designId,
       ownerKey,
@@ -127,7 +127,7 @@ async function persistApprovedState(
 async function existingGeneration(generationId: string) {
   const sql = getCatalogDb();
   const rows = await sql.query(
-    \`select
+    `select
       status,
       result_asset_id::text as result_asset_id,
       failure_message,
@@ -135,7 +135,7 @@ async function existingGeneration(generationId: string) {
       duration_ms
      from public.render_generations
      where id=$1::uuid
-     limit 1\`,
+     limit 1`,
     [generationId],
   ) as Array<{
     status: string;
@@ -250,7 +250,7 @@ export async function POST(request: Request) {
         return NextResponse.json({
           generationId,
           resultAssetId: prior.result_asset_id,
-          resultUrl: \`/api/assets/\${prior.result_asset_id}\`,
+          resultUrl: `/api/assets/${prior.result_asset_id}`,
           balance: spend.balance,
           reused: true,
           costUsdMicros: prior.cost_usd_micros,
@@ -276,7 +276,7 @@ export async function POST(request: Request) {
     const response = await fetch("https://api.openai.com/v1/images/edits", {
       method: "POST",
       headers: {
-        Authorization: \`Bearer \${apiKey}\`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -298,7 +298,7 @@ export async function POST(request: Request) {
     measuredUsage = calculateImageCost(payload.usage);
 
     if (!response.ok) {
-      throw new Error(payload.error?.message || \`OpenAI image edit failed with HTTP \${response.status}.\`);
+      throw new Error(payload.error?.message || `OpenAI image edit failed with HTTP ${response.status}.`);
     }
 
     const resultBase64 = payload.data?.[0]?.b64_json;
@@ -312,7 +312,7 @@ export async function POST(request: Request) {
     const sql = getCatalogDb();
 
     const saved = await sql.query(
-      \`with asset as (
+      `with asset as (
         insert into public.design_assets (
           design_id, asset_kind, mime_type, byte_size, data, sha256,
           storage_backend, metadata
@@ -347,7 +347,7 @@ export async function POST(request: Request) {
         where id=$1::uuid
         returning id
       )
-      select id::text as asset_id from generation\`,
+      select id::text as asset_id from generation`,
       [
         designId,
         bytes.length,
@@ -372,7 +372,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       generationId,
       resultAssetId,
-      resultUrl: \`/api/assets/\${resultAssetId}\`,
+      resultUrl: `/api/assets/${resultAssetId}`,
       balance: spend.balance,
       renderCreditsUsed: 1,
       provider: "openai",
