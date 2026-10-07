@@ -13,6 +13,7 @@ export type GrowthCollection = {
   roomCount:number;
   indexable:boolean;
   rooms:GrowthRoomCard[];
+  featuredImageUrl?:string|null;
 };
 
 export type GrowthRoomCard = {
@@ -54,7 +55,16 @@ export async function listGrowthCollections():Promise<GrowthCollection[]>{
     `select
       c.id::text as id,c.slug,c.title,c.eyebrow,c.intro,c.meta_title,c.meta_description,
       c.tag_slug,c.min_rooms_for_index,
-      count(gp.id)::int as room_count
+      count(gp.id)::int as room_count,
+      (
+        select gp2.slug
+        from public.growth_collection_publications gcp2
+        join public.growth_publications gp2
+          on gp2.id=gcp2.publication_id and gp2.status='published'
+        where gcp2.collection_id=c.id
+        order by gcp2.is_featured desc,gcp2.relevance_score desc,gp2.published_at desc
+        limit 1
+      ) as featured_slug
      from public.growth_collections c
      left join public.growth_collection_publications gcp on gcp.collection_id=c.id
      left join public.growth_publications gp
@@ -78,6 +88,9 @@ export async function listGrowthCollections():Promise<GrowthCollection[]>{
     roomCount:row.room_count,
     indexable:row.room_count>=row.min_rooms_for_index,
     rooms:[],
+    featuredImageUrl:row.featured_slug
+      ? `/api/growth/rooms/${encodeURIComponent(row.featured_slug)}/image`
+      : null,
   }));
 }
 
@@ -139,6 +152,7 @@ export async function getGrowthCollection(slug:string):Promise<GrowthCollection|
     roomCount:row.room_count,
     indexable:row.room_count>=row.min_rooms_for_index,
     rooms,
+    featuredImageUrl:rooms[0]?.imageUrl ?? null,
   };
 }
 
@@ -252,7 +266,7 @@ export async function getLiveGrowthProducts(selection:any):Promise<GrowthProduct
       p.id::text as product_id,v.id::text as variant_id,
       p.name as product_name,v.name as variant_name,b.name as brand_name,
       pi.image_url,
-      ro.id::text as offer_id,r.name as retailer_name,ro.price_minor,
+      ro.id::text as offer_id,ro.name as retailer_name,ro.price_minor,
       ro.availability::text as availability
     from requested req
     join public.products p on p.id=req.product_id and p.status='active' and p.is_curated
@@ -284,7 +298,6 @@ export async function getLiveGrowthProducts(selection:any):Promise<GrowthProduct
         ro2.quality_score desc
       limit 1
     ) ro on true
-    left join public.retailers r on r.name=ro.name
     order by req.position`,
     [JSON.stringify(requested)],
   ) as Array<any>;
