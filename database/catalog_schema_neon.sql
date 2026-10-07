@@ -356,3 +356,56 @@ create index catalog_sync_runs_source_started_idx on public.catalog_sync_runs (s
 create index catalog_quality_open_idx on public.catalog_quality_issues (severity, created_at desc) where resolved_at is null;
 
 -- Neon Stage 5: updated_at is maintained explicitly by application/import writes.
+
+
+-- Affiliate-feed quarantine. Feed rows land here before canonical product promotion.
+create table public.catalog_feed_candidates (
+  id uuid primary key default gen_random_uuid(),
+  source_id uuid references public.catalog_sources(id) on delete cascade,
+  retailer_id uuid not null references public.retailers(id) on delete cascade,
+  external_product_id text not null,
+  parent_product_id text,
+  title text not null,
+  description text,
+  brand_name text,
+  product_url text not null,
+  affiliate_url text,
+  image_url text,
+  additional_images jsonb not null default '[]'::jsonb,
+  price_minor integer,
+  compare_at_price_minor integer,
+  currency char(3) not null default 'GBP',
+  availability public.offer_availability not null default 'unknown',
+  stock_quantity integer,
+  merchant_category text,
+  category_path text,
+  colour_text text,
+  material_text text,
+  dimensions_text text,
+  width_mm integer,
+  height_mm integer,
+  depth_mm integer,
+  ean text,
+  mpn text,
+  source_updated_at timestamptz,
+  normalized_category_slug text,
+  inferred_style_slugs text[] not null default '{}',
+  inferred_material_slugs text[] not null default '{}',
+  inferred_colour_slugs text[] not null default '{}',
+  quality_score smallint not null default 0,
+  candidate_status text not null default 'pending',
+  review_notes text,
+  raw jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint catalog_feed_candidates_price_nonnegative check (price_minor is null or price_minor >= 0),
+  constraint catalog_feed_candidates_compare_price_nonnegative check (compare_at_price_minor is null or compare_at_price_minor >= 0),
+  constraint catalog_feed_candidates_quality_score check (quality_score between 0 and 100),
+  constraint catalog_feed_candidates_status check (candidate_status in ('pending','approved','rejected','imported')),
+  unique (retailer_id, external_product_id)
+);
+
+create index catalog_feed_candidates_review_idx
+  on public.catalog_feed_candidates (candidate_status, quality_score desc, normalized_category_slug);
+create index catalog_feed_candidates_source_idx
+  on public.catalog_feed_candidates (source_id, source_updated_at desc);
