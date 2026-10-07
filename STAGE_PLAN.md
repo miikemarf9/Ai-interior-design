@@ -42,7 +42,7 @@ Implemented:
 - Feed/source records + sync-run audit
 - Catalogue quality issues
 - Curation and quality scores
-- 53 production indexes for selection and freshness queries
+- Production indexes for selection, freshness and feed-candidate review
 - Initial living-room taxonomy seeds
 - TypeScript catalogue domain types
 - Catalogue quality-scoring helper
@@ -50,12 +50,13 @@ Implemented:
 - Server-side Neon connection helper
 
 Live production verification:
-- 18 catalogue tables
+- 19 catalogue tables, including affiliate-feed quarantine
 - 18 categories
 - 8 styles
 - 17 materials
 - 17 colours
-- 0 products / offers until curated feeds are ingested
+- 2 configured Awin retailer sources: Wayfair UK and The Range
+- 0 canonical products / offers until reviewed feed candidates are promoted
 
 Live-data target:
 - Start with 500–2,000 curated living-room products.
@@ -90,8 +91,11 @@ Implemented:
 - Approved product set becomes the hard input for Stage 7 rendering
 
 Current live-data dependency:
-- The production catalogue currently has taxonomy but no retailer products/offers.
-- Stage 6 deliberately returns an honest empty state until curated real products are ingested.
+- Awin feed ingestion and promotion code is implemented.
+- Wayfair UK and The Range are configured as the first production retailer sources.
+- Feed rows land in a quarantine table and cannot become customer-visible automatically.
+- The remaining external dependency is an approved Awin publisher/feed URL for at least one retailer.
+- Stage 6 deliberately returns an honest empty state until reviewed real products are promoted.
 
 ## Stage 7 — Image generation + credit enforcement
 ## Stage 8 — Designed-room experience
