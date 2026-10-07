@@ -4,22 +4,30 @@ import { getCatalogDb } from "@/lib/catalog/neon";
 export const runtime = "nodejs";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
+  const ownerKey = new URL(request.url).searchParams.get("ownerKey") || "";
+
+  if (!/^[a-zA-Z0-9_-]{20,100}$/.test(ownerKey)) {
+    return NextResponse.json({ error: "Asset not found." }, { status: 404 });
+  }
+
   const sql = getCatalogDb();
 
   try {
     const rows = await sql.query(
       `select
-        mime_type,
-        external_url,
-        case when data is null then null else encode(data,'base64') end as base64
-       from public.design_assets
-       where id=$1::uuid
+        a.mime_type,
+        a.external_url,
+        case when a.data is null then null else encode(a.data,'base64') end as base64
+       from public.design_assets a
+       join public.room_designs d on d.id = a.design_id
+       where a.id=$1::uuid
+         and d.owner_key=$2
        limit 1`,
-      [id],
+      [id, ownerKey],
     ) as Array<{
       mime_type: string;
       external_url: string | null;
