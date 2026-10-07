@@ -100,6 +100,10 @@ export function BriefExperience() {
       'roomfound-brief-v1',
       JSON.stringify({ brief: nextBrief, source: nextSource, approved: isApproved, updatedAt: new Date().toISOString() }),
     );
+
+    if (!isApproved) {
+      window.localStorage.removeItem('roomfound-product-selection-v1');
+    }
   }
 
   function startEdit(key: keyof DesignBrief) {
