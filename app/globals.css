@@ -885,3 +885,139 @@ p { line-height: 1.65; }
   .renderActionButton { min-width: 0; }
   .renderActionButton .button { width: 100%; min-width: 0; }
 }
+
+
+/* Stage 8 — designed-room payoff */
+.renderResultPayoff { margin-top: 24px; display:flex; align-items:center; justify-content:space-between; gap:24px; padding:24px 0; border-top:1px solid var(--line); }
+.renderResultPayoff > div { display:grid; gap:5px; }
+.renderResultPayoff > div > strong { font-family:var(--display); font-size:24px; font-weight:400; }
+
+.designedRoom { min-height:100vh; background:#11130f; color:white; }
+.designedRoomLoading,.designedRoomMissing { min-height:100vh; width:min(900px,calc(100% - 56px)); margin:auto; display:flex; flex-direction:column; justify-content:center; }
+.designedRoomMissing > p { max-width:600px; color:rgba(255,255,255,.62); }
+
+.roomChrome { min-height:68px; position:sticky; top:0; z-index:40; display:grid; grid-template-columns:1fr minmax(0,1.8fr) 1fr; align-items:center; gap:24px; padding:10px 24px; background:rgba(17,19,15,.88); border-bottom:1px solid rgba(255,255,255,.12); backdrop-filter:blur(18px); }
+.roomBrand { font-family:var(--display); font-size:21px; }
+.roomChromeTitle { min-width:0; text-align:center; }
+.roomChromeTitle span { display:block; color:rgba(255,255,255,.48); font-size:8px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.roomChromeTitle strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--display); font-size:17px; font-weight:400; }
+.roomChromeActions { justify-self:end; display:flex; align-items:center; gap:16px; }
+.roomTotal { display:flex; align-items:baseline; gap:8px; }
+.roomTotal span { color:rgba(255,255,255,.5); font-size:8px; font-weight:700; text-transform:uppercase; }
+.roomTotal strong { font-family:var(--display); font-size:21px; font-weight:400; }
+.roomShareButton { min-height:34px; padding:0 14px; border:1px solid rgba(255,255,255,.24); border-radius:999px; background:transparent; color:white; font-size:10px; font-weight:700; }
+
+.roomHero { height:calc(100svh - 68px); min-height:590px; position:relative; overflow:hidden; background:#292b25; }
+.roomAfterImage,.roomBeforeLayer,.roomBeforeLayer img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.roomBeforeLayer { z-index:2; will-change:clip-path; }
+.roomHeroShade { position:absolute; z-index:3; inset:0; background:linear-gradient(180deg,rgba(12,14,11,.08),rgba(12,14,11,0) 44%,rgba(12,14,11,.62)); pointer-events:none; }
+.roomHeroHeading { position:absolute; z-index:5; left:clamp(24px,5vw,76px); bottom:clamp(72px,9vh,110px); max-width:760px; text-shadow:0 2px 18px rgba(0,0,0,.24); }
+.roomHeroHeading p { margin-bottom:10px; font-size:9px; font-weight:700; letter-spacing:.15em; text-transform:uppercase; }
+.roomHeroHeading h1 { margin-bottom:18px; font-size:clamp(52px,7vw,108px); line-height:.88; }
+.roomHeroHeading > strong { font-family:var(--display); font-size:clamp(26px,3vw,42px); font-weight:400; }
+.roomHeroHeading > strong span { color:rgba(255,255,255,.65); font-family:var(--sans); font-size:10px; text-transform:uppercase; }
+
+.roomHotspot { width:34px; height:34px; position:absolute; z-index:8; transform:translate(-50%,-50%); display:grid; place-items:center; border:1px solid rgba(255,255,255,.78); border-radius:50%; background:rgba(20,23,18,.74); color:white; box-shadow:0 0 0 7px rgba(255,255,255,.08); backdrop-filter:blur(6px); transition:.2s ease; }
+.roomHotspot:hover { transform:translate(-50%,-50%) scale(1.08); }
+.roomHotspot span { font-size:9px; font-weight:700; }
+.roomHotspot.isHiddenByBefore { opacity:0; pointer-events:none; }
+
+.roomImageControls { position:absolute; z-index:9; right:24px; bottom:22px; display:flex; align-items:center; gap:10px; }
+.roomImageControls > button,.beforeAfterControl,.sharedRoomLabel { min-height:37px; display:flex; align-items:center; gap:10px; padding:0 13px; border:1px solid rgba(255,255,255,.2); border-radius:999px; background:rgba(17,19,15,.7); color:white; backdrop-filter:blur(10px); font-size:9px; font-weight:700; }
+.beforeAfterControl input { width:130px; accent-color:white; }
+.roomDivider { position:absolute; z-index:7; top:0; bottom:0; width:1px; background:rgba(255,255,255,.88); pointer-events:none; }
+.roomDivider i { width:28px; height:44px; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); border:1px solid rgba(255,255,255,.8); border-radius:999px; background:rgba(17,19,15,.5); }
+
+.roomStory { display:grid; grid-template-columns:1.08fr .92fr; gap:100px; padding:120px max(32px,6vw); background:var(--ivory); color:var(--ink); }
+.roomStory h2 { margin-bottom:0; font-size:clamp(39px,4.6vw,70px); line-height:1.02; }
+.roomStoryFacts { border-top:1px solid var(--line-strong); }
+.roomStoryFacts > div { min-height:70px; display:grid; grid-template-columns:95px 1fr; gap:22px; align-items:center; border-bottom:1px solid var(--line); }
+.roomStoryFacts span { color:var(--muted); font-size:9px; font-weight:700; text-transform:uppercase; }
+.roomStoryFacts strong { font-size:11px; line-height:1.55; }
+
+.roomProductsSection { padding:110px max(32px,6vw) 125px; background:#ede6da; color:var(--ink); }
+.roomProductsIntro { max-width:720px; margin-bottom:45px; }
+.roomProductsIntro > p:last-child { max-width:600px; color:var(--muted); }
+.roomProductRail { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(220px,310px); gap:14px; overflow-x:auto; padding-bottom:20px; scroll-snap-type:x proximity; }
+.roomProductCard { min-width:0; scroll-snap-align:start; border:0; background:transparent; padding:0; text-align:left; }
+.roomProductImage { aspect-ratio:1/1.08; position:relative; overflow:hidden; background:#ddd4c6; }
+.roomProductImage img { width:100%; height:100%; object-fit:cover; transition:transform .4s ease; }
+.roomProductCard:hover .roomProductImage img { transform:scale(1.02); }
+.roomProductImage > i { position:absolute; left:12px; bottom:12px; width:27px; height:27px; display:grid; place-items:center; border-radius:50%; background:rgba(251,250,247,.92); font-size:8px; font-style:normal; font-weight:700; }
+.roomProductCard > span { display:block; margin-top:14px; color:var(--muted); font-size:8px; font-weight:700; text-transform:uppercase; }
+.roomProductCard > strong { display:block; margin:6px 0 5px; font-family:var(--display); font-size:21px; font-weight:400; line-height:1.05; }
+.roomProductCard > small { font-size:11px; font-weight:700; }
+.roomProductCard > em { display:block; margin-top:8px; color:var(--clay); font-size:9px; font-style:normal; font-weight:700; }
+
+.roomNextActions { display:grid; grid-template-columns:1fr .9fr; gap:100px; padding:110px max(32px,6vw); background:#11130f; }
+.roomNextActions h2 { max-width:680px; margin-bottom:0; }
+.roomNextLinks { border-top:1px solid rgba(255,255,255,.2); }
+.roomNextLinks a { min-height:68px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,.14); }
+.roomNextLinks span { font-size:12px; }
+.roomNextLinks strong { color:rgba(255,255,255,.55); font-size:10px; text-transform:uppercase; }
+.sharedRoomCta { padding:120px max(32px,6vw); background:var(--forest-dark); text-align:center; }
+.sharedRoomCta h2 { max-width:760px; margin:0 auto 34px; }
+
+.productDrawerBackdrop { position:fixed; z-index:100; inset:0; background:rgba(8,10,8,.56); backdrop-filter:blur(4px); }
+.productDrawer { width:min(520px,100%); height:100%; position:absolute; top:0; right:0; overflow-y:auto; padding:22px 26px 50px; background:var(--ivory); color:var(--ink); box-shadow:-30px 0 80px rgba(0,0,0,.18); }
+.productDrawerTop { min-height:42px; display:flex; align-items:center; justify-content:space-between; }
+.productDrawerTop > span { color:var(--muted); font-size:9px; font-weight:700; text-transform:uppercase; }
+.productDrawerTop button { width:34px; height:34px; border:1px solid var(--line); border-radius:50%; background:transparent; font-size:19px; }
+.productDrawerImage { aspect-ratio:1.2/1; display:grid; place-items:center; margin:12px 0 25px; overflow:hidden; background:var(--bone); }
+.productDrawerImage img { width:100%; height:100%; object-fit:cover; }
+.productDrawerIdentity small { color:var(--muted); font-size:9px; font-weight:700; text-transform:uppercase; }
+.productDrawerIdentity h2 { margin:7px 0 10px; font-size:clamp(34px,4vw,50px); }
+.productDrawerIdentity > strong { font-family:var(--display); font-size:28px; font-weight:400; }
+.productDrawerFacts { margin-top:26px; border-top:1px solid var(--line-strong); }
+.productDrawerFacts > div { min-height:49px; display:grid; grid-template-columns:100px 1fr; gap:18px; align-items:center; border-bottom:1px solid var(--line); }
+.productDrawerFacts span { color:var(--muted); font-size:9px; }
+.productDrawerFacts strong { font-size:10px; }
+.productDrawerReason { margin:23px 0; color:var(--muted); font-size:11px; }
+.productRetailerButton { width:100%; }
+.drawerPendingChoice { margin-top:20px; padding:16px; background:#eee8de; }
+.drawerPendingChoice span,.drawerPendingChoice strong { display:block; }
+.drawerPendingChoice span { color:var(--clay); font-size:8px; font-weight:700; text-transform:uppercase; }
+.drawerPendingChoice strong { margin-top:5px; font-size:11px; }
+.drawerPendingChoice button { margin-top:10px; border:0; border-bottom:1px solid var(--line-strong); background:transparent; padding:0 0 3px; font-size:9px; font-weight:700; }
+.drawerSwaps { margin-top:36px; border-top:1px solid var(--line-strong); }
+.drawerSwapHeading { min-height:56px; display:flex; align-items:center; justify-content:space-between; }
+.drawerSwapHeading span { font-family:var(--display); font-size:24px; }
+.drawerSwapHeading small { color:var(--muted); font-size:8px; }
+.drawerAlternative { min-height:78px; display:grid; grid-template-columns:52px 54px 1fr auto; gap:10px; align-items:center; border-top:1px solid var(--line); }
+.drawerAlternative > span { color:var(--muted); font-size:8px; font-weight:700; text-transform:uppercase; }
+.drawerAlternativeImage { width:48px; height:48px; overflow:hidden; background:var(--bone); }
+.drawerAlternativeImage img { width:100%; height:100%; object-fit:cover; }
+.drawerAlternative strong { display:block; margin-bottom:3px; font-size:10px; }
+.drawerAlternative small { color:var(--muted); font-size:8px; }
+.drawerAlternative > button { border:0; border-bottom:1px solid var(--line-strong); background:transparent; padding:2px 0; font-size:9px; font-weight:700; }
+.drawerNoAlternative { grid-column:2/-1; color:var(--muted); font-size:9px; }
+
+.pendingSwapBar { position:fixed; z-index:80; left:50%; bottom:18px; transform:translateX(-50%); width:min(740px,calc(100% - 30px)); min-height:70px; display:flex; align-items:center; justify-content:space-between; gap:24px; padding:12px 13px 12px 20px; border:1px solid rgba(255,255,255,.2); border-radius:16px; background:rgba(22,27,22,.94); color:white; box-shadow:0 18px 60px rgba(0,0,0,.28); backdrop-filter:blur(16px); }
+.pendingSwapBar > div { display:grid; grid-template-columns:auto auto; column-gap:12px; align-items:baseline; }
+.pendingSwapBar span { grid-column:1/-1; color:rgba(255,255,255,.62); font-size:8px; font-weight:700; text-transform:uppercase; }
+.pendingSwapBar strong { font-family:var(--display); font-size:23px; font-weight:400; }
+.pendingSwapBar small { color:rgba(255,255,255,.48); font-size:8px; }
+.pendingSwapBar button { min-height:43px; border:0; border-radius:999px; background:white; padding:0 17px; font-size:10px; font-weight:700; }
+
+@media (max-width:850px) {
+  .roomChrome { grid-template-columns:auto 1fr auto; }
+  .roomChromeTitle { display:none; }
+  .roomStory,.roomNextActions { grid-template-columns:1fr; gap:55px; }
+}
+@media (max-width:620px) {
+  .roomChrome { min-height:60px; padding-inline:14px; }
+  .roomTotal span { display:none; }
+  .roomHero { height:calc(100svh - 60px); min-height:540px; }
+  .roomHeroHeading { left:18px; bottom:92px; max-width:calc(100% - 36px); }
+  .roomImageControls { left:12px; right:12px; bottom:13px; justify-content:space-between; }
+  .beforeAfterControl { flex:1; }
+  .beforeAfterControl input { width:100%; min-width:70px; }
+  .roomStory,.roomProductsSection,.roomNextActions,.sharedRoomCta { padding:78px 20px; }
+  .roomProductRail { grid-auto-columns:72vw; }
+  .productDrawer { padding-inline:20px; }
+  .drawerAlternative { grid-template-columns:45px 48px 1fr; }
+  .drawerAlternative > button { grid-column:3; justify-self:start; margin-bottom:10px; }
+  .pendingSwapBar { flex-direction:column; align-items:stretch; gap:10px; }
+  .pendingSwapBar button { width:100%; }
+  .renderResultPayoff { align-items:flex-start; flex-direction:column; }
+}

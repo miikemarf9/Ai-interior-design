@@ -124,6 +124,24 @@ Pre-public dependency:
 - Stage 10 verified accounts must replace development-session ownership before public paid rendering.
 - Binary assets should move from Postgres bytea to dedicated object storage before meaningful scale.
 ## Stage 8 — Designed-room experience
+Status: implemented; becomes fully populated once real catalogue products and renders exist.
+
+Implemented:
+- Dedicated `/room` emotional-payoff experience
+- Full-viewport finished room image with minimal chrome
+- Persistent whole-room total
+- Draggable before/after comparison for the room owner
+- Interactive product hotspots
+- Product strip beneath the room
+- Product drawer with retailer, availability, dimensions, match score and rationale
+- Cheaper / similar / premium alternatives
+- Swaps staged for the next version instead of falsely changing the current image
+- Separate pending next-version total
+- Updated room generation remains an explicit 1-credit action
+- Explicit per-generation share links
+- Public share view exposes only finished render + safe product/design data
+- Original room photograph and owner key are never exposed through sharing
+- Native Web Share with clipboard fallback
 ## Stage 9 — Affiliate commerce
 ## Stage 10 — Accounts + saved homes
 ## Stage 11 — Verified Room V1

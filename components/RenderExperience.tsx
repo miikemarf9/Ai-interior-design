@@ -293,6 +293,13 @@ export function RenderExperience() {
           <div className="renderResultImage">
             <img src={result.resultUrl} alt="Generated room design" />
           </div>
+          <div className="renderResultPayoff">
+            <div>
+              <span className="microLabel">The payoff</span>
+              <strong>Now experience the room as a complete design.</strong>
+            </div>
+            <Link className="button buttonPrimary" href="/room">Open my designed room</Link>
+          </div>
         </section>
       ) : null}
     </div>

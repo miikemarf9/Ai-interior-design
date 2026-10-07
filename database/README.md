@@ -146,3 +146,10 @@ Each generation logs the provider, exact model, prompt version/text, selected pr
 Credit balance is updated atomically before the provider call. The immutable ledger is the audit trail. Technical/provider failures insert a refund ledger event and restore one credit.
 
 The current asset backend is explicitly marked `postgres_bytea_mvp`. It is suitable for controlled development and early testing, not high-volume image storage.
+
+
+## Stage 8 room sharing
+
+Apply `room_experience_schema_neon.sql` after `render_schema_neon.sql` for a fresh environment.
+
+`room_shares` creates a revocable public token for one successful generation. Shared APIs expose the finished render and safe design/product data only. They do not expose the original room photograph or `owner_key`.

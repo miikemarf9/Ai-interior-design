@@ -45,6 +45,8 @@ The Neon-native schema is `database/catalog_schema_neon.sql`; taxonomy and verif
 - `/brief` — free editable written design brief
 - `/products` — real-product proposal, alternatives and pre-render approval
 - `/render` — metered image generation using the approved room + real products
+- `/room` — immersive designed-room result, hotspots, product drawer and swaps
+- `/room/share/[token]` — explicit public share view of a finished room
 - `/style-guide` — internal design system
 
 ## Product catalogue principle
@@ -75,7 +77,7 @@ See `CREDIT_POLICY.md`.
 
 ## Current stage
 
-Stages 1–6 are implemented.
+Stages 1–8 are implemented.
 
 Stage 5 is deployed to the dedicated Neon project `small-glitter-35907125` in AWS London. Stage 6 is wired to the live catalogue and deliberately refuses to invent products. The remaining pre-render dependency is approved affiliate-feed access so real products can be staged, reviewed and promoted.
 
@@ -116,3 +118,10 @@ Development credits are intentionally disabled by default. Set `RENDER_ALLOW_DEV
 ## Continuous integration
 
 GitHub Actions runs `npm run typecheck` and `npm run build` on pushes to `main` and on pull requests.
+
+
+## Stage 8 designed-room experience
+
+The finished room is separated from the technical generation interface. The owner gets a full-screen room, before/after comparison, product hotspots, persistent room total, a product drawer and staged cheaper/similar/premium swaps.
+
+Public share tokens expose the finished render and safe design/product data only. They never expose the original room photograph or owner key.
