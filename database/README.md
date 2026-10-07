@@ -97,3 +97,34 @@ Import/sync history, quality issues and price history remain backend concerns. A
 ## Feed secrets
 
 Do not store private affiliate/API credentials in `catalog_sources.public_config` or any catalogue row. Put secrets in the deployment environment/secret store and keep only non-secret source configuration in Postgres.
+
+
+## Feed quarantine and promotion
+
+Affiliate feeds never write directly into `products`.
+
+Flow:
+
+```
+authorized Awin feed
+  → normalize + filter
+  → catalog_feed_candidates (pending)
+  → review / curation
+  → canonical brand
+  → product
+  → variant
+  → taxonomy links
+  → retailer offer
+  → product image
+  → price history
+```
+
+The import endpoint caps each category during a run so a very large retailer feed cannot overwhelm the review queue.
+
+Candidates currently need a normalized living-room category, GBP price, current orderable availability and a product image before they are staged as useful records. Promotion has a second quality threshold and remains explicit.
+
+Initial Awin retailer sources configured in production:
+- Wayfair UK — advertiser `72067`
+- The Range — advertiser `5238`
+
+Private Awin feed URLs/API keys are never stored in Neon. `catalog_sources.public_config` contains only the environment-variable name expected by the server.
