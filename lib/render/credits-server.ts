@@ -14,17 +14,17 @@ export async function ensureRenderWallet(ownerKey: string): Promise<CreditStatus
   const sql = getCatalogDb();
 
   await sql.query(
-    \`insert into public.design_credit_wallets (
+    `insert into public.design_credit_wallets (
        owner_key, owner_type, verification_status, balance, free_grant_applied
      )
      values ($1, 'development_session', 'unverified', 0, false)
-     on conflict (owner_key) do nothing\`,
+     on conflict (owner_key) do nothing`,
     [ownerKey],
   );
 
   if (allowDevelopmentWallets()) {
     await sql.query(
-      \`with granted as (
+      `with granted as (
         update public.design_credit_wallets
         set
           balance = balance + $2,
@@ -48,16 +48,16 @@ export async function ensureRenderWallet(ownerKey: string): Promise<CreditStatus
         'signup-grant:' || id::text,
         '{"grant":"development_stage_7"}'::jsonb
       from granted
-      on conflict (idempotency_key) do nothing\`,
+      on conflict (idempotency_key) do nothing`,
       [ownerKey, creditPolicy.freeRenderCredits],
     );
   }
 
   const rows = await sql.query(
-    \`select balance, verification_status
+    `select balance, verification_status
      from public.design_credit_wallets
      where owner_key = $1
-     limit 1\`,
+     limit 1`,
     [ownerKey],
   ) as Array<{
     balance: number;
@@ -84,10 +84,10 @@ export async function spendCreditAndCreateGeneration(args: {
   outputSize: string;
 }) {
   const sql = getCatalogDb();
-  const idempotencyKey = \`render-spend:\${args.ownerKey}:\${args.requestId}\`;
+  const idempotencyKey = `render-spend:${args.ownerKey}:${args.requestId}`;
 
   const existing = await sql.query(
-    \`select
+    `select
        g.id::text as generation_id,
        w.balance,
        g.status
@@ -95,7 +95,7 @@ export async function spendCreditAndCreateGeneration(args: {
      join public.render_generations g on g.id = l.generation_id
      join public.design_credit_wallets w on w.id = l.wallet_id
      where l.idempotency_key = $1
-     limit 1\`,
+     limit 1`,
     [idempotencyKey],
   ) as Array<{ generation_id: string; balance: number; status: string }>;
 
@@ -108,7 +108,7 @@ export async function spendCreditAndCreateGeneration(args: {
     : ["verified"];
 
   const rows = await sql.query(
-    \`with debited as (
+    `with debited as (
       update public.design_credit_wallets
       set balance = balance - 1, updated_at = now()
       where owner_key = $1
@@ -156,7 +156,7 @@ export async function spendCreditAndCreateGeneration(args: {
       d.balance,
       'processing'::text as status
     from generation g
-    join debited d on d.id = g.wallet_id\`,
+    join debited d on d.id = g.wallet_id`,
     [
       args.ownerKey,
       args.designId,
@@ -193,10 +193,10 @@ export async function refundFailedGeneration(args: {
   };
 }) {
   const sql = getCatalogDb();
-  const refundKey = \`render-refund:\${args.generationId}\`;
+  const refundKey = `render-refund:${args.generationId}`;
 
   await sql.query(
-    \`with generation as (
+    `with generation as (
       update public.render_generations
       set
         status = 'failed',
@@ -233,7 +233,7 @@ export async function refundFailedGeneration(args: {
     update public.design_credit_wallets w
     set balance = balance + 1, updated_at = now()
     from refund r
-    where w.id = r.wallet_id\`,
+    where w.id = r.wallet_id`,
     [
       args.generationId,
       refundKey,
