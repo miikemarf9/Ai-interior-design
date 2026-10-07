@@ -51,3 +51,22 @@ export function calculateImageCost(usage?: ImageUsage | null): RenderUsage {
     costUsdMicros,
   };
 }
+
+
+export type GbpCostSnapshot = {
+  costGbpMinor: number | null;
+  usdToGbpRate: number | null;
+};
+
+export function snapshotGbpCost(costUsdMicros: number | null): GbpCostSnapshot {
+  const rate = Number(process.env.AI_COST_USD_TO_GBP_RATE || "");
+  if (costUsdMicros === null || !Number.isFinite(rate) || rate <= 0) {
+    return { costGbpMinor: null, usdToGbpRate: null };
+  }
+
+  // micro-USD -> USD -> GBP -> pence.
+  return {
+    costGbpMinor: Math.max(0, Math.round(costUsdMicros * rate / 10_000)),
+    usdToGbpRate: rate,
+  };
+}
