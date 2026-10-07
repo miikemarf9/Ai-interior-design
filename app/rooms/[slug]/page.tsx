@@ -66,7 +66,7 @@ export default async function PublicRoomPage({
       <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(jsonLd)}} />
 
       <section className="publicRoomHero">
-        <img src={room.imageUrl} alt={room.title} />
+        <img src={room.imageUrl} alt={room.title} fetchPriority="high" decoding="async" />
         <div className="publicRoomShade" />
         <div className="publicRoomHeroCopy">
           <p>Real Roomfound design · {products.length} products</p>
@@ -92,13 +92,14 @@ export default async function PublicRoomPage({
         <div className="publicRoomProductsHeading">
           <p className="eyebrow">Shop this room</p>
           <h2>The actual products.</h2>
+          <p className="affiliateDisclosure">Retailer links may be affiliate links. Roomfound may earn a commission if you buy after following one.</p>
         </div>
 
         <div className="publicProductGrid">
           {products.map((product)=>(
             <article className="publicProduct" key={product.variantId}>
               <div className="publicProductImage">
-                {product.imageUrl ? <img src={product.imageUrl} alt={product.productName} /> : <span>Image unavailable</span>}
+                {product.imageUrl ? <img src={product.imageUrl} alt={product.productName} loading="lazy" decoding="async" /> : <span>Image unavailable</span>}
               </div>
               <small>{product.slot.replaceAll("-"," ")}</small>
               <h3>{product.productName}{product.variantName ? ` · ${product.variantName}` : ""}</h3>
