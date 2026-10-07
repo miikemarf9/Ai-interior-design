@@ -1361,3 +1361,24 @@ button:disabled { cursor:not-allowed; opacity:.58; }
   .legalTable > div { grid-template-columns:1fr; gap:7px; }
   .legalActions { align-items:flex-start; flex-direction:column; }
 }
+
+
+.accountPrivacy {
+  display:grid; grid-template-columns:.75fr 1.25fr; gap:70px; margin:20px 0 70px;
+  padding:34px; border:1px solid var(--line); background:#f5f1e9;
+}
+.accountPrivacy h2 { margin-bottom:12px; font-size:38px; }
+.accountPrivacy > div:first-child > p:last-child { color:var(--muted); font-size:10px; }
+.accountPrivacyControls { display:grid; gap:18px; }
+.privacyToggle { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:24px; padding:16px 0; border-bottom:1px solid var(--line); }
+.privacyToggle strong,.privacyToggle small { display:block; }
+.privacyToggle strong { margin-bottom:5px; font-size:10px; }
+.privacyToggle small { max-width:580px; color:var(--muted); font-size:9px; line-height:1.5; }
+.privacyToggle input { width:22px; height:22px; accent-color:var(--forest); }
+.privacyActionRow { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.privacyActionRow > button { min-height:42px; border:1px solid var(--line-strong); border-radius:999px; background:transparent; padding:0 14px; font-size:9px; font-weight:800; }
+.privacyNotice { margin:0; padding:11px 12px; background:#e7eee7; color:#3f5a45; font-size:9px; }
+
+@media (max-width:780px){
+  .accountPrivacy { grid-template-columns:1fr; gap:28px; padding:24px 18px; }
+}
