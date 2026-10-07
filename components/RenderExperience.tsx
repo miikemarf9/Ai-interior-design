@@ -199,7 +199,7 @@ export function RenderExperience() {
             </div>
           </div>
           <div className="renderOriginalImage">
-            <img src={`/api/assets/${runtime?.roomAssetId}`} alt="Original customer room" />
+            <img src={`/api/assets/${runtime?.roomAssetId}?ownerKey=${encodeURIComponent(runtime?.ownerKey || "")}`} alt="Original customer room" />
             <span>Original photograph</span>
           </div>
         </div>
