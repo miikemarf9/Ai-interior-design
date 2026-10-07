@@ -160,7 +160,9 @@ export async function GET(request:Request){
     ),
     sql.query(
       `select
-        (select count(*) from public.affiliate_programs where status='active')::int as active_affiliate_programs,
+        (select count(*) from public.affiliate_programs
+          where relationship_status is not null
+            and lower(relationship_status) in ('joined','approved','active'))::int as active_affiliate_programs,
         (select count(*) from public.affiliate_clicks)::int as clicks,
         (select count(*) from public.affiliate_conversions)::int as conversions,
         (select count(*) from public.affiliate_conversions where status='approved')::int as approved_conversions`,
