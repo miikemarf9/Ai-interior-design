@@ -15,18 +15,29 @@ npm run dev
 
 ## Environment
 
-The Stage 4 written-design-brief endpoint uses OpenAI's Responses API when a key is configured.
+### AI design brief
 
-Create `.env.local`:
+The Stage 4 written-design-brief endpoint uses OpenAI's Responses API when a key is configured.
 
 ```bash
 OPENAI_API_KEY=your_key_here
 OPENAI_BRIEF_MODEL=gpt-6-luna
 ```
 
-Never commit a real API key to this public repository.
+### Supabase product catalogue
 
-If no API key is present, the brief experience uses a deterministic preview draft so the UX remains testable.
+Stage 5 defines a dedicated Supabase catalogue. Do **not** apply it to the existing Grab&Book project.
+
+Once the separate interior project exists:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+Never expose a Supabase secret/service-role key in browser code.
+
+The catalogue SQL lives in `database/`.
 
 ## Current routes
 
@@ -34,6 +45,16 @@ If no API key is present, the brief experience uses a deterministic preview draf
 - `/design` — 10-step Design My Room consultation
 - `/brief` — free editable written design brief
 - `/style-guide` — internal design system
+
+## Product catalogue principle
+
+**Product ≠ retailer offer.**
+
+The canonical product and variant describe what the item actually is. Retailer offers describe where it can be bought, the current price, affiliate destination, stock and UK delivery state.
+
+This lets the same real product be stocked by several retailers without duplicating its design identity.
+
+See `database/README.md`.
 
 ## Credit principle
 
@@ -53,4 +74,6 @@ See `CREDIT_POLICY.md`.
 
 ## Current stage
 
-Stages 1–4 are implemented. Stage 5 is the UK real-product database.
+Stages 1–5 are architected/implemented in the repository.
+
+Stage 5's database schema is intentionally not deployed into the existing Supabase project. A dedicated interior-commerce Supabase project is required before the schema is applied and populated with live retailer data.
