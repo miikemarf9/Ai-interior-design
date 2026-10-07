@@ -356,7 +356,7 @@ function ProductCard({
             target="_blank"
             rel="sponsored noopener"
           >
-            View retailer
+            View retailer · affiliate
           </a>
         </div>
 
