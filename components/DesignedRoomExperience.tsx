@@ -7,6 +7,7 @@ import type { ProductAlternative, ProductSelection, ProposedProduct, SelectionCa
 import { applyPendingAlternative, hotspotForProduct, type DesignedRoomPayload } from "@/lib/room-experience";
 import { VerifiedRoomPanel } from "@/components/VerifiedRoomPanel";
 import type { RoomVerification } from "@/lib/verification/types";
+import { trackRoomfound } from "@/components/PrivacyAnalytics";
 import { GrowthShareCards } from "@/components/GrowthShareCards";
 
 type ExperiencePayload = DesignedRoomPayload & {
@@ -362,6 +363,7 @@ export function DesignedRoomExperience({
         const payload = await response.json() as { path?: string; error?: string };
         if (!response.ok || !payload.path) throw new Error(payload.error || "Share link failed.");
         shareUrl = `${window.location.origin}${payload.path}`;
+        trackRoomfound("room_shared",{generationId:data.generationId});
       }
 
       if (navigator.share) {
