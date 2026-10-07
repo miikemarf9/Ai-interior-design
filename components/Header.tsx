@@ -6,12 +6,12 @@ export function Header() {
     <header className="siteHeader shellWide">
       <Brand />
       <nav className="desktopNav" aria-label="Primary navigation">
-        <Link href="/style-guide">Our approach</Link>
-        <a href="#accessible-premium">Design direction</a>
-        <a href="#trust-layer">Why it works</a>
+        <a href="#reimagined">How it works</a>
+        <a href="#shop-room">Shop the room</a>
+        <a href="#verified-room">Verified Room</a>
       </nav>
       <div className="headerActions">
-        <Link className="textLink" href="/style-guide">Style guide</Link>
+        <Link className="textLink" href="/style-guide">About</Link>
         <Link className="button buttonPrimary buttonCompact" href="/design">Design my room</Link>
       </div>
     </header>
