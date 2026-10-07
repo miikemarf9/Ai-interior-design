@@ -287,7 +287,7 @@ export function BriefExperience() {
           </p>
         </div>
         {approved ? (
-          <button className="button buttonSecondary briefNextDisabled" type="button" disabled>Product selection comes next</button>
+          <Link className="button buttonLight" href="/products">Select real products · Free</Link>
         ) : (
           <button className="button buttonLight" type="button" onClick={approve}>Approve design direction</button>
         )}
