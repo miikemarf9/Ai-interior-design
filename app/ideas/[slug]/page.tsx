@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { getGrowthCollection, siteUrl } from "@/lib/growth";
 
+export const dynamic="force-dynamic";
+
 function money(minor:number|null){
   if(minor===null) return "Live price unavailable";
   return new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP",maximumFractionDigits:0}).format(minor/100);
