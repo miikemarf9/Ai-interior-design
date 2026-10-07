@@ -1,7 +1,7 @@
 # Controlled build plan
 
 ## Stage 1 — Foundation + visual identity
-Status: current.
+Status: complete.
 
 - Production project scaffold
 - Routes established
@@ -15,15 +15,21 @@ Status: current.
 - Internal style guide
 
 ## Stage 2 — Premium homepage
-- Full visual homepage
-- Large room photography / before-after
-- Product hotspot storytelling
-- Budget communication
-- Existing-furniture messaging
-- Verified Room introduction
-- Final upload CTA
+Status: complete.
+
+- Large photographic hero
+- Before/after transformation interaction
+- Interactive product hotspots
+- Keep / replace storytelling
+- Budget-led design examples
+- Verified Room trust introduction
+- Whole-room price
+- Final Design My Room CTA
+- Responsive/mobile treatment
 
 ## Stage 3 — Design my room intake
+Status: next.
+
 - Photo upload
 - Keep / replace
 - Image-led style selection
