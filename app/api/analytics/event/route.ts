@@ -16,6 +16,7 @@ const allowedEvents=new Set([
   "render_failed",
   "room_shared",
   "retailer_clicked",
+  "web_vital",
 ]);
 
 function cleanText(value:unknown,max:number){
