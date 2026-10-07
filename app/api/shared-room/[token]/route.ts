@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCatalogDb } from "@/lib/catalog/neon";
+import { readStoredVerification } from "@/lib/verification/server";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,8 @@ export async function GET(
       return NextResponse.json({ error: "Shared room not found." }, { status: 404 });
     }
 
+    const verification = await readStoredVerification(row.generation_id);
+
     return NextResponse.json({
       designId: row.design_id,
       generationId: row.generation_id,
@@ -50,6 +53,7 @@ export async function GET(
       resultUrl: `/api/shared-room/${token}/image`,
       generatedAt: row.completed_at,
       shared: true,
+      verification,
     });
   } catch {
     return NextResponse.json({ error: "Shared room not found." }, { status: 404 });

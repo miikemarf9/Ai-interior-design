@@ -207,5 +207,37 @@ Deployment dependencies:
 - `AUTH_FROM_EMAIL` using a verified sender/domain
 - Optional future `GRABANDBOOK_CRM_ENDPOINT` + bridge secret once Grab&Book exposes ingestion
 ## Stage 11 — Verified Room V1
+Status: implemented; visual checks activate when an OpenAI API key and real product/render images are available.
+
+Implemented:
+- Generation-specific verification record
+- Product-level evidence records
+- Real canonical product / exact variant check
+- Current UK retailer-offer check
+- Price freshness check
+- Price verified threshold: <=72 hours
+- Stale-price warning / failure states rather than permanent green ticks
+- Full width / depth / height availability check
+- Supplied room width / length / height evidence
+- V1 product-vs-room envelope check
+- Explicit insufficient-data state when room measurements or product dimensions are missing
+- Vision comparison of finished room vs exact selected product reference images
+- Per-product visual confidence score
+- Visual divergence warning text
+- Visual assessment cached per generation so the same render is not repeatedly charged for vision checks
+- Live price/availability/dimension evidence refreshed when the owner reopens verification
+- Customer-facing Verified Room panel on the designed-room page
+- Product-by-product expandable evidence
+- Shared rooms can display already-recorded verification without triggering new AI work
+- Explicit V1 limitation language for clearances, doorways, wall space and exact scale
+- No guarantee wording and no conversion of missing evidence into a pass
+
+Advanced layer intentionally deferred:
+- circulation and furniture clearances
+- doorway / access-route checking
+- wall-space placement
+- exact layout geometry
+- scale and proportion reconstruction
+- deeper colour/material divergence analysis
 ## Stage 12 — Growth engine
 ## Stage 13 — Beta hardening + launch

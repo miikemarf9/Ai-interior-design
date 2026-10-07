@@ -79,7 +79,7 @@ See `CREDIT_POLICY.md`.
 
 ## Current stage
 
-Stages 1–10 are implemented.
+Stages 1–11 are implemented.
 
 Stage 5 is deployed to the dedicated Neon project `small-glitter-35907125` in AWS London. Stage 6 is wired to the live catalogue and deliberately refuses to invent products. The remaining pre-render dependency is approved affiliate-feed access so real products can be staged, reviewed and promoted.
 
@@ -174,3 +174,23 @@ Account emails use Resend's HTTP API. Configure `APP_URL`, `RESEND_API_KEY` and 
 Roomfound does not duplicate CRM functions. Customer lifecycle events are written to `crm_outbox` and linked to a `grabandbook` CRM provider record. A protected sync worker can forward those events once Grab&Book exposes a dedicated authenticated CRM-ingestion endpoint.
 
 Until then the bridge is deliberately dormant rather than writing directly into Grab&Book's internal tables.
+
+
+## Stage 11 Verified Room V1
+
+Verified Room is evidence attached to the exact generated room, not a generic badge.
+
+V1 checks:
+- real canonical product and exact variant
+- current UK availability
+- price freshness
+- complete product dimensions
+- room measurement availability
+- basic product-vs-room envelope fit
+- visual similarity between the finished render and exact product reference images
+
+Price and availability evidence is refreshed from the live catalogue when the owner reopens the room. The visual comparison is stored against the generation because the rendered pixels and selected product references do not change.
+
+The visual check uses the Responses API with the final render plus exact product reference images and returns an uncertainty-aware confidence assessment. It does not verify physical fit.
+
+V1 explicitly does not claim to verify clearances, doorway access, circulation, wall placement, exact scale/proportion or colour accuracy under all lighting conditions.

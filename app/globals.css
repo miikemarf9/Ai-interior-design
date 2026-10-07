@@ -1138,3 +1138,74 @@ p { line-height: 1.65; }
   .savedRoomGrid { grid-template-columns:1fr; }
   .emptySavedRooms { padding:45px 20px; }
 }
+
+
+/* Stage 11 — Verified Room */
+.verifiedRoomSection { padding:110px max(24px,5vw); background:#eef0e9; color:var(--ink); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.verifiedRoomHeader { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:80px; align-items:end; max-width:1440px; margin:0 auto 55px; }
+.verifiedRoomIntro { max-width:820px; }
+.verifiedRoomEyebrow { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+.verifiedRoomEyebrow .eyebrow { margin:0; }
+.verifiedRoomIntro h2 { margin:0 0 18px; font-size:clamp(48px,6vw,88px); }
+.verifiedRoomIntro > p { max-width:690px; color:var(--muted); font-size:13px; line-height:1.65; }
+.verifyStatus { display:inline-flex; align-items:center; gap:6px; width:max-content; font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+.verifyStatus i { width:20px; height:20px; display:grid; place-items:center; border-radius:50%; font-style:normal; border:1px solid currentColor; }
+.verifyStatus.isCompact span { display:none; }
+.verifyStatus-verified { color:#385944; }
+.verifyStatus-warning { color:#9a6c23; }
+.verifyStatus-failed { color:#925043; }
+.verifyStatus-insufficient { color:#7d817b; }
+.verifiedRoomStamp { padding:22px 0 4px 25px; border-left:1px solid var(--line-strong); }
+.verifiedRoomStamp span,.verifiedRoomStamp small { display:block; color:var(--muted); font-size:8px; }
+.verifiedRoomStamp strong { display:block; margin:7px 0; font-family:var(--display); font-size:26px; font-weight:400; }
+.verifiedRoomSummary { max-width:1440px; margin:0 auto 60px; display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); border-top:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong); }
+.verifiedRoomSummary article { min-height:145px; padding:22px 18px; border-right:1px solid var(--line); }
+.verifiedRoomSummary article:last-child { border-right:0; }
+.verifiedRoomSummary article > span { display:block; color:var(--muted); font-size:8px; font-weight:700; text-transform:uppercase; }
+.verifiedRoomSummary article > strong { min-height:55px; display:flex; align-items:center; margin:8px 0 4px; font-family:var(--display); font-size:38px; font-weight:400; }
+.verifiedRoomSummary article > small { color:var(--muted); font-size:8px; line-height:1.45; }
+.verifiedProductList { max-width:1440px; margin:0 auto; border-top:1px solid var(--line-strong); }
+.verifiedProductListHeading { min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:30px; }
+.verifiedProductListHeading > span { font-family:var(--display); font-size:28px; }
+.verifiedProductListHeading > small { color:var(--muted); font-size:9px; }
+.verifiedProduct { border-top:1px solid var(--line); }
+.verifiedProductRow { width:100%; min-height:80px; display:grid; grid-template-columns:minmax(220px,1fr) auto 28px; align-items:center; gap:28px; border:0; background:transparent; padding:12px 0; text-align:left; color:var(--ink); }
+.verifiedProductName small { display:block; margin-bottom:4px; color:var(--muted); font-size:8px; font-weight:700; text-transform:uppercase; }
+.verifiedProductName strong { font-size:11px; }
+.verifiedProductSignals { display:grid; grid-template-columns:repeat(6,22px); gap:8px; }
+.verifiedProductChevron { font-family:var(--display); font-size:28px; font-weight:300; }
+.verifiedProductDetails { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; margin-bottom:18px; background:var(--line); border:1px solid var(--line); }
+.verificationDetail { min-height:150px; padding:18px; background:#f5f4ee; }
+.verificationDetail > div { display:flex; align-items:flex-start; justify-content:space-between; gap:15px; }
+.verificationDetail > div > span { font-size:9px; font-weight:800; text-transform:uppercase; }
+.verificationDetail p { margin:28px 0 0; color:var(--muted); font-size:9px; line-height:1.6; }
+.verifiedLimitations { max-width:1440px; margin:70px auto 0; display:grid; grid-template-columns:.75fr 1fr; gap:80px; padding-top:35px; border-top:1px solid var(--line-strong); }
+.verifiedLimitations h3 { margin:8px 0 0; font-family:var(--display); font-size:36px; font-weight:400; }
+.verifiedLimitations ul { margin:0; padding:0; list-style:none; }
+.verifiedLimitations li { padding:10px 0; border-bottom:1px solid var(--line); color:var(--muted); font-size:9px; line-height:1.5; }
+.verifiedLimitations li::before { content:"—"; margin-right:9px; color:var(--ink); }
+.verifiedRoomLoading { max-width:1440px; margin:50px auto 0; display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.verifiedRoomLoading span { height:120px; background:rgba(25,35,27,.07); animation:verifyPulse 1.4s ease-in-out infinite alternate; }
+.verifiedRoomLoading span:nth-child(2){animation-delay:.1s}.verifiedRoomLoading span:nth-child(3){animation-delay:.2s}.verifiedRoomLoading span:nth-child(4){animation-delay:.3s}
+@keyframes verifyPulse { to { opacity:.38; } }
+
+@media (max-width:1050px){
+  .verifiedRoomSummary { grid-template-columns:repeat(3,1fr); }
+  .verifiedRoomSummary article:nth-child(3n) { border-right:0; }
+  .verifiedRoomSummary article:nth-child(-n+3) { border-bottom:1px solid var(--line); }
+  .verifiedProductDetails { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:760px){
+  .verifiedRoomSection { padding:78px 20px; }
+  .verifiedRoomHeader,.verifiedLimitations { grid-template-columns:1fr; gap:35px; }
+  .verifiedRoomStamp { padding:18px 0 0; border-left:0; border-top:1px solid var(--line-strong); }
+  .verifiedRoomSummary { grid-template-columns:repeat(2,1fr); }
+  .verifiedRoomSummary article:nth-child(odd) { border-right:1px solid var(--line); }
+  .verifiedRoomSummary article:nth-child(even) { border-right:0; }
+  .verifiedRoomSummary article { border-bottom:1px solid var(--line); }
+  .verifiedProductListHeading { align-items:flex-start; flex-direction:column; padding:18px 0; }
+  .verifiedProductRow { grid-template-columns:1fr 28px; gap:14px; }
+  .verifiedProductSignals { grid-column:1/-1; grid-row:2; }
+  .verifiedProductChevron { grid-column:2; grid-row:1; }
+  .verifiedProductDetails { grid-template-columns:1fr; }
+}
