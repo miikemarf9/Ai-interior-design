@@ -44,6 +44,7 @@ The Neon-native schema is `database/catalog_schema_neon.sql`; taxonomy and verif
 - `/design` — 10-step Design My Room consultation
 - `/brief` — free editable written design brief
 - `/products` — real-product proposal, alternatives and pre-render approval
+- `/render` — metered image generation using the approved room + real products
 - `/style-guide` — internal design system
 
 ## Product catalogue principle
@@ -91,3 +92,22 @@ The first production feed path is Awin.
 - Images and affiliate deep links come from the authorized product feed rather than retailer-page scraping.
 
 See `database/AWIN_FEEDS.md`.
+
+
+## Stage 7 render engine
+
+The render boundary is server-enforced:
+
+- brief creation/revision: 0 credits
+- product selection/swaps: 0 credits
+- successful room generation: 1 credit
+- successful regeneration: 1 credit
+- technical/provider failure: logged and automatically refunded
+
+The render uses OpenAI image editing with the original room as reference image 1 and the approved real products as subsequent image references.
+
+Production logging records provider, model, prompt version, product IDs, token usage, calculated API cost, duration, result asset and failure state.
+
+Original room photos and rendered outputs are private server assets. The current MVP uses Postgres bytea storage because Neon branchable object storage is not available in the London region. Move binary assets to dedicated object storage before meaningful scale.
+
+Development credits are intentionally disabled by default. Set `RENDER_ALLOW_DEVELOPMENT_WALLETS=true` only in a private/local environment. Public render credits should remain blocked until Stage 10 verified accounts are connected.
