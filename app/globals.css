@@ -2354,7 +2354,7 @@ p { line-height: 1.58; }
     gap: 8px; max-width: 520px; margin-left: auto;
   }
   .heroPricesCaption { position: static; grid-column: 1 / -1; justify-self: end; }
-  .heroPrice { position: relative; min-width: 0; padding: 10px 10px 10px 26px; }
+  .heroPrice { position: relative; inset: auto; min-width: 0; padding: 10px 10px 10px 26px; }
 
 }
 @media (max-width: 680px) {
@@ -2367,4 +2367,34 @@ p { line-height: 1.58; }
 }
 @media (prefers-reduced-motion: reduce) {
   .heroPrice, .heroPricesCaption { transition: none; transform: none; }
+}
+
+
+/* One quiet pointer demonstration after the five-second zoom. */
+.heroDemoCursor { display: none; }
+.heroPrice .heroPriceQualities {
+  margin-block: 6px 8px; font-size: 10px; line-height: 1.55; color: #6b5e50;
+}
+.heroPrice strong { font-weight: 700; }
+@media (min-width: 1101px) and (prefers-reduced-motion: no-preference) {
+  .heroPriceSofa { min-width: 182px; --price-delay: 1.3s; }
+  .heroPricePendant { --price-delay: 1.8s; }
+  .heroPriceTable { --price-delay: 2.1s; }
+  .heroDemoCursor {
+    display: block; position: absolute; right: calc(6% + 184px); top: calc(52% + 28px);
+    width: 25px; height: 32px; z-index: 1; opacity: 0;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,.22));
+  }
+  .heroPrices.isVisible .heroDemoCursor {
+    animation: roomfoundPointerDemo 3.4s cubic-bezier(.25,.65,.3,1) both;
+  }
+}
+@keyframes roomfoundPointerDemo {
+  0% { opacity: 0; transform: translate(-95px, 75px); }
+  12% { opacity: 1; transform: translate(-95px, 75px); }
+  38%, 76% { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+@media (max-width: 680px) {
+  .heroPrice .heroPriceQualities { font-size: 8px; margin-block: 4px 6px; }
 }
