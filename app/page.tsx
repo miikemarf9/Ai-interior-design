@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { HomeHeroImage } from '@/components/HomeHeroImage';
+import { HomeHeroCarousel } from '@/components/HomeHeroCarousel';
 import { Header } from '@/components/Header';
 import { BeforeAfter } from '@/components/BeforeAfter';
 import { ProductHotspots } from '@/components/ProductHotspots';
@@ -15,26 +15,7 @@ export default function HomePage() {
       <Header />
       <ScrollMotion />
 
-      <section className="homeHero">
-        <HomeHeroImage />
-        <div className="homeHeroShade" />
-        <div className="homeHeroContent shellWide">
-          <p className="eyebrow eyebrowLight heroLine heroLineOne">Your room · real products · UK prices</p>
-          <h1 className="heroLine heroLineTwo">
-            Design a room<br />
-            you can actually<br />
-            buy.
-          </h1>
-          <p className="heroLine heroLineThree">Upload a photo of your room. We’ll design around your space, style and budget using furniture you can actually buy.</p>
-          <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Design my room</Link>
-        </div>
-        <div className="heroProof shellWide">
-          <span>01 Upload your room</span>
-          <span>02 Set your brief</span>
-          <span>03 See the design</span>
-          <span>04 Shop the room</span>
-        </div>
-      </section>
+      <HomeHeroCarousel />
 
       <RoomfoundPillars />
 
