@@ -2576,3 +2576,37 @@ p { line-height: 1.58; }
     font-size: 16px;
   }
 }
+
+/* The room pair shares one camera transform; only the upper layer is masked. */
+.heroRoomFrame { position: absolute; inset: 0; overflow: hidden; background: #d8cfc2; }
+.heroRoomZoom { object-position: 50% 50%; opacity: 1 !important; }
+.heroRoomPhoto { object-fit: cover; object-position: inherit; }
+.heroRoomReveal {
+  position: absolute; inset: 0; object-position: inherit;
+  clip-path: inset(0 100% 0 0);
+  animation: roomfoundRoomReveal 4s cubic-bezier(.45,0,.2,1) .8s both;
+  will-change: clip-path;
+}
+@keyframes roomfoundRoomReveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+/* Preserve the existing tag design/entrance, anchoring to the actual cropped photo. */
+.heroRoomPrices { inset: 0; display: block; max-width: none; margin: 0; }
+.heroRoomPrices .heroPrice {
+  position: absolute; right: auto; bottom: auto;
+  translate: -50% -50%;
+}
+.heroRoomPrices .heroPrice[hidden] { display: none; }
+.heroRoomPrices .heroPricePendant { --price-delay: 0s; }
+.heroRoomPrices .heroPriceSofa { --price-delay: .2s; }
+.heroRoomPrices .heroPriceTable { --price-delay: .4s; }
+@media (max-width: 680px) {
+  .heroRoomZoom { object-position: 61% 50%; }
+  .heroRoomPrices .heroPrice span { min-width: 84px; max-width: 100px; min-height: 36px; padding: 7px; font-size: 9px; }
+  .heroRoomPrices .heroPrice strong { min-width: 62px; font-size: 15px; padding: 6px 13px 6px 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .heroRoomReveal { animation: none; clip-path: none; will-change: auto; }
+  .heroRoomBefore { visibility: hidden; }
+}
