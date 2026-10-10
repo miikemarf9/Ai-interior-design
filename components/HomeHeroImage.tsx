@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import beforeRoom from '@/public/images/hero-room-before.webp';
 import afterRoom from '@/public/images/hero-room-after.webp';
+import { heroPoint, clearHeroRect, type HeroRect } from '@/lib/hero-layout';
 
 export function HomeHeroImage() {
   const [beforeLoaded, setBeforeLoaded] = useState(false);
@@ -16,7 +17,10 @@ export function HomeHeroImage() {
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReducedMotion(media.matches);
+    const update = () => {
+      setReducedMotion(media.matches);
+      if (media.matches) setPricesReady(true);
+    };
     update();
     media.addEventListener('change', update);
     return () => media.removeEventListener('change', update);
@@ -28,36 +32,77 @@ export function HomeHeroImage() {
     const container = frame.current;
     const labels = prices.current;
     if (!container || !labels) return;
+    const hero = container.closest('.homeHero');
+    let disposed = false;
     const positionLabels = () => {
-      const { width, height } = container.getBoundingClientRect();
-      const mobile = window.matchMedia('(max-width: 680px)').matches;
-      const cover = Math.max(width / afterRoom.width, height / afterRoom.height);
-      const imageWidth = afterRoom.width * cover;
-      const imageHeight = afterRoom.height * cover;
-      const zoom = reducedMotion ? 1 : mobile ? 1.065 : 1.085;
-      const px = reducedMotion ? (mobile ? .61 : .5) : mobile ? .68 : .66;
-      const py = reducedMotion ? .5 : mobile ? .38 : .31;
-      const ox = width * (mobile ? .76 : .72);
-      const oy = height * (mobile ? .30 : .24);
+      const bounds = container.getBoundingClientRect();
+      const { width, height } = bounds;
+      const mobile = width <= 680;
+      const obstacles: HeroRect[] = [];
+      // Reserve the navigation's original space even while it is hidden on scroll.
+      const header = document.querySelector<HTMLElement>('.siteHeader');
+      obstacles.push({ left: 0, top: 0, right: width, bottom: header?.offsetHeight || 94 });
+      hero?.querySelectorAll<HTMLElement>('.homeHeroContent > *, .heroProof').forEach(element => {
+        const rect = element.getBoundingClientRect();
+        obstacles.push({ left: rect.left - bounds.left, right: rect.right - bounds.left,
+          top: rect.top - bounds.top, bottom: rect.bottom - bounds.top });
+      });
+      const place = (element: HTMLElement, candidates: { x: number; y: number }[]) => {
+        element.hidden = false;
+        const w = element.offsetWidth, h = element.offsetHeight;
+        for (const { x, y } of candidates) {
+          const rect = { left: x - w / 2, right: x + w / 2, top: y - h / 2, bottom: y + h / 2 };
+          if (!clearHeroRect(rect, obstacles, width, height)) continue;
+          element.style.left = `${x}px`;
+          element.style.top = `${y}px`;
+          obstacles.push(rect);
+          return { x, y, height: h };
+        }
+        element.hidden = true;
+        return null;
+      };
+      // Reserve a quiet disclosure above the bottom proof bar before placing prices.
+      const caption = labels.querySelector<HTMLElement>('.heroPricesCaption');
+      if (caption) {
+        caption.hidden = false;
+        const proof = hero?.querySelector<HTMLElement>('.heroProof');
+        const bottom = height - (proof?.offsetHeight || 68) - 18 - caption.offsetHeight / 2;
+        place(caption, [
+          { x: width - caption.offsetWidth / 2 - 20, y: bottom },
+          { x: caption.offsetWidth / 2 + 20, y: bottom },
+        ]);
+      }
       for (const label of labels.querySelectorAll<HTMLElement>('[data-image-x]')) {
-        const x = ((width - imageWidth) * px + Number(mobile ? label.dataset.mobileX || label.dataset.imageX : label.dataset.imageX) * imageWidth - ox) * zoom + ox;
-        const y = ((height - imageHeight) * py + Number(label.dataset.imageY) * imageHeight - oy) * zoom + oy;
-        label.style.left = `${x}px`;
-        label.style.top = `${y}px`;
-        // Never float a label over a different product when its anchor is cropped out.
-        label.hidden = x < 0 || x > width || y < 0 || y > height;
+        const x = Number(mobile ? label.dataset.mobileX || label.dataset.imageX : label.dataset.imageX);
+        const y = Number(label.dataset.imageY);
+        // Nearby alternative anchors stay within/beside the same product, never clamp to screen edges.
+        const alternatives = label.classList.contains('heroPricePendant')
+          ? [[x, y], [.66, .18], [.65, .23]]
+          : label.classList.contains('heroPriceSofa')
+            ? [[x, y], [.53, .65], [.54, .70]]
+            : [[x, y], [.65, .74], [.59, .77]];
+        place(label, alternatives.map(([ax, ay]) => heroPoint(width, height, ax, ay, reducedMotion)));
+        if (caption?.hidden) label.hidden = true; // No illustrative price without its disclosure.
       }
     };
     const observer = new ResizeObserver(positionLabels);
     observer.observe(container);
+    hero?.querySelectorAll<HTMLElement>('.homeHeroContent, .heroProof').forEach(element => observer.observe(element));
+    const content = hero?.querySelector('.homeHeroContent');
+    content?.addEventListener('animationend', positionLabels);
+    document.fonts.ready.then(() => { if (!disposed) positionLabels(); });
     positionLabels();
-    return () => observer.disconnect();
-  }, [reducedMotion]);
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      content?.removeEventListener('animationend', positionLabels);
+    };
+  }, [reducedMotion, pricesReady]);
 
   const showPrices = afterLoaded && (pricesReady || reducedMotion);
   return (
     <>
-      <div ref={frame} className={`heroRoomFrame${loaded ? ' isReady' : ''}`}>
+      <div ref={frame} className={`heroRoomFrame${loaded ? ' isReady' : ''}${pricesReady ? ' isComplete' : ''}`}>
         <div
           className="homeHeroImage heroRoomZoom"
           style={{ animationPlayState: loaded ? 'running' : 'paused' }}
@@ -67,14 +112,14 @@ export function HomeHeroImage() {
         >
           <Image
             className="heroRoomPhoto heroRoomBefore"
-            src={beforeRoom} fill sizes="100vw" priority quality={85}
+            src={beforeRoom} fill sizes="100vw" priority quality={85} placeholder="blur"
             alt="Empty British living room with a bay window, ready to transform"
             onLoad={() => setBeforeLoaded(true)}
           />
           <div className="heroRoomReveal" style={{ animationPlayState: loaded ? 'running' : 'paused' }}>
             <Image
               className="heroRoomPhoto"
-              src={afterRoom} fill sizes="100vw" priority quality={85}
+              src={afterRoom} fill sizes="100vw" priority quality={85} placeholder="blur"
               alt="The same room furnished with an ivory sofa, walnut coffee table and terracotta lounge chair"
               onLoad={() => setAfterLoaded(true)}
             />
@@ -82,14 +127,14 @@ export function HomeHeroImage() {
         </div>
       </div>
       <div ref={prices} className={`heroPrices heroRoomPrices${showPrices ? ' isVisible' : ''}`} aria-hidden={!showPrices}>
-        <p className="heroPricesCaption">Example room prices</p>
-        <div className="heroPrice heroPricePendant" data-image-x="0.60" data-image-y="0.19">
+        <p className="heroPricesCaption">Illustrative furniture prices</p>
+        <div className="heroPrice heroPricePendant" data-image-x="0.66" data-image-y="0.15">
           <span>Pendant light</span><strong>£165</strong>
         </div>
         <div className="heroPrice heroPriceSofa" data-image-x="0.49" data-mobile-x="0.56" data-image-y="0.62">
           <span>Three-seater sofa</span><strong>£1,295</strong>
         </div>
-        <div className="heroPrice heroPriceTable" data-image-x="0.62" data-image-y="0.76">
+        <div className="heroPrice heroPriceTable" data-image-x="0.65" data-image-y="0.74">
           <span>Coffee table</span><strong>£245</strong>
         </div>
       </div>

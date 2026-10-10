@@ -2452,7 +2452,7 @@ p { line-height: 1.58; }
 .homeHeroShade {
   z-index: 1;
   background:
-    linear-gradient(270deg, rgba(9,11,9,.62) 0%, rgba(9,11,9,.42) 23%, rgba(9,11,9,.16) 40%, rgba(9,11,9,0) 58%),
+    linear-gradient(270deg, rgba(9,11,9,.42) 0%, rgba(9,11,9,.27) 23%, rgba(9,11,9,.10) 40%, rgba(9,11,9,0) 58%),
     linear-gradient(90deg, rgba(20,24,20,.70) 0%, rgba(20,24,20,.42) 36%, rgba(20,24,20,.10) 58%, rgba(20,24,20,0) 72%),
     linear-gradient(0deg, rgba(15,18,15,.55) 0%, rgba(15,18,15,.18) 30%, transparent 46%);
 }
@@ -2609,4 +2609,45 @@ p { line-height: 1.58; }
 @media (prefers-reduced-motion: reduce) {
   .heroRoomReveal { animation: none; clip-path: none; will-change: auto; }
   .heroRoomBefore { visibility: hidden; }
+}
+
+/* Hero polish: retain the existing tag shapes, with quieter colour and clear disclosure. */
+.heroRoomPrices .heroPrice strong { background: #35483D; color: #fff; }
+.heroRoomPrices .heroPricesCaption {
+  display: block; position: absolute; right: auto; bottom: auto;
+  translate: -50% -50%; margin: 0; width: max-content;
+  padding: 6px 10px; border-radius: 3px;
+  font-size: 11px; font-weight: 400; line-height: 1.4; letter-spacing: .02em;
+  color: #fff; background: rgba(16,18,15,.78);
+  --price-delay: 0s;
+}
+.heroRoomPrices .heroPricesCaption[hidden] { display: none; }
+/* One animation name prevents a fresh zoom when the viewport crosses a breakpoint. */
+.heroRoomZoom {
+  --camera-start: 1.018; --camera-end: 1.085;
+  --camera-from: 50% 50%; --camera-to: 66% 31%;
+  animation-name: roomfoundSharedCamera;
+}
+@keyframes roomfoundSharedCamera {
+  0% { transform: scale(var(--camera-start)); object-position: var(--camera-from); filter: saturate(.92) blur(2px); }
+  14% { filter: saturate(1) blur(0); }
+  100% { transform: scale(var(--camera-end)); object-position: var(--camera-to); filter: saturate(1) blur(0); }
+}
+.heroRoomFrame.isComplete .heroRoomZoom {
+  animation: none; transform: scale(var(--camera-end));
+  object-position: var(--camera-to); filter: saturate(1); will-change: auto;
+}
+.heroRoomFrame.isComplete .heroRoomReveal { animation: none; clip-path: inset(0); will-change: auto; }
+@media (max-width: 680px) {
+  .heroRoomZoom {
+    --camera-start: 1.015; --camera-end: 1.065;
+    --camera-from: 61% 50%; --camera-to: 68% 38%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .heroRoomFrame .heroRoomZoom,
+  .heroRoomFrame.isComplete .heroRoomZoom {
+    animation: none !important; transform: none; object-position: var(--camera-from);
+    filter: none; will-change: auto;
+  }
 }
