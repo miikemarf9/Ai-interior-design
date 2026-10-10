@@ -2627,6 +2627,8 @@ p { line-height: 1.58; }
   --camera-start: 1.018; --camera-end: 1.085;
   --camera-from: 50% 50%; --camera-to: 66% 31%;
   animation-name: roomfoundSharedCamera;
+  /* Keep the furnished reveal moving at the same gentle rate as the before. */
+  animation-timing-function: linear;
 }
 @keyframes roomfoundSharedCamera {
   0% { transform: scale(var(--camera-start)); object-position: var(--camera-from); filter: saturate(.92) blur(2px); }
