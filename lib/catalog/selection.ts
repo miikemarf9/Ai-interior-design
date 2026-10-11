@@ -2,6 +2,8 @@ import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
 import type { Availability, ProductDimensions, UkDeliveryStatus } from "@/lib/catalog/types";
 
 export type SelectionCandidate = {
+  clearedForSelection?: true;
+  commercial?: { packSize: number; unitLabel: string; deliveryBasis: 'per_unit' | 'per_order' | 'unknown'; deliveryDetails: string };
   productId: string;
   variantId: string;
   productName: string;
@@ -43,6 +45,7 @@ export type ProductAlternative = {
 };
 
 export type ProposedProduct = {
+  quantity: number;
   slot: string;
   slotLabel: string;
   budgetMinor: number;
@@ -53,7 +56,11 @@ export type ProposedProduct = {
 };
 
 export type ProductSelection = {
-  version: 1;
+  version: 2;
+  missingItems: string[];
+  productSubtotalMinor: number;
+  knownDeliveryMinor: number;
+  unknownDelivery: boolean;
   createdAt: string;
   totalMinor: number;
   budgetMinor: number;
@@ -146,7 +153,7 @@ function mapped(values: string[], aliases: Record<string, string>) {
 }
 
 function retainedText(intake: IntakeForBrief, brief: DesignBrief) {
-  return [...intake.keep, brief.keep].join(" ").toLowerCase();
+  return [...intake.keep, ...(intake.retainedFurniture || []).map(item => item.label), brief.keep].join(" ").toLowerCase();
 }
 
 function shouldSkipForRetention(slot: SlotDefinition, retained: string) {
@@ -158,7 +165,8 @@ function buildSlots(intake: IntakeForBrief, brief: DesignBrief) {
   const needs = new Set(intake.uses.map(normalize));
 
   const eligible = SLOT_DEFINITIONS.filter((slot) => {
-    if (shouldSkipForRetention(slot, retained)) return false;
+    if (shouldSkipForRetention(slot, retained) || (intake.keep.some(item => normalize(item) === 'lighting') && slot.category.includes('lamps'))) return false;
+    if (intake.change.length && !intake.change.some(item => slot.keywords.some(keyword => normalize(item).includes(keyword)) || (normalize(item) === 'lighting' && slot.category.includes('lamps')))) return false;
 
     const requirementOverride =
       (slot.category === "armchairs" && needs.has("entertaining"))
@@ -200,6 +208,9 @@ function dimensionFit(candidate: SelectionCandidate, intake: IntakeForBrief) {
 
   const width = candidate.dimensions.widthMm;
   const depth = candidate.dimensions.depthMm;
+  const height = candidate.dimensions.heightMm;
+  const ceiling = Number(intake.measurements.height) * 10;
+  if (height && ceiling > 0 && height > ceiling) return { allowed: false, score: 0, reason: 'Too tall for the supplied ceiling height.' };
 
   if (width && width > room.longest) {
     return { allowed: false, score: 0, reason: "Too wide for the supplied room dimensions." };
@@ -209,7 +220,7 @@ function dimensionFit(candidate: SelectionCandidate, intake: IntakeForBrief) {
   }
 
   if (width && depth) {
-    return { allowed: true, score: 12, reason: "Dimensions fit within the supplied room envelope." };
+    return { allowed: true, score: 12, reason: "No room-envelope conflict found; layout, clearance and delivery access are still unverified." };
   }
   return { allowed: true, score: 7, reason: "No obvious fit conflict, but some product dimensions are missing." };
 }
@@ -229,7 +240,10 @@ function scoreCandidate(
   intake: IntakeForBrief,
   slotBudgetMinor: number,
 ) {
-  if (candidate.offer.priceMinor > slotBudgetMinor) return null;
+  if (!Number.isSafeInteger(candidate.offer.priceMinor) || candidate.offer.priceMinor <= 0 || candidate.offer.priceMinor > slotBudgetMinor) return null;
+  const terms = intake.dislikes.toLowerCase();
+  const tags = [...candidate.materials, ...candidate.colours, candidate.brandName || '', candidate.offer.retailerName].map(normalize).filter(Boolean);
+  if (tags.some(tag => terms.includes(tag.replace(/-/g, ' ')))) return null;
 
   const wantedStyles = mapped(intake.styles, STYLE_ALIASES);
   const wantedColours = mapped(intake.colours, COLOUR_ALIASES);
@@ -256,10 +270,10 @@ function scoreCandidate(
 
   const reasons = [
     styleMatches ? `Matches ${styleMatches} selected style signal${styleMatches === 1 ? "" : "s"}.` : "Chosen for overall catalogue fit rather than an exact style tag.",
-    colourMatches ? "Works with the selected colour direction." : "Colour is compatible rather than an exact palette match.",
-    materialMatches ? "Uses one or more preferred materials." : "Material choice does not conflict with the brief.",
+    colourMatches ? "Works with the selected colour direction." : "Check the colour against your preferred palette.",
+    materialMatches ? "Uses one or more preferred materials." : "Check the material against your practical needs.",
     fit.reason,
-    candidate.offer.availability === "in_stock" ? "Currently in stock with UK delivery." : "Currently orderable with UK delivery.",
+    candidate.offer.availability === "in_stock" ? "Listed in stock when last checked; confirm your postcode with the retailer." : "Listed as orderable when last checked; confirm delivery with the retailer.",
   ];
 
   return {
@@ -269,7 +283,11 @@ function scoreCandidate(
 }
 
 function eligibleForSlot(candidate: SelectionCandidate, category: string) {
-  return candidate.category === category
+  const age = Date.now() - Date.parse(candidate.offer.lastCheckedAt);
+  return candidate.clearedForSelection === true && !!candidate.image && !!candidate.variantName && !!candidate.commercial
+    && /^https:\/\//.test(candidate.offer.productUrl)
+    && Number.isFinite(age) && age >= 0 && age <= 7 * 86400000
+    && candidate.category === category
     && ["in_stock", "low_stock", "preorder"].includes(candidate.offer.availability)
     && ["available", "restricted"].includes(candidate.offer.ukDeliveryStatus);
 }
@@ -297,7 +315,7 @@ export function buildProductSelection(
   brief: DesignBrief,
   candidates: SelectionCandidate[],
 ): ProductSelection {
-  const slots = buildSlots(intake, brief);
+  const slots = intake.roomType === 'bedroom' ? [] : buildSlots(intake, brief);
   const usedProducts = new Set<string>();
   const products: ProposedProduct[] = [];
 
@@ -318,9 +336,11 @@ export function buildProductSelection(
 
     const alternatives = (["cheaper", "similar", "premium"] as const)
       .map((kind) => chooseAlternative(kind, selected, ranked))
-      .filter((item): item is ProductAlternative => Boolean(item));
+      .filter((item): item is ProductAlternative => Boolean(item))
+      .filter((item, index, all) => all.findIndex(other => other.candidate.variantId === item.candidate.variantId) === index);
 
     products.push({
+      quantity: 1,
       slot: slot.category,
       slotLabel: slot.label,
       budgetMinor: slot.budgetMinor,
@@ -331,23 +351,69 @@ export function buildProductSelection(
     });
   }
 
-  const totalMinor = products.reduce((sum, product) => sum + product.selected.offer.priceMinor, 0);
   const budgetMinor = intake.budget * 100;
 
   return {
-    version: 1,
+    version: 2,
+    missingItems: [...slots.filter(slot => !products.some(product => product.slot === slot.category)).map(slot => slot.label), ...intake.change.filter(item => !SLOT_DEFINITIONS.some(slot => slot.keywords.some(keyword => normalize(item).includes(keyword)) || (normalize(item) === 'lighting' && slot.category.includes('lamps'))))],
+    ...selectionTotals(products, budgetMinor),
     createdAt: new Date().toISOString(),
-    totalMinor,
     budgetMinor,
-    remainingMinor: budgetMinor - totalMinor,
     catalogueCandidates: candidates.length,
-    retainedItems: intake.keep,
+    retainedItems: [...new Set([...intake.keep, ...(intake.retainedFurniture || []).map(item => item.label)])],
     requirements: intake.uses,
     products,
     notes: [
-      "Only active, curated catalogue products with a live UK offer are eligible.",
+      ...(candidates.some(item => !Number.isSafeInteger(item.offer.priceMinor) || item.offer.priceMinor <= 0) ? ['Products with missing or invalid prices have been left out. Their cost is not included in this total.'] : []),
+      ...(intake.dislikes.trim() ? ['Your exclusions: ' + intake.dislikes + '. Tagged matches are excluded; check any requirements not covered by the product details.'] : []),
+      "Only products cleared for photography display and the real-product pilot are included. Prices and stock can change.",
       "Selection happens before image generation, so changing products costs no design credits.",
-      "A product set is not considered render-ready until every selected item is accepted.",
+      "Room and product dimensions do not verify layout, walkways, assembly or delivery access. Measure before buying.",
     ],
   };
+}
+
+export function selectionTotals(products: ProposedProduct[], budgetMinor: number) {
+  const productSubtotalMinor = products.reduce((sum, product) => sum + product.selected.offer.priceMinor * product.quantity, 0);
+  let knownDeliveryMinor = 0;
+  let unknownDelivery = false;
+  const retailers = new Map<string, ProposedProduct[]>();
+  for (const product of products) retailers.set(product.selected.offer.retailerSlug, [...(retailers.get(product.selected.offer.retailerSlug) || []), product]);
+  for (const group of retailers.values()) {
+    if (group.some(item => item.selected.offer.deliveryPriceMinor === null || !Number.isSafeInteger(item.selected.offer.deliveryPriceMinor) || item.selected.offer.deliveryPriceMinor! < 0 || !item.selected.commercial || item.selected.commercial.deliveryBasis === 'unknown')) {
+      unknownDelivery = true; continue;
+    }
+    if (group.every(item => item.selected.commercial!.deliveryBasis === 'per_unit')) {
+      knownDeliveryMinor += group.reduce((sum, item) => sum + item.selected.offer.deliveryPriceMinor! * item.quantity, 0);
+    } else if (group.every(item => item.selected.commercial!.deliveryBasis === 'per_order' && item.selected.offer.deliveryPriceMinor === group[0].selected.offer.deliveryPriceMinor)) {
+      knownDeliveryMinor += group[0].selected.offer.deliveryPriceMinor!;
+    } else { unknownDelivery = true; }
+  }
+  const totalMinor = productSubtotalMinor + knownDeliveryMinor;
+  return { productSubtotalMinor, knownDeliveryMinor, unknownDelivery, totalMinor, remainingMinor: budgetMinor - totalMinor };
+}
+
+export type SelectionChoice = { slot: string; variantId: string; quantity: number };
+export function applySelectionChoices(selection: ProductSelection, choices: SelectionChoice[]) {
+  if (choices.length > 15 || new Set(choices.map(item => item.slot)).size !== choices.length) throw new Error('Invalid product choices.');
+  for (const choice of choices) {
+    const product = selection.products.find(item => item.slot === choice.slot);
+    if (!product || !Number.isInteger(choice.quantity) || choice.quantity < 1 || choice.quantity > 10) throw new Error('Your saved collection has changed. Please review a fresh recommendation.');
+    if (choice.variantId !== product.selected.variantId) {
+      const alternative = product.alternatives.find(item => item.candidate.variantId === choice.variantId);
+      if (!alternative) throw new Error('A selected variant is no longer available for this brief. Please refresh the collection.');
+      const previous = { kind: alternative.kind, candidate: product.selected, score: product.score, reasons: product.reasons };
+      product.selected = alternative.candidate;
+      product.score = alternative.score;
+      product.reasons = alternative.reasons;
+      product.alternatives = [previous, ...product.alternatives.filter(item => item.candidate.variantId !== choice.variantId)].slice(0, 3);
+    }
+    product.quantity = choice.quantity;
+  }
+  return { ...selection, ...selectionTotals(selection.products, selection.budgetMinor) };
+}
+
+/** Material changes require another review even if two price changes cancel out. */
+export function approvalSnapshot(selection: ProductSelection) {
+  return JSON.stringify({ totalMinor: selection.totalMinor, missingItems: selection.missingItems, unknownDelivery: selection.unknownDelivery, products: selection.products.map(product => ({ slot: product.slot, quantity: product.quantity, variant: product.selected.variantId, offer: product.selected.offer, dimensions: product.selected.dimensions, commercial: product.selected.commercial, image: product.selected.image })) });
 }

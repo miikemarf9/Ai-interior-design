@@ -4,6 +4,7 @@ import type { ProductSelection } from "@/lib/catalog/selection";
 export const RENDER_PROMPT_VERSION = "room-render-v1";
 
 export type RenderProductReference = {
+  quantity?: number;
   productId: string;
   variantId: string;
   offerId: string;
@@ -30,7 +31,7 @@ export function buildRoomRenderPrompt(
 
     return [
       `Reference image ${index + 2}: ${product.categoryName} — ${product.brandName ? `${product.brandName} ` : ""}${product.name}${product.variantName ? ` / ${product.variantName}` : ""}.`,
-      `Use this exact real product design as faithfully as possible. Dimensions W × D × H: ${dimensions}.`,
+      `Quantity: ${product.quantity ?? 1}. Use this exact real product design as faithfully as possible. Dimensions W × D × H: ${dimensions}.`,
     ].join(" ");
   });
 

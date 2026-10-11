@@ -1,3 +1,4 @@
+import { currentClearances } from "@/lib/catalog/clearance";
 import { getCatalogDb } from "@/lib/catalog/neon";
 import type { ProductSelection } from "@/lib/catalog/selection";
 import type { RenderProductReference } from "@/lib/render/prompt";
@@ -7,16 +8,22 @@ type RequestedProduct = {
   product_id: string;
   variant_id: string;
   offer_id: string;
+  image_url: string;
 };
 
 export async function getVerifiedRenderProducts(
   selection: ProductSelection,
 ): Promise<RenderProductReference[]> {
+  const clearances = currentClearances();
+  if (selection.version !== 2 || selection.products.some(item => !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 10 || !clearances.some(entry => entry.productId === item.selected.productId && entry.variantId === item.selected.variantId && entry.offerId === item.selected.offer.id))) {
+    throw new Error('This collection contains products that are not currently cleared for use. Return to product selection.');
+  }
   const requested: RequestedProduct[] = selection.products.map((item, position) => ({
     position,
     product_id: item.selected.productId,
     variant_id: item.selected.variantId,
     offer_id: item.selected.offer.id,
+    image_url: clearances.find(entry => entry.variantId === item.selected.variantId && entry.offerId === item.selected.offer.id)!.imageUrl,
   }));
 
   if (!requested.length) return [];
@@ -29,7 +36,8 @@ export async function getVerifiedRenderProducts(
         position integer,
         product_id uuid,
         variant_id uuid,
-        offer_id uuid
+        offer_id uuid,
+        image_url text
       )
     )
     select
@@ -44,7 +52,7 @@ export async function getVerifiedRenderProducts(
       v.width_mm,
       v.height_mm,
       v.depth_mm,
-      pi.image_url
+      req.image_url
     from requested req
     join public.products p
       on p.id = req.product_id
@@ -72,15 +80,6 @@ export async function getVerifiedRenderProducts(
       on c.id = pc.category_id
       and c.is_active
     left join public.brands b on b.id = p.brand_id
-    join lateral (
-      select image_url
-      from public.product_images image
-      where image.product_id = p.id
-        and (image.variant_id is null or image.variant_id = v.id)
-        and image.image_url is not null
-      order by image.is_primary desc, (image.variant_id = v.id) desc, image.sort_order asc
-      limit 1
-    ) pi on true
     order by req.position asc`,
     [JSON.stringify(requested)],
   ) as Array<{
@@ -114,5 +113,6 @@ export async function getVerifiedRenderProducts(
     heightMm: row.height_mm,
     depthMm: row.depth_mm,
     imageUrl: row.image_url,
+    quantity: selection.products[row.position].quantity * clearances.find(entry => entry.variantId === row.variant_id && entry.offerId === row.offer_id)!.packSize,
   }));
 }

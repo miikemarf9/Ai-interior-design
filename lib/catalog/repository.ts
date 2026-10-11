@@ -1,3 +1,4 @@
+import { currentClearances } from "@/lib/catalog/clearance";
 import { getCatalogDb } from "@/lib/catalog/neon";
 import type { SelectionCandidate } from "@/lib/catalog/selection";
 
@@ -37,6 +38,8 @@ type CandidateRow = {
 };
 
 export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]> {
+  const clearances = currentClearances();
+  if (!clearances.length) return [];
   const sql = getCatalogDb();
 
   const rows = await sql.query(
@@ -116,6 +119,7 @@ export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]
       from public.retailer_offers ro
       join public.retailers r on r.id = ro.retailer_id
       where ro.variant_id = v.id
+        and ro.id = any($2::uuid[])
         and ro.is_active
         and r.status = 'active'
         and r.ships_to_uk
@@ -139,16 +143,22 @@ export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]
     ) image on true
     where p.status = 'active'
       and p.is_curated
+      and v.id = any($1::uuid[])
     order by p.curation_score desc, v.quality_score desc
     limit 1200`,
-    [],
+    [clearances.map(item => item.variantId), clearances.map(item => item.offerId)],
   ) as CandidateRow[];
 
-  return rows.map((row) => ({
+  return rows.flatMap((row) => {
+    const clearance = clearances.find(item => item.productId === row.product_id && item.variantId === row.variant_id && item.offerId === row.offer_id);
+    if (!clearance) return [];
+    return [{
+    clearedForSelection: true as const,
+    commercial: { packSize: clearance.packSize, unitLabel: clearance.unitLabel, deliveryBasis: clearance.deliveryBasis, deliveryDetails: clearance.deliveryDetails },
     productId: row.product_id,
     variantId: row.variant_id,
     productName: row.product_name,
-    variantName: row.variant_name,
+    variantName: clearance.exactVariantName,
     brandName: row.brand_name,
     category: row.category_slug,
     categoryName: row.category_name,
@@ -179,6 +189,7 @@ export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]
       affiliateUrl: row.affiliate_url,
       lastCheckedAt: row.last_checked_at,
     },
-    image: row.image_url ? { url: row.image_url, altText: row.image_alt } : null,
-  }));
+    image: { url: clearance.imageUrl, altText: `${row.product_name} — ${clearance.exactVariantName}` },
+  }];
+  });
 }

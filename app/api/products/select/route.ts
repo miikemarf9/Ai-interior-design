@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
 import { getLiveSelectionCandidates } from "@/lib/catalog/repository";
-import { buildProductSelection } from "@/lib/catalog/selection";
+import { applySelectionChoices, approvalSnapshot, buildProductSelection, type SelectionChoice } from "@/lib/catalog/selection";
 
 export const runtime = "nodejs";
 
@@ -10,6 +10,10 @@ export async function POST(request: Request) {
     const body = await request.json() as {
       intake?: IntakeForBrief;
       brief?: DesignBrief;
+      choices?: SelectionChoice[];
+      approve?: boolean;
+      acknowledgeLimitations?: boolean;
+      expectedSnapshot?: string;
     };
 
     if (body.intake?.roomType === 'bedroom') return NextResponse.json({ error: 'Bedroom briefs can be saved, but bedroom product selection is not available yet.' }, { status: 409 });
@@ -17,12 +21,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Approved intake and brief are required." }, { status: 400 });
     }
 
+    if (!Array.isArray(body.intake.keep) || !Array.isArray(body.intake.change) || !Array.isArray(body.intake.styles) || !Array.isArray(body.intake.uses) || !Array.isArray(body.intake.colours) || !Array.isArray(body.intake.materials) || !body.intake.measurements || typeof body.intake.dislikes !== 'string' || !Number.isFinite(body.intake.budget) || body.intake.budget <= 0 || typeof body.brief.keep !== 'string') {
+      return NextResponse.json({ error: 'Please review your room answers before selecting furniture.' }, { status: 400 });
+    }
     const candidates = await getLiveSelectionCandidates();
-    const selection = buildProductSelection(body.intake, body.brief, candidates);
+    let selection = buildProductSelection(body.intake, body.brief, candidates);
+    try {
+      if (body.choices) selection = applySelectionChoices(selection, body.choices);
+    } catch (error) {
+      return NextResponse.json({ selection, approved: false, warning: error instanceof Error ? error.message : 'Please review the refreshed collection.' });
+    }
+    const approved = Boolean(body.approve && body.acknowledgeLimitations && selection.products.length && selection.remainingMinor >= 0 && body.expectedSnapshot === approvalSnapshot(selection));
+    const warning = body.approve && !approved ? 'Please review the refreshed prices and collection, acknowledge the outstanding checks and approve again.' : undefined;
 
     return NextResponse.json({
       selection,
-      source: "live-neon-catalogue",
+      approved,
+      warning,
+      source: "cleared-catalogue",
       renderCreditsUsed: 0,
     });
   } catch (error) {
