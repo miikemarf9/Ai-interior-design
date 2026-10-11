@@ -14,3 +14,8 @@
 .alternative img { width: 100%; height: 100px; object-fit: contain; background: #f5f2ed; }
 .alternative p { font-size: 13px; }
 @media (max-width: 600px) { .checks { padding: 18px; } .alternative { grid-template-columns: 72px 1fr; gap: 12px; } .alternative img { height: 72px; } }
+
+.productPhoto { align-self: start; aspect-ratio: 1; }
+.productPhoto img { object-fit: contain; padding: 16px; }
+.productMeta span { font-size: 12px; }
+.actions { flex-wrap: wrap; }
