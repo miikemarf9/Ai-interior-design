@@ -2665,7 +2665,7 @@ p { line-height: 1.58; }
 .homeHeroCarousel .heroProof { z-index: 4; }
 .heroSlide:not(.isActive) .heroLine, .homeHeroCarousel.isPaused .heroLine { animation-play-state: paused; }
 .heroBedroomBed { --price-delay: 0s; }
-.heroBedroomWardrobe { --price-delay: .2s; }
+.heroBedroomBedside { --price-delay: .2s; }
 .heroBedroomChest { --price-delay: .4s; }
 .heroRoomPrices .heroBedroomBed span { max-width: 160px; }
 .heroCarouselControls, .homeHero .heroCarouselPause {
