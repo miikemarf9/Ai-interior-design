@@ -1,0 +1,31 @@
+.experience .image { height:auto; min-height:0; overflow:visible; background:#e8e2d8; }
+.experience .after { display:block; position:relative; width:100%; height:auto; object-fit:contain; }
+.experience .before { object-fit:fill; }
+.experience .imageControls { position:relative; inset:auto; display:flex; flex-wrap:wrap; gap:20px; padding:16px 24px; background:#26372d; }
+.experience .divider { height:100%; top:0; pointer-events:none; }
+.frame { position:relative; }
+.experience .pin { width:44px; height:44px; z-index:4; border:0; background:transparent; box-shadow:none; backdrop-filter:none; }
+.pin > span:first-child { width:26px; height:26px; display:grid; place-items:center; border:1px solid white; border-radius:50%; background:#35483d; color:white; box-shadow:0 2px 8px #0005; }
+.pin:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+.tooltip { position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%); min-width:135px; max-width:190px; padding:10px; border-radius:6px; color:white; background:#26372d; opacity:0; visibility:hidden; pointer-events:none; text-align:left; }
+.tooltip strong,.tooltip small { display:block; line-height:1.4; font-size:12px; }
+.pin:hover .tooltip,.pin:focus-visible .tooltip { opacity:1; visibility:visible; }
+.pin[data-edge="left"] .tooltip { left:0; transform:none; }
+.pin[data-edge="right"] .tooltip { left:auto; right:0; transform:none; }
+.pin[data-top="true"] .tooltip { top:calc(100% + 4px); bottom:auto; }
+.notice { padding:14px 24px; color:#35483d; background:#f3f0e9; margin:0; }
+.experience .panelWrap { position:relative; inset:auto; background:none; backdrop-filter:none; padding:24px; }
+.experience .panel { position:relative; inset:auto; width:100%; max-width:900px; height:auto; margin:auto; overflow:visible; box-shadow:none; border:1px solid #d9d5cb; border-radius:12px; }
+.experience .panel > :global(.productDrawerImage) { max-width:320px; margin:0 auto 24px; }
+.editor { margin:24px; padding:20px; border:1px solid #d9d5cb; color:#26372d; background:#f8f6f1; }
+.editor summary { cursor:pointer; font-weight:600; }
+.editor label { display:block; margin:16px 0; }
+.editor select,.editor input[type="number"] { display:block; min-height:44px; padding:8px; border:1px solid #8d938b; max-width:100%; background:white; color:#26372d; }
+.positionImage { position:relative; max-width:850px; cursor:crosshair; }
+.positionImage img { width:100%; height:auto; display:block; }
+.positionImage i { position:absolute; transform:translate(-50%,-50%); width:28px; height:28px; border-radius:50%; background:#35483d; color:white; text-align:center; font-size:22px; pointer-events:none; }
+.coordinates { display:flex; gap:16px; flex-wrap:wrap; }
+@media(max-width:700px){.experience .panelWrap{padding:12px}.editor{margin:12px}.tooltip{max-width:145px}.experience .imageControls{padding:12px}.experience .panel{padding:18px}.notice{padding:12px}}
+@media(prefers-reduced-motion:reduce){.experience .pin{transition:none}}
+
+.experience :global(.roomProductCard[aria-expanded="true"]) { outline:2px solid #35483d; outline-offset:3px; }

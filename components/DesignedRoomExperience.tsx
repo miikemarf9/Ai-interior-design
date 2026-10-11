@@ -1,10 +1,12 @@
 'use client';
 
 import Link from "next/link";
+import { RoomHotspotEditor } from './RoomHotspotEditor';
+import styles from './RoomExploration.module.css';
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { IntakeForBrief } from "@/lib/brief";
 import type { ProductAlternative, ProductSelection, ProposedProduct, SelectionCandidate } from "@/lib/catalog/selection";
-import { applyPendingAlternative, hotspotForProduct, type DesignedRoomPayload } from "@/lib/room-experience";
+import { applyPendingAlternative, type DesignedRoomPayload } from "@/lib/room-experience";
 import { VerifiedRoomPanel } from "@/components/VerifiedRoomPanel";
 import type { RoomVerification } from "@/lib/verification/types";
 import { trackRoomfound } from "@/components/PrivacyAnalytics";
@@ -43,7 +45,7 @@ function money(minor: number) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(minor / 100);
 }
 
@@ -88,10 +90,13 @@ export function DesignedRoomExperience({
   designId?: string;
 }) {
   const shared = Boolean(shareToken);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  function selectProduct(slot: string, button: HTMLButtonElement) { triggerRef.current = button; setLiveOffers([]); setDrawerSlot(slot); }
+  function closeProduct() { setDrawerSlot(null); triggerRef.current?.focus(); }
   const [data, setData] = useState<ExperiencePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [compare, setCompare] = useState(34);
+  const [compare, setCompare] = useState(0);
   const [showPins, setShowPins] = useState(true);
   const [drawerSlot, setDrawerSlot] = useState<string | null>(null);
   const [pendingChanges, setPendingChanges] = useState<Record<string, ProductAlternative>>({});
@@ -223,7 +228,7 @@ export function DesignedRoomExperience({
   useEffect(() => {
     if (!drawerSlot) return;
     const close = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setDrawerSlot(null);
+      if (event.key === "Escape") closeProduct();
     };
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
@@ -264,7 +269,7 @@ export function DesignedRoomExperience({
     fetch(`/api/commerce/offers?variantId=${encodeURIComponent(selected.variantId)}`, { cache: "no-store" })
       .then(async (response) => {
         const payload = await response.json() as { offers?: LiveOffer[] };
-        if (!cancelled) setLiveOffers(response.ok && Array.isArray(payload.offers) ? payload.offers : []);
+        if (!cancelled) setLiveOffers(response.ok && Array.isArray(payload.offers) ? payload.offers.filter(offer => offer.id === selected.offer.id) : []);
       })
       .catch(() => {
         if (!cancelled) setLiveOffers([]);
@@ -417,7 +422,7 @@ export function DesignedRoomExperience({
   const originalAvailable = Boolean(data.originalUrl && !shared);
 
   return (
-    <main className="designedRoom">
+    <main className={`designedRoom ${styles.experience}`}>
       <header className="roomChrome">
         <Link className="roomBrand" href="/">Roomfound</Link>
         <div className="roomChromeTitle">
@@ -430,41 +435,26 @@ export function DesignedRoomExperience({
         </div>
       </header>
 
-      <section className="roomHero" aria-label={title}>
-        <img className="roomAfterImage" src={data.resultUrl} alt={title} fetchPriority="high" decoding="async" />
+      <section className={`roomHero ${styles.image}`} aria-label={title}>
+        <div className={styles.frame}><img className={`roomAfterImage ${styles.after}`} src={data.resultUrl} alt={title} fetchPriority="high" decoding="async" />
 
         {originalAvailable ? (
           <div className="roomBeforeLayer" style={{ clipPath: `inset(0 ${100 - compare}% 0 0)` }}>
-            <img src={data.originalUrl || ""} alt="Room before redesign" decoding="async" />
+            <img className={styles.before} src={data.originalUrl || ""} alt="Room before redesign" decoding="async" />
           </div>
         ) : null}
 
-        <div className="roomHeroShade" />
-
-        <div className="roomHeroHeading">
-          <p>{shared ? "Designed with Roomfound" : "Your finished direction"}</p>
-          <h1>{title}</h1>
-          <strong>{money(data.selection.totalMinor)} <span>total</span></strong>
-        </div>
-
-        {showPins ? data.selection.products.map((product, index) => {
-          const hotspot = hotspotForProduct(product, index);
-          const hiddenBehindBefore = originalAvailable && hotspot.x < compare;
-          return (
-            <button
-              key={product.slot}
-              type="button"
-              className={`roomHotspot ${hiddenBehindBefore ? "isHiddenByBefore" : ""}`}
-              style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
-              onClick={() => setDrawerSlot(product.slot)}
-              aria-label={`View ${product.slotLabel}: ${product.selected.productName}`}
-            >
-              <span>{index + 1}</span>
-            </button>
-          );
+        {showPins ? (data.hotspots || []).filter(h => h.visibility === 'visible' && h.x !== undefined && h.y !== undefined && !(originalAvailable && h.x < compare)).map(hotspot => {
+          const index = data.selection.products.findIndex(p => p.selected.variantId === hotspot.variantId);
+          const product = data.selection.products[index];
+          if (!product) return null;
+          return <button key={hotspot.variantId} type="button" className={`roomHotspot ${styles.pin}`} style={{left:`${hotspot.x}%`,top:`${hotspot.y}%`}} data-edge={hotspot.x!<25?'left':hotspot.x!>75?'right':'middle'} data-top={hotspot.y!<20} onClick={e=>selectProduct(product.slot,e.currentTarget)} aria-controls="room-product-details" aria-expanded={drawerSlot===product.slot} aria-label={`${product.selected.productName}, ${money(product.selected.offer.priceMinor)}. View product details`}>
+            <span>{index+1}</span><span className={styles.tooltip} aria-hidden="true"><strong>{product.selected.productName}</strong><small>{money(product.selected.offer.priceMinor)}</small></span>
+          </button>;
         }) : null}
-
-        <div className="roomImageControls">
+        {originalAvailable ? <div className={`roomDivider ${styles.divider}`} style={{left:`${compare}%`}} aria-hidden="true"><i /></div> : null}
+        </div>
+        <div className={`roomImageControls ${styles.imageControls}`}>
           {originalAvailable ? (
             <div className="beforeAfterControl">
               <span>Before</span>
@@ -484,10 +474,26 @@ export function DesignedRoomExperience({
           </button>
         </div>
 
-        {originalAvailable ? (
-          <div className="roomDivider" style={{ left: `${compare}%` }} aria-hidden="true"><i /></div>
-        ) : null}
       </section>
+
+      <p className={styles.notice}>Markers identify visually checked products, not guaranteed exact matches. Prices are recorded product prices; confirm price, availability and fit with the retailer. Unmarked products remain in the list.</p>
+      {activeProduct ? (
+        <ProductDrawer
+          key={activeProduct.slot}
+          product={activeProduct}
+          pending={pendingChanges[activeProduct.slot]}
+          shared={shared}
+          liveOffers={liveOffers}
+          offersLoading={offersLoading}
+          retailerHref={retailerHref}
+          onViewSwaps={() => trackSwapViews(activeProduct)}
+          onClose={closeProduct}
+          onChoose={(alternative) => chooseAlternative(activeProduct, alternative)}
+          onRemovePending={() => removePending(activeProduct.slot)}
+        />
+      ) : null}
+
+      {!shared && data.resultAssetId ? <RoomHotspotEditor key={data.generationId} generationId={data.generationId} designId={data.designId} resultAssetId={data.resultAssetId} resultUrl={data.resultUrl} ownerKey={data.ownerKey || JSON.parse(localStorage.getItem('roomfound-design-runtime-v1') || '{}').ownerKey || ''} selection={data.selection} hotspots={data.hotspots || []} onSave={hotspots=>setData({...data,hotspots})} /> : null}
 
       <section className="roomStory">
         <div>
@@ -519,7 +525,7 @@ export function DesignedRoomExperience({
           {data.selection.products.map((product, index) => {
             const pending = pendingChanges[product.slot];
             return (
-              <button className="roomProductCard" type="button" key={product.slot} onClick={() => setDrawerSlot(product.slot)}>
+              <button className="roomProductCard" type="button" key={product.slot} onClick={e => selectProduct(product.slot,e.currentTarget)} aria-controls="room-product-details" aria-expanded={drawerSlot===product.slot}>
                 <div className="roomProductImage">
                   {product.selected.image ? (
                     <img src={product.selected.image.url} alt={product.selected.image.altText || product.selected.productName} loading="lazy" decoding="async" />
@@ -529,6 +535,7 @@ export function DesignedRoomExperience({
                 <span>{product.slotLabel}</span>
                 <strong>{candidateName(product.selected)}</strong>
                 <small>{money(product.selected.offer.priceMinor)}</small>
+                <small>{({visible:"Position checked in this image",hidden:"Hidden in this image",missing:"Missing from this image",uncertain:"Position not confirmed"})[data.hotspots?.find(h=>h.variantId===product.selected.variantId)?.visibility || "uncertain"]}</small>
                 {pending ? <em>Next: {pending.candidate.productName}</em> : null}
               </button>
             );
@@ -555,22 +562,6 @@ export function DesignedRoomExperience({
           <Link className="button buttonLight" href="/design">Design my room</Link>
         </section>
       )}
-
-      {activeProduct ? (
-        <ProductDrawer
-          key={activeProduct.slot}
-          product={activeProduct}
-          pending={pendingChanges[activeProduct.slot]}
-          shared={shared}
-          liveOffers={liveOffers}
-          offersLoading={offersLoading}
-          retailerHref={retailerHref}
-          onViewSwaps={() => trackSwapViews(activeProduct)}
-          onClose={() => setDrawerSlot(null)}
-          onChoose={(alternative) => chooseAlternative(activeProduct, alternative)}
-          onRemovePending={() => removePending(activeProduct.slot)}
-        />
-      ) : null}
 
       {changedCount > 0 && pendingSelection && !shared ? (
         <div className="pendingSwapBar">
@@ -615,12 +606,8 @@ function ProductDrawer({
   const displayPrice = liveOffers[0]?.price_minor ?? selected.offer.priceMinor;
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
+    closeButtonRef.current?.focus({preventScroll:true});
+    closeButtonRef.current?.closest("section")?.scrollIntoView({block:"start",behavior:"auto"});
   }, []);
 
   function openSwaps() {
@@ -629,11 +616,9 @@ function ProductDrawer({
   }
 
   return (
-    <div className="productDrawerBackdrop" role="presentation" onMouseDown={onClose}>
+    <section id="room-product-details" className={styles.panelWrap} aria-label="Selected product details">
       <aside
-        className="productDrawer"
-        role="dialog"
-        aria-modal="true"
+        className={`productDrawer ${styles.panel}`}
         aria-label={product.slotLabel}
         onMouseDown={(event) => event.stopPropagation()}
       >
@@ -649,11 +634,12 @@ function ProductDrawer({
         <div className="productDrawerIdentity">
           <small>{selected.brandName || selected.offer.retailerName}</small>
           <h2>{candidateName(selected)}</h2>
-          <strong>{liveOffers.length > 1 ? "From " : ""}{money(displayPrice)}</strong>
+          <strong>{money(displayPrice)} <small>per {selected.commercial?.unitLabel || "item"}</small></strong>
+          <p>Recorded price · {selected.offer.lastCheckedAt ? new Date(selected.offer.lastCheckedAt).toLocaleDateString("en-GB") : "check date unavailable"}. Delivery may be extra.</p>
         </div>
 
         <div className="productDrawerFacts">
-          <div><span>Retailers</span><strong>{offersLoading ? "Checking…" : liveOffers.length ? `${liveOffers.length} live UK offer${liveOffers.length === 1 ? "" : "s"}` : "No live offer right now"}</strong></div>
+          <div><span>Retailers</span><strong>{offersLoading ? "Checking…" : liveOffers.length ? `${liveOffers.length} recorded UK offer${liveOffers.length === 1 ? "" : "s"}` : "No current offer confirmed"}</strong></div>
           <div><span>Availability</span><strong>{liveOffers[0] ? availabilityLabel(liveOffers[0].availability) : availabilityLabel(selected.offer.availability)}</strong></div>
           <div>
             <span>Dimensions</span>
@@ -663,7 +649,7 @@ function ProductDrawer({
                 : "See retailer"}
             </strong>
           </div>
-          <div><span>Room match</span><strong>{product.score}/100</strong></div>
+          <div><span>Quantity</span><strong>{product.quantity} × {selected.commercial?.unitLabel || "item"}</strong></div>
         </div>
 
         <p className="productDrawerReason">{product.reasons.slice(0, 3).join(" ")}</p>
@@ -671,7 +657,7 @@ function ProductDrawer({
         <div className="liveRetailerOffers">
           <div className="liveRetailerHeading">
             <span>Where to buy</span>
-            <small>Current offers · affiliate links may earn Roomfound a commission</small>
+            <small>Recorded offers · affiliate links may earn Roomfound a commission</small>
           </div>
 
           {offersLoading ? <p className="offerLoading">Checking current price and availability…</p> : null}
@@ -696,7 +682,7 @@ function ProductDrawer({
           {!offersLoading && liveOffers.length === 0 ? (
             <div className="noLiveRetailer">
               <strong>The product stays in your design.</strong>
-              <p>Its retailer offer is currently unavailable. Roomfound will show another retailer here when the same variant has a live UK offer.</p>
+              <p>Its retailer offer is currently unavailable. Roomfound will show another retailer here when the same variant has a recorded UK offer.</p>
             </div>
           ) : null}
         </div>
@@ -742,6 +728,6 @@ function ProductDrawer({
           </div>
         ) : null}
       </aside>
-    </div>
+    </section>
   );
 }

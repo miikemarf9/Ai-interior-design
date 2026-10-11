@@ -1,8 +1,11 @@
-import type { ProductSelection, ProposedProduct, ProductAlternative } from "@/lib/catalog/selection";
+import type { RoomHotspot } from '@/lib/room-hotspots';
+import type { ProductSelection, ProductAlternative } from "@/lib/catalog/selection";
 
 export type DesignedRoomPayload = {
   designId: string;
   generationId: string;
+  resultAssetId?: string;
+  hotspots?: RoomHotspot[];
   brief: {
     title: string;
     direction: string;
@@ -16,43 +19,6 @@ export type DesignedRoomPayload = {
   generatedAt?: string | null;
   shared?: boolean;
 };
-
-export type ProductHotspot = {
-  x: number;
-  y: number;
-};
-
-const slotHotspots: Record<string, ProductHotspot> = {
-  sofas: { x: 50, y: 66 },
-  armchairs: { x: 22, y: 62 },
-  "coffee-tables": { x: 50, y: 76 },
-  "side-tables": { x: 76, y: 68 },
-  rugs: { x: 52, y: 84 },
-  "floor-lamps": { x: 16, y: 38 },
-  "table-lamps": { x: 80, y: 46 },
-  "storage-cabinets": { x: 83, y: 53 },
-  "tv-units": { x: 78, y: 58 },
-  shelving: { x: 87, y: 42 },
-  mirrors: { x: 71, y: 31 },
-  artwork: { x: 58, y: 28 },
-  cushions: { x: 43, y: 61 },
-  throws: { x: 38, y: 64 },
-};
-
-export function hotspotForProduct(product: ProposedProduct, index: number): ProductHotspot {
-  const known = slotHotspots[product.slot];
-  if (known) return known;
-
-  const fallback = [
-    { x: 18, y: 28 },
-    { x: 34, y: 72 },
-    { x: 51, y: 42 },
-    { x: 66, y: 73 },
-    { x: 82, y: 30 },
-  ];
-
-  return fallback[index % fallback.length];
-}
 
 export function applyPendingAlternative(
   selection: ProductSelection,
@@ -71,7 +37,7 @@ export function applyPendingAlternative(
   );
 
   const totalMinor = products.reduce(
-    (sum, product) => sum + product.selected.offer.priceMinor,
+    (sum, product) => sum + product.selected.offer.priceMinor * (product.quantity || 1),
     0,
   );
 

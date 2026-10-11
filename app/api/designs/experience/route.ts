@@ -1,3 +1,5 @@
+import { clearedImageSelection } from '@/lib/room-exploration-server';
+import { checkedHotspots } from '@/lib/room-hotspots';
 import { NextResponse } from "next/server";
 import { getCatalogDb } from "@/lib/catalog/neon";
 
@@ -29,6 +31,7 @@ export async function GET(request: Request) {
       d.brief,
       d.product_selection,
       d.original_room_asset_id::text as original_room_asset_id,
+      g.metadata,
       g.id::text as generation_id,
       g.result_asset_id::text as result_asset_id,
       g.completed_at,
@@ -36,7 +39,7 @@ export async function GET(request: Request) {
       g.prompt_version
     from public.room_designs d
     join lateral (
-      select id, result_asset_id, completed_at, model, prompt_version
+      select id, metadata, result_asset_id, completed_at, model, prompt_version
       from public.render_generations
       where design_id = d.id
         and status = 'succeeded'
@@ -54,6 +57,7 @@ export async function GET(request: Request) {
     brief: unknown;
     product_selection: unknown;
     original_room_asset_id: string | null;
+    metadata: any;
     generation_id: string;
     result_asset_id: string;
     completed_at: string | null;
@@ -66,14 +70,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "No completed room design is available yet." }, { status: 404 });
   }
 
+  const snapshot = row.metadata?.snapshot;
+  row.original_room_asset_id = snapshot?.roomAssetId || row.original_room_asset_id;
+  const selection = clearedImageSelection(row.metadata);
+  if (!selection) return NextResponse.json({error:'This image needs a cleared, saved product collection before it can be explored.'},{status:409});
+  row.product_selection = selection;
+  row.brief = snapshot?.brief || row.brief;
   const owner = encodeURIComponent(ownerKey);
 
   return NextResponse.json({
     designId: row.design_id,
     generationId: row.generation_id,
-    intake: row.intake,
+    intake: snapshot?.intake || row.intake,
     brief: row.brief,
     selection: row.product_selection,
+    resultAssetId: row.result_asset_id,
+    hotspots: checkedHotspots(row.metadata?.hotspots,row.generation_id,row.result_asset_id,row.product_selection as any),
     originalUrl: row.original_room_asset_id
       ? `/api/assets/${row.original_room_asset_id}?ownerKey=${owner}`
       : null,
