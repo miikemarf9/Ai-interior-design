@@ -1,3 +1,4 @@
+import { currentClearances } from "@/lib/catalog/clearance";
 import { getCatalogDb } from "@/lib/catalog/neon";
 import type { ProductSelection } from "@/lib/catalog/selection";
 import type { IntakeForBrief } from "@/lib/brief";
@@ -7,7 +8,7 @@ import type {
   VerificationStatus,
 } from "@/lib/verification/types";
 
-export const VERIFICATION_VERSION = "verified-room-v1";
+export const VERIFICATION_VERSION = "room-check-v2";
 const PRICE_VERIFIED_HOURS = 72;
 const PRICE_STALE_HOURS = 168;
 
@@ -70,10 +71,10 @@ function roomMeasurementAssessment(intake: IntakeForBrief | null) {
   const room = roomMeasurements(intake);
   if (room.widthMm && room.lengthMm) {
     return {
-      status: "verified" as const,
+      status: "warning" as const,
       note: room.heightMm
-        ? "Room width, length and ceiling height were supplied."
-        : "Room width and length were supplied. Ceiling height is not required for the V1 floor-space check.",
+        ? "Customer-supplied room dimensions; measurement accuracy and fit are not independently verified."
+        : "Customer-supplied width and length; ceiling height, measurement accuracy and fit remain unverified.",
       ...room,
     };
   }
@@ -230,8 +231,8 @@ function roomFitAssessment(
   }
 
   return {
-    status: "verified" as VerificationStatus,
-    note: "The product fits inside the supplied room envelope. V1 does not yet verify placement clearances, doors or circulation space.",
+    status: "warning" as VerificationStatus,
+    note: "No room-envelope conflict found. Placement, walkways, retained furniture and delivery access remain unverified.",
   };
 }
 
@@ -293,7 +294,7 @@ function parseVisualAssessments(text: string, count: number): VisualAssessment[]
 
       let status: VerificationStatus = "insufficient";
       if (confidence !== null) {
-        status = confidence >= 85 ? "verified" : confidence >= 60 ? "warning" : "failed";
+        status = confidence >= 60 ? "warning" : "failed";
       }
 
       return [{ position, confidence, status, note }];
@@ -443,8 +444,8 @@ export async function buildVerifiedRoom(args: {
   const rows = await sql.query(
     `select
       d.id::text as design_id,
-      d.intake,
-      d.product_selection as selection,
+      coalesce(g.metadata->'snapshot'->'intake',d.intake) as intake,
+      coalesce(g.metadata->'snapshot'->'selection',d.product_selection) as selection,
       g.id::text as generation_id,
       a.mime_type as result_mime_type,
       case when a.data is null then null else encode(a.data,'base64') end as result_base64
@@ -465,6 +466,8 @@ export async function buildVerifiedRoom(args: {
     throw new Error("Verification requires a completed room with selected products.");
   }
 
+  const clearances = currentClearances();
+  if (design.selection.products.some(item => !clearances.some(entry => entry.variantId === item.selected.variantId && entry.offerId === item.selected.offer.id))) throw new Error('Reference-image clearance needs checking before automated comparison.');
   const requested = design.selection.products.map((item, position) => ({
     position,
     slot: item.slot,
@@ -543,6 +546,7 @@ export async function buildVerifiedRoom(args: {
     [JSON.stringify(requested)],
   ) as CatalogueEvidence[];
 
+  for (const row of evidence) row.image_url = clearances.find(entry => entry.variantId === row.variant_id && entry.offerId === row.selected_offer_id)?.imageUrl || null;
   const room = roomMeasurementAssessment(design.intake);
 
   const existingVisual = await sql.query(

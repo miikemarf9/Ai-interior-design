@@ -51,7 +51,7 @@ export function VerifiedRoomPanel({
     return (
       <section className="verifiedRoomSection">
         <div className="verifiedRoomIntro">
-          <p className="eyebrow">Verified Room</p>
+          <p className="eyebrow">Room checks</p>
           <h2>Checking the room against reality.</h2>
           <p>We are checking the products, retailer data, dimensions, your measurements and the finished visual.</p>
         </div>
@@ -66,7 +66,7 @@ export function VerifiedRoomPanel({
     return (
       <section className="verifiedRoomSection">
         <div className="verifiedRoomIntro">
-          <p className="eyebrow">Verified Room</p>
+          <p className="eyebrow">Room checks</p>
           <h2>We will show what we can prove.</h2>
           <p>Verification evidence is not available for this generation yet. Roomfound does not convert missing evidence into a green tick.</p>
         </div>
@@ -77,9 +77,9 @@ export function VerifiedRoomPanel({
   const total=verification.products.length;
   const visualAverage=averageVisual(verification.products);
   const summary=verification.overallStatus==="verified"
-    ? "Every V1 check has enough evidence to pass."
+    ? "Catalogue checks have evidence. Visual identity and physical fit still require review."
     : verification.overallStatus==="warning"
-      ? "The room is usable, but at least one check needs attention before purchase."
+      ? "At least one check needs attention. Review the source room and product references before making a purchase."
       : "Some checks do not have enough evidence yet.";
 
   return (
@@ -87,7 +87,7 @@ export function VerifiedRoomPanel({
       <div className="verifiedRoomHeader">
         <div className="verifiedRoomIntro">
           <div className="verifiedRoomEyebrow">
-            <p className="eyebrow">Verified Room</p>
+            <p className="eyebrow">Room checks</p>
             <Status status={verification.overallStatus} />
           </div>
           <h2>Trust the evidence, not the render.</h2>
@@ -109,7 +109,7 @@ export function VerifiedRoomPanel({
         <article>
           <span>UK availability</span>
           <strong>{countVerified(verification.products,"ukAvailabilityStatus")} / {total}</strong>
-          <small>Live retailer evidence</small>
+          <small>Recorded retailer evidence</small>
         </article>
         <article>
           <span>Price checked</span>
@@ -124,10 +124,10 @@ export function VerifiedRoomPanel({
         <article>
           <span>Room measurements</span>
           <strong><Status status={verification.roomMeasurementStatus} compact /></strong>
-          <small>{verification.roomMeasurementStatus==="verified" ? "Basic room envelope available" : "More measurements needed"}</small>
+          <small>{verification.roomMeasurementStatus==="verified" ? "Basic room envelope available" : "Fit remains unverified"}</small>
         </article>
         <article>
-          <span>Visual match</span>
+          <span>AI visual assessment</span>
           <strong>{visualAverage === null ? "—" : `${visualAverage}%`}</strong>
           <small>AI confidence, never a guarantee</small>
         </article>
@@ -170,7 +170,7 @@ export function VerifiedRoomPanel({
                 <VerificationDetail label="Dimensions available" status={product.dimensionsStatus} note={product.dimensionsNote} />
                 <VerificationDetail label="Room measurements checked" status={product.roomFitStatus} note={product.roomFitNote} />
                 <VerificationDetail
-                  label="Visual match"
+                  label="AI visual assessment"
                   status={product.visualStatus}
                   note={product.visualConfidence === null
                     ? product.visualNote
@@ -184,7 +184,7 @@ export function VerifiedRoomPanel({
 
       <div className="verifiedLimitations">
         <div>
-          <span className="microLabel">What Verified Room V1 does not claim</span>
+          <span className="microLabel">What Room checks V1 does not claim</span>
           <h3>Uncertainty is part of the answer.</h3>
         </div>
         <ul>

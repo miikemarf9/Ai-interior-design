@@ -1,0 +1,16 @@
+.comparison { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,320px),1fr)); gap: 24px; margin: 40px 0; }
+.comparison figure { margin: 0; }
+.comparison img { display: block; width: 100%; height: auto; }
+.comparison figcaption { font-size: 14px; padding: 10px 0; }
+.panel { margin: 32px 0; padding: 24px; background: #eee9e0; color: #293b31; border-radius: 8px; }
+.panel h2 { font-size: 30px; }
+.panel h3 { font-size: 22px; }
+.panel p, .panel li { font-size: 15px; line-height: 1.6; }
+.panel label { display: grid; gap: 8px; margin: 14px 0; font-size: 14px; }
+.panel textarea, .panel select { width: 100%; min-height: 44px; padding: 10px; border: 1px solid #969e96; background: white; color: #293b31; font: inherit; border-radius: 4px; }
+.products { display: grid; gap: 24px; }
+.products article { display: grid; grid-template-columns: 150px 1fr; gap: 20px; border-bottom: 1px solid #c9cec8; padding-bottom: 20px; }
+.products img { width: 100%; height: 150px; object-fit: contain; }
+.checks { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,250px),1fr)); gap: 20px; }
+.checks fieldset { border: 1px solid #969e96; padding: 12px; }
+@media(max-width:600px) { .panel { padding: 18px; } .products article { grid-template-columns: 1fr; } .products img { max-width: 180px; } }

@@ -1,15 +1,20 @@
+import sharp from "sharp";
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getCurrentAccount } from "@/lib/auth";
 import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
 import type { ProductSelection } from "@/lib/catalog/selection";
 import { getCatalogDb } from "@/lib/catalog/neon";
-import { calculateImageCost, snapshotGbpCost } from "@/lib/render/cost";
+import { calculateImageCost, snapshotGbpCost, IMAGE_COST_BASIS } from "@/lib/render/cost";
 import {
   ensureRenderWallet,
   refundFailedGeneration,
   spendCreditAndCreateGeneration,
 } from "@/lib/render/credits-server";
+import { currentClearances } from '@/lib/catalog/clearance';
+import { getLiveSelectionCandidates } from '@/lib/catalog/repository';
+import { applySelectionChoices, approvalSnapshot, buildProductSelection } from '@/lib/catalog/selection';
+import { MAX_CORRECTIONS, validPlacements, type Placement } from '@/lib/render/pilot';
 import { getVerifiedRenderProducts } from "@/lib/render/products";
 import {
   buildRoomRenderPrompt,
@@ -26,6 +31,9 @@ type RenderRequest = {
   intake?: IntakeForBrief;
   brief?: DesignBrief;
   selection?: ProductSelection;
+  placements?: Placement[];
+  parentGenerationId?: string;
+  correction?: string;
 };
 
 type OpenAIImageResponse = {
@@ -149,7 +157,10 @@ async function existingGeneration(generationId: string) {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json() as RenderRequest;
+  let body: RenderRequest;
+  try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid render request.' }, { status: 400 }); }
+  if (!body || typeof body !== 'object') return NextResponse.json({ error: 'Invalid render request.' }, { status: 400 });
+  if (!currentClearances().length) return NextResponse.json({ error: 'The living-room pilot needs a cleared furniture collection. No image was generated or credit used.', code: 'PILOT_CATALOGUE_NOT_READY' }, { status: 409 });
   if (body.intake?.roomType === 'bedroom') return NextResponse.json({ error: 'Bedroom image generation is not available yet. Your brief remains saved.' }, { status: 409 });
   const account = await getCurrentAccount();
   const ownerKey = account?.ownerKey || body.ownerKey || "";
@@ -167,26 +178,34 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "The approved room design is incomplete." }, { status: 400 });
   }
 
-  if (!body.selection.products.length) {
+  if (!Array.isArray(body.selection.products) || !body.selection.products.length) {
     return NextResponse.json({ error: "Approve at least one real product before rendering." }, { status: 409 });
   }
 
-  if (body.selection.products.length > 15) {
-    return NextResponse.json({ error: "This render contains too many product references." }, { status: 409 });
+  if (body.selection.products.length > 6) {
+    return NextResponse.json({ error: "The first living-room pilot is limited to six product references." }, { status: 409 });
   }
 
+  if (!validPlacements(body.placements, body.selection)) return NextResponse.json({ error: 'Confirm an intended placement for every selected variant.' }, { status: 400 });
+  if (body.parentGenerationId && (!validUuid(body.parentGenerationId) || typeof body.correction !== 'string' || body.correction.trim().length < 10 || body.correction.length > 2000)) return NextResponse.json({ error: 'Identify the failed result and describe the correction (10–2,000 characters).' }, { status: 400 });
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "Image generation is not configured yet." }, { status: 503 });
   }
 
   let generationId: string | null = null;
+  let correctionAttempt = 0;
+  let previousResultUrl: string | null = null;
   const startedAt = Date.now();
   let providerRequestId: string | null = null;
   let measuredUsage = calculateImageCost(null);
   let gbpCost = snapshotGbpCost(null);
 
   try {
+    const candidates = await getLiveSelectionCandidates();
+    const refreshed = applySelectionChoices(buildProductSelection(body.intake, body.brief, candidates), body.selection.products.map(item => ({ slot: item.slot, variantId: item.selected.variantId, quantity: item.quantity })));
+    if (approvalSnapshot(refreshed) !== approvalSnapshot(body.selection)) return NextResponse.json({ error: 'The approved collection has changed. Review the products again before generating.', code: 'SELECTION_CHANGED' }, { status: 409 });
+    body.selection = refreshed;
     const roomAsset = await getRoomAsset(designId, ownerKey);
     if (!roomAsset) {
       return NextResponse.json({
@@ -194,7 +213,28 @@ export async function POST(request: Request) {
       }, { status: 409 });
     }
 
+    if (!roomAsset.base64) return NextResponse.json({ error: 'Upload the actual room photograph for the pilot rather than using an example-room link.' }, { status: 409 });
+    const imageMetadata = await sharp(Buffer.from(roomAsset.base64, 'base64')).metadata();
+    const rotated = (imageMetadata.orientation || 1) >= 5;
+    const sourceWidth = (rotated ? imageMetadata.height : imageMetadata.width) || 0;
+    const sourceHeight = (rotated ? imageMetadata.width : imageMetadata.height) || 0;
+    if (!sourceWidth || !sourceHeight || sourceWidth / sourceHeight > 3 || sourceHeight / sourceWidth > 3) return NextResponse.json({ error: 'Use a room photograph with an aspect ratio between 1:3 and 3:1.' }, { status: 400 });
+    const scale = 1536 / Math.max(sourceWidth, sourceHeight);
+    const outputSize = `${Math.round(sourceWidth * scale / 16) * 16}x${Math.round(sourceHeight * scale / 16) * 16}`;
     const products = await getVerifiedRenderProducts(body.selection);
+    if (body.parentGenerationId) {
+      const priorRows = await getCatalogDb().query(`select g.metadata,a.mime_type,encode(a.data,'base64') as base64 from public.render_generations g join public.design_assets a on a.id=g.result_asset_id where g.id=$1::uuid and g.design_id=$2::uuid and g.status='succeeded' and g.prompt_version=$3`, [body.parentGenerationId, designId, RENDER_PROMPT_VERSION]) as any[];
+      const prior = priorRows[0];
+      if (!prior?.base64 || prior.metadata?.humanReview?.outcome !== 'needs_correction') return NextResponse.json({ error: 'Save a review identifying the failed or uncertain checks before requesting a correction.' }, { status: 409 });
+      correctionAttempt = Number(prior.metadata.correctionAttempt || 0) + 1;
+      if (correctionAttempt > MAX_CORRECTIONS) return NextResponse.json({ error: 'Two corrections have been attempted. Stop for manual review before spending more credits.' }, { status: 409 });
+      if (JSON.stringify(prior.metadata.snapshot) !== JSON.stringify({ intake: body.intake, brief: body.brief, selection: body.selection, placements: body.placements, roomAssetId: roomAsset.asset_id })) {
+        // createdAt is regenerated during catalogue checks; compare substantive inputs instead.
+        const snapshot = prior.metadata.snapshot;
+        if (!snapshot || snapshot.roomAssetId !== roomAsset.asset_id || approvalSnapshot(snapshot.selection) !== approvalSnapshot(body.selection) || JSON.stringify([snapshot.intake, snapshot.brief, snapshot.placements]) !== JSON.stringify([body.intake, body.brief, body.placements])) return NextResponse.json({ error: 'The room, brief, products or placements changed. Return to the brief and start a new approved design.' }, { status: 409 });
+      }
+      previousResultUrl = `data:${prior.mime_type};base64,${prior.base64}`;
+    }
     if (!products.length) {
       return NextResponse.json({
         error: "The selected products are not currently render-ready.",
@@ -231,8 +271,11 @@ export async function POST(request: Request) {
 
     const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2.5-sunburst-2026-09-08";
     const quality = process.env.OPENAI_IMAGE_QUALITY || "high";
-    const outputSize = "1536x1024";
-    const prompt = buildRoomRenderPrompt(body.intake, body.brief, body.selection, products);
+    const prompt = buildRoomRenderPrompt(body.intake, body.brief, body.selection, products, body.placements!, body.parentGenerationId ? body.correction : undefined);
+    if (body.parentGenerationId) {
+      const claimed = await getCatalogDb().query(`update public.render_generations set metadata=metadata || jsonb_build_object('correctionRequestId',$2::text) where id=$1::uuid and design_id=$3::uuid and metadata->'humanReview'->>'outcome'='needs_correction' and (metadata->>'correctionRequestId' is null or metadata->>'correctionRequestId'=$2) returning id`, [body.parentGenerationId, requestId, designId]) as any[];
+      if (!claimed.length) return NextResponse.json({ error: 'A correction has already been requested for this result. Reload the saved pilot history before continuing.' }, { status: 409 });
+    }
 
     const spend = await spendCreditAndCreateGeneration({
       ownerKey,
@@ -244,6 +287,7 @@ export async function POST(request: Request) {
       productIds: products.map((product) => product.productId),
       quality,
       outputSize,
+      metadata: { snapshot: { intake: body.intake, brief: body.brief, selection: body.selection, placements: body.placements, roomAssetId: roomAsset.asset_id }, products, correctionAttempt, parentGenerationId: body.parentGenerationId || null, correction: body.correction || null, costBasis: IMAGE_COST_BASIS, humanReview: null },
     });
 
     generationId = spend.generation_id;
@@ -275,6 +319,7 @@ export async function POST(request: Request) {
     const images = [
       { image_url: roomAsset.imageUrl },
       ...products.map((product) => ({ image_url: product.imageUrl })),
+      ...(previousResultUrl ? [{ image_url: previousResultUrl }] : []),
     ];
 
     const response = await fetch("https://api.openai.com/v1/images/edits", {
@@ -302,7 +347,7 @@ export async function POST(request: Request) {
 
     providerRequestId = response.headers.get("x-request-id");
     const payload = await response.json() as OpenAIImageResponse;
-    measuredUsage = calculateImageCost(payload.usage);
+    measuredUsage = calculateImageCost(payload.usage, model);
     gbpCost = snapshotGbpCost(measuredUsage.costUsdMicros);
 
     if (!response.ok) {
@@ -315,6 +360,8 @@ export async function POST(request: Request) {
     }
 
     const bytes = Buffer.from(resultBase64, "base64");
+    const resultMetadata = await sharp(bytes).metadata();
+    if (resultMetadata.format !== "jpeg" || !resultMetadata.width || !resultMetadata.height) throw new Error("Provider returned an invalid image file.");
     const sha256 = createHash("sha256").update(bytes).digest("hex");
     const durationMs = Date.now() - startedAt;
     const sql = getCatalogDb();
@@ -394,6 +441,8 @@ export async function POST(request: Request) {
       costGbpMinor: gbpCost.costGbpMinor,
       costFxUsdGbp: gbpCost.usdToGbpRate,
       durationMs,
+      correctionAttempt,
+      costBasis: IMAGE_COST_BASIS,
     });
   } catch (error) {
     const durationMs = Date.now() - startedAt;
@@ -402,6 +451,7 @@ export async function POST(request: Request) {
       && (error.name === "TimeoutError" || error.name === "AbortError");
     gbpCost = snapshotGbpCost(measuredUsage.costUsdMicros);
 
+    let refunded = false;
     if (generationId) {
       try {
         await refundFailedGeneration({
@@ -414,6 +464,7 @@ export async function POST(request: Request) {
           costGbpMinor: gbpCost.costGbpMinor,
           costFxUsdGbp: gbpCost.usdToGbpRate,
         });
+        refunded = true;
       } catch (refundError) {
         console.error("Render refund logging failed", refundError);
       }
@@ -421,10 +472,8 @@ export async function POST(request: Request) {
 
     console.error("Room render failed", error);
     return NextResponse.json({
-      error: generationId
-        ? "The render failed and the design credit has been returned."
-        : reason,
-      code: generationId
+      error: generationId ? (refunded ? "The render failed and the design credit has been returned." : "The render failed. Credit return could not be confirmed; check your balance before retrying.") : reason,
+      code: generationId && !refunded ? "REFUND_UNCONFIRMED" : generationId
         ? (timedOut ? "RENDER_TIMEOUT_REFUNDED" : "RENDER_FAILED_REFUNDED")
         : (timedOut ? "RENDER_TIMEOUT" : "RENDER_FAILED"),
       generationId,

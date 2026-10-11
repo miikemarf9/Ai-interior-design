@@ -82,6 +82,7 @@ export async function spendCreditAndCreateGeneration(args: {
   productIds: string[];
   quality: string;
   outputSize: string;
+  metadata?: Record<string, unknown>;
 }) {
   const sql = getCatalogDb();
   const idempotencyKey = `render-spend:${args.ownerKey}:${args.requestId}`;
@@ -119,7 +120,7 @@ export async function spendCreditAndCreateGeneration(args: {
     generation as (
       insert into public.render_generations (
         design_id, wallet_id, provider, model, prompt_version, prompt_text,
-        product_ids, status, quality, output_size
+        product_ids, status, quality, output_size, metadata
       )
       select
         $2::uuid,
@@ -131,7 +132,8 @@ export async function spendCreditAndCreateGeneration(args: {
         $7::uuid[],
         'processing',
         $8,
-        $10
+        $10,
+        $11::jsonb
       from debited d
       returning id, wallet_id
     ),
@@ -168,6 +170,7 @@ export async function spendCreditAndCreateGeneration(args: {
       args.quality,
       allowedStatuses,
       args.outputSize,
+      JSON.stringify(args.metadata || {}),
     ],
   ) as Array<{ generation_id: string; balance: number; status: string }>;
 

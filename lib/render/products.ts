@@ -106,7 +106,7 @@ export async function getVerifiedRenderProducts(
     variantId: row.variant_id,
     offerId: row.offer_id,
     name: row.name,
-    variantName: row.variant_name,
+    variantName: clearances.find(entry => entry.variantId === row.variant_id && entry.offerId === row.offer_id)!.exactVariantName,
     brandName: row.brand_name,
     categoryName: row.category_name,
     widthMm: row.width_mm,

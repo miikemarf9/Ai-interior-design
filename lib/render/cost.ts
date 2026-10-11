@@ -20,7 +20,8 @@ export type RenderUsage = {
   costUsdMicros: number | null;
 };
 
-export function calculateImageCost(usage?: ImageUsage | null): RenderUsage {
+export const IMAGE_COST_BASIS = 'Standard uncached token estimate; rates checked 2026-10-11. Not an invoice; unknown usage or model leaves cost unknown.';
+export function calculateImageCost(usage?: ImageUsage | null, model = 'gpt-image-2.5-sunburst-2026-09-08'): RenderUsage {
   if (!usage) {
     return {
       inputTextTokens: null,
@@ -39,7 +40,7 @@ export function calculateImageCost(usage?: ImageUsage | null): RenderUsage {
   // text input $5/M, image input $8/M, image output $30/M.
   // With a micro-USD field, token_count * $/M is numerically equal to micro-USD.
   const costUsdMicros =
-    inputTextTokens !== null && inputImageTokens !== null && outputImageTokens !== null
+    ["gpt-image-2.5-sunburst", "gpt-image-2.5-sunburst-2026-09-08"].includes(model) && inputTextTokens !== null && inputImageTokens !== null && outputImageTokens !== null && [inputTextTokens, inputImageTokens, outputImageTokens].every(value => Number.isSafeInteger(value) && value >= 0)
       ? (inputTextTokens * 5) + (inputImageTokens * 8) + (outputImageTokens * 30)
       : null;
 

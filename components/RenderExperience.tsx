@@ -1,311 +1,132 @@
 'use client';
+import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+import type { DesignBrief, IntakeForBrief } from '@/lib/brief';
+import { approvalSnapshot, type ProductSelection } from '@/lib/catalog/selection';
+import { MAX_CORRECTIONS, reviewPassed, type Placement, type PilotReview, type Check } from '@/lib/render/pilot';
+import styles from './RenderPilot.module.css';
 
-import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
-import type { ProductSelection } from "@/lib/catalog/selection";
-import { trackRoomfound } from "@/components/PrivacyAnalytics";
-
-type CreditState = {
-  balance: number;
-  verificationStatus: "unverified" | "development" | "verified";
-  verifiedRequired: boolean;
-  renderCreditCost: number;
-};
-
-type RuntimeState = {
-  ownerKey?: string;
-  designId?: string;
-  roomAssetId?: string;
-  photoName?: string;
-};
-
-type RenderResult = {
-  generationId: string;
-  resultAssetId: string;
-  resultUrl: string;
-  balance: number;
-  renderCreditsUsed: number;
-  costUsdMicros: number | null;
-  durationMs: number;
-};
-
+type Runtime = { ownerKey: string; designId: string; roomAssetId: string };
+type Attempt = { generation_id: string; status: string; resultUrl: string | null; cost_usd_micros: number | null; duration_ms: number | null; metadata: { correctionAttempt: number; parentGenerationId?: string; snapshot: { placements: Placement[]; selection: ProductSelection; intake: IntakeForBrief; brief: DesignBrief; roomAssetId: string }; humanReview?: PilotReview & { outcome: string } } };
 export function RenderExperience() {
-  const [intake, setIntake] = useState<IntakeForBrief | null>(null);
+  const [room, setRoom] = useState<IntakeForBrief | null>(null);
   const [brief, setBrief] = useState<DesignBrief | null>(null);
   const [selection, setSelection] = useState<ProductSelection | null>(null);
-  const [runtime, setRuntime] = useState<RuntimeState | null>(null);
-  const [credits, setCredits] = useState<CreditState | null>(null);
-  const [result, setResult] = useState<RenderResult | null>(null);
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState("");
+  const [runtime, setRuntime] = useState<Runtime | null>(null);
+  const [placements, setPlacements] = useState<Placement[]>([]);
+  const [attempts, setAttempts] = useState<Attempt[]>([]);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [verified, setVerified] = useState(false);
   const [ready, setReady] = useState(false);
+  const [blocked, setBlocked] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [correction, setCorrection] = useState('');
+  const [summary, setSummary] = useState<any>(null);
   const started = useRef(false);
-
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-
-    try {
-      const intakeRaw = window.localStorage.getItem("roomfound-intake-v1");
-      const briefRaw = window.localStorage.getItem("roomfound-brief-v1");
-      const selectionRaw = window.localStorage.getItem("roomfound-product-selection-v1");
-      const runtimeRaw = window.localStorage.getItem("roomfound-design-runtime-v1");
-
-      const savedIntake = intakeRaw ? JSON.parse(intakeRaw) as { state?: IntakeForBrief } : {};
-      const savedBrief = briefRaw ? JSON.parse(briefRaw) as { brief?: DesignBrief; approved?: boolean } : {};
-      const savedSelection = selectionRaw ? JSON.parse(selectionRaw) as { selection?: ProductSelection; approved?: boolean } : {};
-      const savedRuntime = runtimeRaw ? JSON.parse(runtimeRaw) as RuntimeState : {};
-
-      if (savedIntake.state) setIntake(savedIntake.state);
-      if (savedBrief.brief && savedBrief.approved) setBrief(savedBrief.brief);
-      if (savedSelection.selection && savedSelection.approved) setSelection(savedSelection.selection);
-      setRuntime(savedRuntime);
-
-      if (savedRuntime.ownerKey) {
-        loadCredits(savedRuntime.ownerKey);
-      }
-    } catch {
-      // The prerequisite state below will explain what is missing.
-    } finally {
-      setReady(true);
-    }
+    if (started.current) return; started.current = true;
+    (async () => {
+      try {
+        const savedRoom = JSON.parse(localStorage.getItem('roomfound-intake-v1') || '{}').state;
+        const savedBrief = JSON.parse(localStorage.getItem('roomfound-brief-v1') || '{}');
+        const savedSelection = JSON.parse(localStorage.getItem('roomfound-product-selection-v1') || '{}');
+        const savedRuntime = JSON.parse(localStorage.getItem('roomfound-design-runtime-v1') || '{}');
+        if (!savedRoom || !savedBrief.approved || !savedSelection.approved || savedSelection.selection?.version !== 2 || !savedRuntime.roomAssetId || !savedRuntime.designId || !savedRuntime.ownerKey) { setBlocked('Approve your room brief and a cleared furniture collection, and upload your room photograph first.'); return; }
+        if (savedRoom.roomType === 'bedroom') { setBlocked('The first pilot is living-room only. Bedroom generation remains unavailable.'); return; }
+        setRoom(savedRoom); setBrief(savedBrief.brief); setRuntime(savedRuntime);
+        const history = await readHistory(savedRuntime);
+        if (!history.available) { setBlocked(history.reason); return; }
+        const response = await fetch('/api/products/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ intake: savedRoom, brief: savedBrief.brief, choices: savedSelection.selection.products.map((p: any) => ({ slot: p.slot, variantId: p.selected.variantId, quantity: p.quantity })), approve: true, acknowledgeLimitations: true, expectedSnapshot: approvalSnapshot(savedSelection.selection) }) });
+        const checked = await response.json();
+        if (!response.ok || !checked.approved) { setBlocked('Your collection needs reviewing again before image generation.'); return; }
+        setSelection(checked.selection);
+        const prior = history.attempts?.find((item: Attempt) => item.status === 'succeeded' && item.metadata?.snapshot?.roomAssetId === savedRuntime.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(checked.selection) && JSON.stringify([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === JSON.stringify([savedRoom, savedBrief.brief]));
+        const savedPlan: Placement[] = prior?.metadata.snapshot.placements || JSON.parse(localStorage.getItem(`roomfound-placements:${savedRuntime.designId}`) || '[]') as Placement[];
+        setPlacements(checked.selection.products.map((p: any) => ({ variantId: p.selected.variantId, instruction: savedPlan.find(item => item.variantId === p.selected.variantId)?.instruction || '' })));
+        await loadCredits(savedRuntime);
+      } catch { setBlocked('We could not prepare the pilot. Your saved brief and furniture choices have not been changed.'); }
+      finally { setReady(true); }
+    })();
   }, []);
-
-  async function loadCredits(ownerKey: string) {
-    try {
-      const response = await fetch(`/api/credits/status?ownerKey=${encodeURIComponent(ownerKey)}`, {
-        cache: "no-store",
-      });
-      const data = await response.json();
-      if (response.ok) setCredits(data);
-    } catch {
-      setCredits(null);
-    }
+  async function loadCredits(context: Runtime) {
+    const response = await fetch(`/api/credits/status?ownerKey=${encodeURIComponent(context.ownerKey)}`, { cache: 'no-store' });
+    const data = await response.json();
+    if (response.ok) { setBalance(data.balance); setVerified(!data.verifiedRequired); }
   }
-
-  const missing = useMemo(() => {
-    const items: string[] = [];
-    if (!runtime?.designId || !runtime?.roomAssetId || !runtime?.ownerKey) items.push("original room photograph");
-    if (!intake) items.push("room consultation");
-    if (!brief) items.push("approved design brief");
-    if (!selection?.products.length) items.push("approved real products");
-    return items;
-  }, [runtime, intake, brief, selection]);
-
-  async function generateRoom() {
-    if (!runtime?.ownerKey || !runtime.designId || !intake || !brief || !selection) return;
-
-    setGenerating(true);
-    setError("");
-    trackRoomfound("render_started",{productCount:selection.products.length});
-
+  async function readHistory(context: Runtime) {
+    const response = await fetch(`/api/render/pilot?designId=${context.designId}&ownerKey=${encodeURIComponent(context.ownerKey)}`, { cache: 'no-store' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Pilot history unavailable.');
+    setAttempts(data.attempts || []); setSummary(data.summary || null); return data;
+  }
+  const result = attempts.find(item => item.status === 'succeeded' && item.resultUrl && selection && item.metadata?.snapshot?.roomAssetId === runtime?.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(selection) && JSON.stringify([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === JSON.stringify([room, brief]));
+  const processing = attempts.some(item => item.status === 'processing');
+  const failedCorrection = attempts.some(item => item.status === 'failed' && item.metadata?.parentGenerationId === result?.generation_id);
+  async function generate() {
+    if (!runtime || !room || !brief || !selection) return;
+    setBusy(true); setError('');
+    const key = `roomfound-pilot-request:${runtime.designId}`;
+    const requestState = JSON.stringify([approvalSnapshot(selection), placements, result?.generation_id, correction]);
     try {
-      const response = await fetch("/api/render", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ownerKey: runtime.ownerKey,
-          designId: runtime.designId,
-          requestId: crypto.randomUUID(),
-          intake,
-          brief,
-          selection,
-        }),
-      });
-
+      const old = JSON.parse(localStorage.getItem(key) || 'null');
+      const requestId = old?.state === requestState ? old.id : crypto.randomUUID();
+      localStorage.setItem(key, JSON.stringify({ id: requestId, state: requestState }));
+      const response = await fetch('/api/render', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...runtime, requestId, intake: room, brief, selection, placements, parentGenerationId: result?.generation_id, correction: result ? correction : undefined }) });
       const data = await response.json();
-
       if (!response.ok) {
-        if (typeof data.balance === "number" && credits) {
-          setCredits({ ...credits, balance: data.balance });
-        }
-        if (data.code === "RENDER_FAILED_REFUNDED" || data.code === "RENDER_TIMEOUT_REFUNDED") {
-          await loadCredits(runtime.ownerKey);
-        }
-        trackRoomfound("render_failed",{code:data.code || "unknown"});
-        throw new Error(data.error || "The room could not be generated.");
+        if (data.code?.endsWith('_REFUNDED')) localStorage.removeItem(key);
+        throw new Error(data.error || 'Generation could not be confirmed. Reload the saved attempt before retrying.');
       }
-
-      setResult(data);
-      trackRoomfound("render_succeeded",{generationId:data.generationId,durationMs:data.durationMs});
-      setCredits((current) => current ? { ...current, balance: data.balance } : current);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "The room could not be generated.");
-    } finally {
-      setGenerating(false);
-    }
+      localStorage.removeItem(key); setCorrection('');
+      await readHistory(runtime); await loadCredits(runtime);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Generation unavailable.');
+      try { await readHistory(runtime); await loadCredits(runtime); } catch { /* Keep the original error and stable request ID. */ }
+    } finally { setBusy(false); }
   }
-
-  if (!ready) {
-    return (
-      <section className="renderLoading shell">
-        <p className="eyebrow">Preparing your room</p>
-        <h1>Checking the approved design before generation.</h1>
-        <div className="briefLoadingLine"><i /></div>
-      </section>
-    );
+  async function saveReview(review: PilotReview) {
+    if (!runtime || !result) return;
+    setBusy(true); setError('');
+    try {
+      const response = await fetch('/api/render/pilot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...runtime, generationId: result.generation_id, review }) });
+      const data = await response.json(); if (!response.ok) throw new Error(data.error);
+      await readHistory(runtime);
+    } catch (error) { setError(error instanceof Error ? error.message : 'Review could not be saved.'); }
+    finally { setBusy(false); }
   }
-
-  if (missing.length) {
-    return (
-      <section className="renderMissing shell">
-        <p className="eyebrow">Image generation</p>
-        <h1>There is still something to approve first.</h1>
-        <p>Missing: {missing.join(", ")}.</p>
-        <Link className="button buttonPrimary" href={selection ? "/products" : brief ? "/products" : "/design"}>
-          Return to design
-        </Link>
-      </section>
-    );
-  }
-
-  const blockedByVerification = Boolean(credits?.verifiedRequired);
-  const noCredits = Boolean(credits && credits.balance < 1);
-
-  return (
-    <div className="renderExperience shell">
-      <section className="renderHero">
-        <div className="renderHeroCopy">
-          <p className="eyebrow">Generate your room</p>
-          <h1>The expensive step only happens when you say so.</h1>
-          <p>
-            Your original room, approved brief, retained furniture, room restrictions and exact selected products
-            are now the constraints for the image model.
-          </p>
-        </div>
-
-        <aside className="renderCreditPanel">
-          <span className="microLabel">Clear credit boundary</span>
-          <div className="renderCreditRule isFree">
-            <span>Editing your brief</span>
-            <strong>Free</strong>
-          </div>
-          <div className="renderCreditRule isPaid">
-            <span>Generate your room</span>
-            <strong>1 credit</strong>
-          </div>
-          <div className="renderCreditBalance">
-            <span>Credits available</span>
-            <strong>{credits?.balance ?? "—"}</strong>
-          </div>
-          <p>Every successful new render or regeneration costs another credit. Technical failures are returned automatically.</p>
-        </aside>
-      </section>
-
-      <section className="renderInputs">
-        <div className="renderOriginal">
-          <div className="renderSectionHeading">
-            <span>01</span>
-            <div>
-              <small>Reference room</small>
-              <h2>Your room stays your room.</h2>
-            </div>
-          </div>
-          <div className="renderOriginalImage">
-            <img src={`/api/assets/${runtime?.roomAssetId}?ownerKey=${encodeURIComponent(runtime?.ownerKey || "")}`} alt="Original customer room" />
-            <span>Original photograph</span>
-          </div>
-        </div>
-
-        <div className="renderConstraints">
-          <div className="renderSectionHeading">
-            <span>02</span>
-            <div>
-              <small>Hard constraints</small>
-              <h2>What the render must respect.</h2>
-            </div>
-          </div>
-          <div className="renderConstraintRows">
-            <div><span>Keep</span><strong>{intake?.keep.length ? intake.keep.join(", ") : "No retained furniture specified"}</strong></div>
-            <div><span>Room limits</span><strong>{intake?.measurements.notes || "No additional restrictions supplied"}</strong></div>
-            <div><span>Measurements</span><strong>{intake?.measurements.width || "?"} W × {intake?.measurements.length || "?"} L × {intake?.measurements.height || "?"} H cm</strong></div>
-            <div><span>Approved products</span><strong>{selection?.products.length ?? 0} real catalogue items</strong></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="renderProducts">
-        <div className="renderProductsHeading">
-          <p className="eyebrow">03 · Product references</p>
-          <h2>These are the real products the model receives.</h2>
-        </div>
-        <div className="renderProductStrip">
-          {selection?.products.map((product) => (
-            <article key={product.selected.variantId}>
-              <div>
-                {product.selected.image ? (
-                  <img src={product.selected.image.url} alt={product.selected.image.altText || product.selected.productName} />
-                ) : null}
-              </div>
-              <small>{product.slotLabel}</small>
-              <strong>{product.selected.productName}</strong>
-            </article>
-          ))}
-        </div>
-        <Link className="textButton" href="/products">Change products · Free</Link>
-      </section>
-
-      <section className="renderAction">
-        <div>
-          <span className="microLabel">{result ? "Another version" : "Ready to generate"}</span>
-          <h2>{result ? "Want a different interpretation?" : "Generate the approved room."}</h2>
-          <p>
-            {result
-              ? "The approved brief and products remain the same. A new image is a new generation and costs another credit."
-              : "This is the first point in the journey where a design credit is spent."}
-          </p>
-          <div className="renderFreeLink">
-            <Link href="/brief">Edit your brief</Link>
-            <span>Free</span>
-          </div>
-        </div>
-
-        <div className="renderActionButton">
-          {blockedByVerification ? (
-            <div className="renderBlocked">
-              <strong>Account verification required</strong>
-              <p>Verify your email in My rooms to activate the 3 free design credits attached to your account.</p>
-            </div>
-          ) : (
-            <button
-              className="button buttonLight"
-              type="button"
-              disabled={generating || noCredits}
-              onClick={generateRoom}
-            >
-              {generating
-                ? "Generating your room…"
-                : result
-                  ? "Generate another version · 1 credit"
-                  : "Generate your room · 1 credit"}
-            </button>
-          )}
-          {noCredits && !blockedByVerification ? <p className="renderNoCredits">No design credits remaining.</p> : null}
-        </div>
-      </section>
-
-      {error ? <div className="renderError"><strong>Render not charged</strong><p>{error}</p></div> : null}
-
-      {result ? (
-        <section className="renderResult">
-          <div className="renderResultHeading">
-            <p className="eyebrow">Your generated room</p>
-            <h2>Built from the approved reality.</h2>
-            <p>Generation {result.generationId.slice(0, 8)} · 1 credit used · {Math.max(1, Math.round(result.durationMs / 1000))}s</p>
-          </div>
-          <div className="renderResultImage">
-            <img src={result.resultUrl} alt="Generated room design" />
-          </div>
-          <div className="renderResultPayoff">
-            <div>
-              <span className="microLabel">The payoff</span>
-              <strong>Now experience the room as a complete design.</strong>
-            </div>
-            <Link className="button buttonPrimary" href="/room">Open my designed room</Link>
-          </div>
-        </section>
-      ) : null}
-    </div>
-  );
+  if (!ready) return <section className="renderLoading shell"><h1>Preparing your living-room pilot.</h1><p>Checking the saved room and cleared references.</p></section>;
+  if (blocked || !selection || !runtime) return <section className="renderMissing shell"><p className="eyebrow">Living-room pilot</p><h1>There is still something to prepare.</h1><p>{blocked || 'The pilot is not ready.'}</p><Link className="button buttonPrimary" href="/products">Review my furniture collection</Link></section>;
+  const originalUrl = `/api/assets/${runtime.roomAssetId}?ownerKey=${encodeURIComponent(runtime.ownerKey)}`;
+  const reviewed = result?.metadata.humanReview;
+  const correctionReady = !!result && reviewed?.outcome === 'needs_correction' && result.metadata.correctionAttempt < MAX_CORRECTIONS && !failedCorrection;
+  return <div className="renderExperience shell">
+    <section className="renderHero"><div><p className="eyebrow">Living-room pilot</p><h1>See your room. Check the details.</h1><p>The photograph, approved brief and exact furniture references guide the visualisation. The result still needs a human check; it does not prove an exact product match or physical fit.</p></div><aside className="renderCreditPanel"><strong>{balance ?? '—'} credits available</strong><p>One credit per successful generation or correction. Technical failures are refunded when the failure is recorded. Check the attempt history after a lost connection.</p></aside></section>
+    <div className={styles.comparison}><figure><img src={originalUrl} alt="Original room photograph used as the architectural reference" /><figcaption>Original room</figcaption></figure>{result && <figure><img src={result.resultUrl!} alt="Generated living-room pilot awaiting or undergoing human review" /><figcaption>Generated attempt · correction {result.metadata.correctionAttempt || 0} of {MAX_CORRECTIONS}</figcaption></figure>}</div>
+    <section className={styles.panel}><h2>Confirm the intended placements</h2><p>Use visible landmarks, such as “against the left wall, clear of the door”. For multiple pieces, describe each position. These instructions are not measured layout checks.</p>
+      <div className={styles.products}>{selection.products.map(product => <article key={product.selected.variantId}>
+        {product.selected.image && <img src={product.selected.image.url} alt={`${product.selected.productName} — ${product.selected.variantName}`} />}
+        <div><h3>{product.selected.productName}</h3><p>{product.selected.variantName} · Quantity: {product.quantity * (product.selected.commercial?.packSize || 1)}</p><p>W × D × H: {[product.selected.dimensions.widthMm, product.selected.dimensions.depthMm, product.selected.dimensions.heightMm].map(value => value ? `${value / 10} cm` : 'unknown').join(' × ')}</p>
+        <label>Intended placement<textarea disabled={busy || !!result || processing} rows={2} maxLength={600} value={placements.find(item => item.variantId === product.selected.variantId)?.instruction || ''} onChange={event => { const next = placements.map(item => item.variantId === product.selected.variantId ? { ...item, instruction: event.target.value } : item); setPlacements(next); localStorage.setItem(`roomfound-placements:${runtime.designId}`, JSON.stringify(next)); }} /></label></div>
+      </article>)}</div><Link href="/products">Review products and prices</Link><p>Prices and product labels stay outside the generated image.</p>
+    </section>
+    {result && <Review key={result.generation_id} selection={result.metadata.snapshot.selection} initial={reviewed} disabled={busy} onSave={saveReview} />}
+    {error && <p role="alert" className="renderError">{error}</p>}
+    {processing && <div className={styles.panel}><p>An attempt is processing. Refresh its status before starting another.</p><button className="button buttonSecondary" onClick={() => readHistory(runtime).catch(error => setError(error.message))}>Refresh attempt status</button></div>}
+    {!result && !processing && <button className="button buttonPrimary" disabled={busy || !verified || balance === null || balance < 1 || placements.some(item => item.instruction.trim().length < 5)} onClick={generate}>{busy ? 'Generating…' : 'Generate living-room pilot · 1 credit'}</button>}
+    {!verified && <p>A verified account and available credit balance are required before generating.</p>}
+    {correctionReady && <section className={styles.panel}><h2>Make a controlled correction</h2><p>Describe the specific failed checks. We reuse the original room, approved references and previous result. A correction costs one credit and must be checked again.</p><label>What needs correcting?<textarea rows={3} maxLength={2000} value={correction} onChange={event => setCorrection(event.target.value)} /></label><button className="button buttonPrimary" disabled={busy || processing || !verified || !balance || correction.trim().length < 10} onClick={generate}>{busy ? 'Correcting…' : 'Generate correction · 1 credit'}</button></section>}
+    {result && (failedCorrection || result.metadata.correctionAttempt >= MAX_CORRECTIONS) && <p>The correction limit or a technical failure has stopped this sequence. Review the saved attempts manually before authorising further work.</p>}
+    {reviewed?.outcome === 'visually_reviewed' && <div className={styles.panel}><h2>Visual review saved</h2><p>This records your visual assessment, not an exact-match certificate or a fit guarantee.</p><Link className="button buttonPrimary" href="/room">Open my designed room</Link></div>}
+    {summary && <section className={styles.panel}><h2>Pilot attempt record</h2><p>{summary.attempts} recent attempts · {summary.corrections} corrections · {Math.round(summary.knownDurationMs / 1000)} seconds recorded</p><p>Known image-generation cost estimate: ${(summary.knownCostUsdMicros / 1e6).toFixed(4)} USD. {summary.unknownCostAttempts} attempt(s) with unknown cost. This excludes human review, hosting and any unreported provider usage; it is not a final invoice.</p><ol>{attempts.map(item => <li key={item.generation_id}>{item.generation_id.slice(0, 8)} · {item.status} · correction {item.metadata.correctionAttempt || 0} · {item.cost_usd_micros === null ? 'cost unknown' : `$${(item.cost_usd_micros / 1e6).toFixed(4)} estimated`} · {item.duration_ms === null ? 'time unknown' : `${Math.round(item.duration_ms / 1000)}s`}</li>)}</ol></section>}
+  </div>;
 }
+function Review({ selection, initial, disabled, onSave }: { selection: ProductSelection; initial?: PilotReview; disabled: boolean; onSave: (review: PilotReview) => void }) {
+  const [review, setReview] = useState<PilotReview>(initial || { architecture: 'uncertain', retainedFurniture: 'uncertain', products: selection.products.map(item => ({ variantId: item.selected.variantId, quantity: 'uncertain', shape: 'uncertain', finish: 'uncertain', placement: 'uncertain' })), notes: '' });
+  return <section className={styles.panel}><h2>Review the source room and every major product</h2><p>Compare the images above. Check windows, doors, skirting, camera angle and retained furniture, then compare each product with its exact reference. If an item is hidden, choose “Uncertain”. A visual pass does not verify fit.</p>
+    <div className={styles.checks}><CheckField label="Architecture and camera perspective" value={review.architecture} disabled={disabled} onChange={value => setReview({ ...review, architecture: value })} /><CheckField label="Retained furniture preserved" value={review.retainedFurniture} disabled={disabled} onChange={value => setReview({ ...review, retainedFurniture: value })} />
+    {review.products.map((product, index) => <fieldset key={product.variantId}><legend>{selection.products[index].selected.productName} · {selection.products[index].selected.variantName}</legend>{(['quantity', 'shape', 'finish', 'placement'] as const).map(key => <CheckField key={key} label={{ quantity: 'Correct count; no missing items', shape: 'Silhouette and shape', finish: 'Material, finish and colour', placement: 'Plausible intended placement' }[key]} value={product[key]} disabled={disabled} onChange={value => setReview({ ...review, products: review.products.map(item => item.variantId === product.variantId ? { ...item, [key]: value } : item) })} />)}</fieldset>)}</div>
+    <label>Observed issues and review notes<textarea rows={3} maxLength={2000} value={review.notes} disabled={disabled} onChange={event => setReview({ ...review, notes: event.target.value })} /></label><button className="button buttonSecondary" disabled={disabled} onClick={() => onSave(review)}>{reviewPassed(review) ? 'Save visual review' : 'Save issues for correction'}</button>
+  </section>;
+}
+function CheckField({ label, value, disabled, onChange }: { label: string; value: Check; disabled: boolean; onChange: (value: Check) => void }) { return <label>{label}<select value={value} disabled={disabled} onChange={event => onChange(event.target.value as Check)}><option value="uncertain">Uncertain / not checked</option><option value="pass">Visually acceptable</option><option value="fail">Needs correction</option></select></label>; }
