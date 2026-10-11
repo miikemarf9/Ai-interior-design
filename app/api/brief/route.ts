@@ -33,20 +33,23 @@ function parseBrief(text: string): DesignBrief | null {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as BriefRequest;
+  let body: BriefRequest;
+  try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid request.' }, { status: 400 }); }
   if (!body.intake) return NextResponse.json({ error: 'Missing intake.' }, { status: 400 });
 
-  const fallback = buildFallbackBrief(body.intake);
+  if (!['keep', 'change', 'styles', 'colours', 'materials', 'uses'].every(key => Array.isArray((body.intake as any)[key]) && (body.intake as any)[key].every((value: unknown) => typeof value === 'string')) || typeof body.intake.dislikes !== 'string' || !Number.isFinite(body.intake.budget) || body.intake.budget <= 0 || !body.intake.measurements || !['width', 'length', 'height', 'notes'].every(key => typeof (body.intake!.measurements as any)[key] === 'string')) {
+    return NextResponse.json({ error: 'Please complete your room answers.' }, { status: 400 });
+  }
+
+  const fallback = body.request?.trim() && body.currentBrief ? body.currentBrief : buildFallbackBrief(body.intake);
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
     if (body.request?.trim() && body.currentBrief) {
       return NextResponse.json({
         source: 'preview',
-        brief: {
-          ...body.currentBrief,
-          designerNote: `${body.currentBrief.designerNote} Customer refinement to apply: ${body.request.trim()}`,
-        },
+        brief: body.currentBrief,
+        warning: 'Automatic revisions are unavailable. Please use the Edit controls to change your saved brief.',
       });
     }
     return NextResponse.json({ source: 'preview', brief: fallback });
@@ -62,6 +65,11 @@ The customer has completed a detailed pre-design consultation. Turn it into a co
 
 Rules:
 - Use British English.
+- Keep each field to one or two short sentences. Respect the room type and furnishing/refreshing goal.
+- Marked furniture must be retained. Marker x/y values identify positions on the original photo; they are not measurements.
+- Clearly distinguish customer-measured dimensions from approximate or unknown values. Never infer dimensions from a photograph.
+- Furniture and accessories spending excludes any design-generation charge. Delivery remains unconfirmed.
+- Budget and measurement changes must be made in room answers, never silently inferred from a revision.
 - Be specific but restrained.
 - Do not invent exact products, retailers, measurements, colours, materials, or constraints that the customer did not provide.
 - Do not promise that furniture will fit.
@@ -100,7 +108,7 @@ ${task}`;
 
     const data = await response.json();
     const parsed = parseBrief(extractOutputText(data));
-    return NextResponse.json({ source: parsed ? 'ai' : 'preview', brief: parsed || fallback });
+    return NextResponse.json({ source: parsed ? 'ai' : 'preview', brief: parsed ? { ...parsed, budget: buildFallbackBrief(body.intake).budget, measurements: buildFallbackBrief(body.intake).measurements } : fallback, ...(parsed ? {} : { warning: 'Automatic writing unavailable. Edit the saved brief directly.' }) });
   } catch {
     return NextResponse.json({ source: 'preview', brief: fallback, warning: 'AI brief service unavailable.' });
   }

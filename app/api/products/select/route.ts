@@ -12,6 +12,7 @@ export async function POST(request: Request) {
       brief?: DesignBrief;
     };
 
+    if (body.intake?.roomType === 'bedroom') return NextResponse.json({ error: 'Bedroom briefs can be saved, but bedroom product selection is not available yet.' }, { status: 409 });
     if (!body.intake || !body.brief) {
       return NextResponse.json({ error: "Approved intake and brief are required." }, { status: 400 });
     }

@@ -150,6 +150,7 @@ async function existingGeneration(generationId: string) {
 
 export async function POST(request: Request) {
   const body = await request.json() as RenderRequest;
+  if (body.intake?.roomType === 'bedroom') return NextResponse.json({ error: 'Bedroom image generation is not available yet. Your brief remains saved.' }, { status: 409 });
   const account = await getCurrentAccount();
   const ownerKey = account?.ownerKey || body.ownerKey || "";
   const designId = body.designId || "";

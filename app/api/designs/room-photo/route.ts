@@ -20,6 +20,7 @@ function validUuid(value: string) {
 async function ensureDesign(args: {
   ownerKey: string;
   requestedDesignId?: string | null;
+  roomType?: 'living_room' | 'bedroom';
   accountId?: string | null;
   homeId?: string | null;
 }) {
@@ -38,16 +39,19 @@ async function ensureDesign(args: {
       [args.requestedDesignId, args.ownerKey, args.accountId ?? null],
     ) as Array<{ id: string }>;
 
-    if (existing[0]) return existing[0].id;
+    if (existing[0]) {
+      await sql.query('update public.room_designs set room_type=$2,room_name=$3,updated_at=now() where id=$1::uuid', [existing[0].id, args.roomType || 'living_room', args.roomType === 'bedroom' ? 'Bedroom' : 'Living room']);
+      return existing[0].id;
+    }
   }
 
   const created = await sql.query(
     `insert into public.room_designs (
       owner_key,status,account_id,home_id,room_name,room_type
     )
-    values ($1,'intake',$2::uuid,$3::uuid,'Living room','living_room')
+    values ($1,'intake',$2::uuid,$3::uuid,$4,$5)
     returning id::text as id`,
-    [args.ownerKey, args.accountId ?? null, args.homeId ?? null],
+    [args.ownerKey, args.accountId ?? null, args.homeId ?? null, args.roomType === 'bedroom' ? 'Bedroom' : 'Living room', args.roomType || 'living_room'],
   ) as Array<{ id: string }>;
 
   return created[0].id;
@@ -150,6 +154,7 @@ export async function POST(request: Request) {
     const designId=await ensureDesign({
       ownerKey:resolvedOwnerKey,
       requestedDesignId:requestedDesignId || null,
+      roomType:form.get('roomType') === 'bedroom' ? 'bedroom' : 'living_room',
       accountId:account?.id ?? null,
       homeId:accountHomeId,
     });
@@ -190,5 +195,28 @@ export async function POST(request: Request) {
   } catch(error){
     console.error("Room photo upload failed",error);
     return NextResponse.json({error:"The room photograph could not be stored."},{status:500});
+  }
+}
+
+// Reclassify an uploaded room without replacing its photograph.
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json() as { designId?: string; ownerKey?: string; roomType?: string };
+    if (!body.designId || !validUuid(body.designId) || !['living_room', 'bedroom'].includes(body.roomType || '')) {
+      return NextResponse.json({ error: 'Choose a valid room type.' }, { status: 400 });
+    }
+    const account = await getCurrentAccount();
+    const ownerKey = account?.ownerKey || body.ownerKey || '';
+    if (!validOwnerKey(ownerKey)) return NextResponse.json({ error: 'Room access required.' }, { status: 403 });
+    const rows = await getCatalogDb().query(
+      `update public.room_designs set room_type=$4,room_name=$5,updated_at=now()
+       where id=$1::uuid and (owner_key=$2 or ($3::uuid is not null and account_id=$3::uuid))
+       returning id`,
+      [body.designId, ownerKey, account?.id ?? null, body.roomType, body.roomType === 'bedroom' ? 'Bedroom' : 'Living room'],
+    ) as Array<{ id: string }>;
+    if (!rows.length) return NextResponse.json({ error: 'Room not found.' }, { status: 404 });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'Room type could not be saved. Please try again.' }, { status: 500 });
   }
 }

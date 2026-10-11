@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { DesignBrief, IntakeForBrief } from '@/lib/brief';
+import { buildFallbackBrief, type DesignBrief, type IntakeForBrief } from '@/lib/brief';
 import { trackRoomfound } from '@/components/PrivacyAnalytics';
-import { creditPolicy } from '@/lib/credits';
+import ui from './RoomBrief.module.css';
 
 type BriefSource = 'ai' | 'preview';
 
@@ -38,6 +38,7 @@ export function BriefExperience() {
   const [revising, setRevising] = useState(false);
   const [editing, setEditing] = useState<keyof DesignBrief | null>(null);
   const [draftValue, setDraftValue] = useState('');
+  const [error, setError] = useState('');
   const [approved, setApproved] = useState(false);
   const started = useRef(false);
 
@@ -91,6 +92,11 @@ export function BriefExperience() {
       setBrief(data.brief);
       setSource(data.source || 'preview');
       saveBrief(data.brief, data.source || 'preview', false);
+    } catch {
+      const fallback = buildFallbackBrief(intakeState);
+      setBrief(fallback);
+      saveBrief(fallback, 'preview', false);
+      setError('Your answers are saved below. The writing service is unavailable; you can edit this draft directly.');
     } finally {
       setLoading(false);
     }
@@ -129,6 +135,7 @@ export function BriefExperience() {
     if (!instruction) return;
 
     setRevision(instruction);
+    setError('');
     setRevising(true);
     try {
       const response = await fetch('/api/brief', {
@@ -137,6 +144,8 @@ export function BriefExperience() {
         body: JSON.stringify({ intake, currentBrief: brief, request: instruction }),
       });
       const data = await response.json();
+      if (data.warning) { setError(data.warning); return; }
+      if (!response.ok || !data.brief) throw new Error('Revision unavailable');
       if (data.brief) {
         setBrief(data.brief);
         setSource(data.source || source);
@@ -144,6 +153,8 @@ export function BriefExperience() {
         saveBrief(data.brief, data.source || source, false);
         setRevision('');
       }
+    } catch {
+      setError('We could not update your brief. Your current version is saved; please edit it directly or try again.');
     } finally {
       setRevising(false);
     }
@@ -196,24 +207,21 @@ export function BriefExperience() {
 
         <aside className="creditStatus">
           <span className="microLabel">Design credits</span>
-          <div className="creditCount">
-            {Array.from({ length: creditPolicy.freeRenderCredits }).map((_, index) => <i key={index} />)}
-            <strong>{creditPolicy.freeRenderCredits} free</strong>
-          </div>
           <div className="creditRule"><span>This brief</span><strong>0 credits</strong></div>
           <div className="creditRule"><span>Brief changes</span><strong>0 credits</strong></div>
           <div className="creditRule"><span>Future room render</span><strong>1 credit</strong></div>
-          <p>Think and refine for free. Credits are reserved for image generation.</p>
+          <p>Your furniture allowance is separate from any image-generation charge. Any charge will be shown before you confirm.</p>
         </aside>
       </section>
 
-      <section className="briefLead">
-        <span>01</span>
-        <p>{brief.direction}</p>
-      </section>
-
+      <div className={ui.summary}>
+        <strong>{intake.roomType === 'bedroom' ? 'Bedroom' : 'Living room'} · {intake.projectGoal === 'furnish' ? 'Furnish' : 'Refresh'}</strong>
+        <span>Furniture allowance: £{intake.budget.toLocaleString('en-GB')}</span>
+        <Link href="/design">Edit room answers, measurements or photo markers</Link>
+      </div>
+      {error && <p role="alert" className={ui.error}>{error}</p>}
       <section className="briefSections">
-        {fieldOrder.slice(1).map((field, index) => (
+        {fieldOrder.filter(field => ['direction', 'keep', 'change', 'function'].includes(field.key)).map((field, index) => (
           <article className="briefSection" key={field.key}>
             <div className="briefSectionMeta">
               <span>{String(index + 2).padStart(2, '0')}</span>
@@ -226,7 +234,7 @@ export function BriefExperience() {
             <div className="briefSectionBody">
               {editing === field.key ? (
                 <div className="inlineBriefEdit">
-                  <textarea value={draftValue} onChange={(event) => setDraftValue(event.target.value)} rows={5} autoFocus />
+                  <textarea aria-label={field.label} value={draftValue} onChange={(event) => setDraftValue(event.target.value)} rows={5} autoFocus />
                   <div>
                     <button className="button buttonPrimary buttonCompact" type="button" onClick={saveEdit}>Save change</button>
                     <button className="textButton" type="button" onClick={() => setEditing(null)}>Cancel</button>
@@ -243,6 +251,24 @@ export function BriefExperience() {
         ))}
       </section>
 
+      <details className={ui.briefDetails}>
+        <summary>Style, measurements, budget and further details</summary>
+        {fieldOrder.filter(field => !['direction', 'keep', 'change', 'function'].includes(field.key)).map(field => (
+          <article className="briefSection" key={field.key}>
+            <strong>{field.label}</strong>
+            <div className="briefSectionBody">
+              <p>{brief[field.key]}</p>
+              {['budget', 'measurements'].includes(field.key) ? <Link href="/design">Edit in room answers</Link> : editing === field.key ? (
+                <div className="inlineBriefEdit">
+                  <textarea aria-label={field.label} value={draftValue} onChange={event => setDraftValue(event.target.value)} rows={3} />
+                  <button type="button" onClick={saveEdit}>Save change</button>
+                  <button type="button" onClick={() => setEditing(null)}>Cancel</button>
+                </div>
+              ) : <button className="briefEditButton" type="button" onClick={() => startEdit(field.key)}>Edit</button>}
+            </div>
+          </article>
+        ))}
+      </details>
       <section className="askDesigner">
         <div className="askDesignerIntro">
           <p className="eyebrow">Refine the direction</p>
@@ -251,6 +277,7 @@ export function BriefExperience() {
         </div>
         <div className="askDesignerControl">
           <textarea
+            aria-label="Changes to your brief"
             rows={4}
             value={revision}
             onChange={(event) => setRevision(event.target.value)}
@@ -265,7 +292,7 @@ export function BriefExperience() {
             <button key={prompt} type="button" disabled={revising} onClick={() => askForChange(prompt)}>{prompt}</button>
           ))}
         </div>
-        <div className="freeRevisionNote"><span>Free</span><p>Changing the written brief does not reduce your three render credits.</p></div>
+        <div className="freeRevisionNote"><span>Free</span><p>Changing the written brief does not use image-generation credits.</p></div>
       </section>
 
       <section className="briefConfidence">
@@ -275,9 +302,9 @@ export function BriefExperience() {
         </div>
         <div className="confidenceRows">
           <div><span>Budget defined</span><strong>Yes</strong></div>
-          <div><span>Existing items considered</span><strong>{intake.keep.length ? 'Yes' : 'Open'}</strong></div>
+          <div><span>Existing items considered</span><strong>{(intake.keep.length || intake.retainedFurniture?.length) ? 'Yes' : 'Open'}</strong></div>
           <div><span>Lifestyle requirements</span><strong>{intake.uses.length ? 'Included' : 'Open'}</strong></div>
-          <div><span>Room measurements</span><strong className={measured ? '' : 'needsData'}>{measured ? 'Added' : 'Optional · not added'}</strong></div>
+          <div><span>Room measurements</span><strong className={measured ? '' : 'needsData'}>{measured ? (intake.measurements.accuracy === 'measured' ? 'Customer measured · fit unverified' : 'Approximate / unconfirmed') : 'Unknown · fit unverified'}</strong></div>
           <div><span>Image credit used</span><strong>None</strong></div>
         </div>
       </section>
@@ -288,24 +315,18 @@ export function BriefExperience() {
           <h2>{approved ? 'Your brief is locked in.' : 'Approve this direction.'}</h2>
           <p>
             {approved
-              ? 'We can now use this approved brief as the constraint for real-product selection. You can still return and edit it later.'
+              ? intake.roomType === 'bedroom' ? 'Your bedroom brief is saved. Bedroom product selection and image generation are not available yet.' : 'We can now use this approved brief as the constraint for real-product selection. You can still return and edit it later.'
               : 'Approval does not generate an image or spend a credit. It simply tells the next stage what we are designing towards.'}
           </p>
         </div>
-        {approved ? (
+        {approved && intake.roomType === 'bedroom' ? <Link className="button buttonLight" href="/design">Edit room answers</Link> : approved ? (
           <Link className="button buttonLight" href="/products">Select real products · Free</Link>
         ) : (
           <button className="button buttonLight" type="button" onClick={approve}>Approve design direction</button>
         )}
       </section>
 
-      <section className="purchaseCreditPreview">
-        <div>
-          <span className="microLabel">Future loyalty loop</span>
-          <h3>Buy from a room. Earn another design.</h3>
-        </div>
-        <p>When a qualifying purchase is confirmed, the architecture can return <strong>1 design credit</strong> to the customer. Affiliate clicks alone will never trigger a reward.</p>
-      </section>
+
     </div>
   );
 }
