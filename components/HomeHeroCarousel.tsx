@@ -106,10 +106,6 @@ export function HomeHeroCarousel() {
           </div>
         </div>
       ))}
-      <div className="heroProof shellWide">
-        <span>01 Upload your room</span><span>02 Set your brief</span>
-        <span>03 See the design</span><span>04 Shop the room</span>
-      </div>
       <div className="heroCarouselControls" role="group" aria-label="Choose a room transformation">
         <button type="button" onClick={() => choose(active - 1)} aria-label="Previous slide" disabled={!ready[1 - active]}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
