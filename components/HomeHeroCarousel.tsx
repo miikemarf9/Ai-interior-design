@@ -93,15 +93,15 @@ export function HomeHeroCarousel() {
           <div className="homeHeroShade" />
           <div key={`copy-${runs[index]}`} className="homeHeroContent shellWide">
             {index === 0 ? <>
-              <p className="eyebrow eyebrowLight heroLine heroLineOne">Your space · your style · your budget</p>
-              <h1 className="heroLine heroLineTwo">See the potential<br />in your<br />room.</h1>
-              <p className="heroLine heroLineThree">Turn your room photo into a personalised design, shaped around your style, budget and the furniture you want to keep. Explore the selected pieces and buy directly from retailers.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="#shop-room">Explore the room</Link>
+              <p className="eyebrow eyebrowLight heroLine heroLineOne">Room design & furniture selection</p>
+              <h1 className="heroLine heroLineTwo">Upload your room.<br />See it redesigned.</h1>
+              <p className="heroLine heroLineThree">Choose your style and budget. Get a design for your space, with furniture selected to work together and links to buy it.</p>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="#shop-room">See an example</Link>
             </> : <>
-              <p className="eyebrow eyebrowLight heroLine heroLineOne">YOUR ROOM. REIMAGINED.</p>
-              <h1 className="heroLine heroLineTwo">Fall in love with<br />your room again.</h1>
-              <p className="heroLine heroLineThree">Keep the pieces you love and see how new furniture, colours and textures could work around them. A fresh look for your room, shaped around your life and budget.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="#home-start-title">Find my inspiration</Link>
+              <p className="eyebrow eyebrowLight heroLine heroLineOne">Refresh your existing room</p>
+              <h1 className="heroLine heroLineTwo">Keep what you love.<br />Redesign the rest.</h1>
+              <p className="heroLine heroLineThree">Upload a room photo and tell us what stays. See a new look built around your furniture, style and budget.</p>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="#shop-room">See an example</Link>
             </>}
           </div>
         </div>

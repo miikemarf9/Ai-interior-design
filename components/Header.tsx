@@ -48,7 +48,7 @@ export function Header({ preview = false }: { preview?: boolean }) {
         </nav>
         <div className="headerActions">
           <Link className="headerAccountLink" href="/account">My rooms</Link>
-          <Link className="button buttonPrimary buttonCompact" href={preview ? '#shop-room' : '/design'}>{preview ? 'Explore the room' : 'Design my room'}</Link>
+          <Link className="button buttonPrimary buttonCompact" href={preview ? '#shop-room' : '/design'}>{preview ? 'See an example' : 'Design my room'}</Link>
         </div>
       </div>
     </header>
