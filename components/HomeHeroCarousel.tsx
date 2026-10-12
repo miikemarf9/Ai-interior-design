@@ -95,12 +95,12 @@ export function HomeHeroCarousel() {
             {index === 0 ? <>
               <p className="eyebrow eyebrowLight heroLine heroLineOne">Your space · your style · your budget</p>
               <h1 className="heroLine heroLineTwo">See the potential<br />in your<br />room.</h1>
-              <p className="heroLine heroLineThree">A welcoming room starts with a little inspiration. Explore a fresh look for an everyday home, with ideas to help you plan your own.</p>
+              <p className="heroLine heroLineThree">Turn your room photo into a personalised design, shaped around your style, budget and the furniture you want to keep. Explore the selected pieces and buy directly from retailers.</p>
               <Link className="button buttonPrimary heroLine heroLineFour" href="#shop-room">Explore the room</Link>
             </> : <>
               <p className="eyebrow eyebrowLight heroLine heroLineOne">YOUR ROOM. REIMAGINED.</p>
               <h1 className="heroLine heroLineTwo">Fall in love with<br />your room again.</h1>
-              <p className="heroLine heroLineThree">You don&apos;t have to start from scratch. Find inspiration for a calmer, more personal space, with room for the pieces you already love.</p>
+              <p className="heroLine heroLineThree">Keep the pieces you love and see how new furniture, colours and textures could work around them. A fresh look for your room, shaped around your life and budget.</p>
               <Link className="button buttonPrimary heroLine heroLineFour" href="#home-start-title">Find my inspiration</Link>
             </>}
           </div>
