@@ -10,12 +10,12 @@ const steps = [
   ['Explore the furniture','Select a piece to see its details in one place.'],
 ];
 const faqs = [
-  ['What can I try today?', 'Explore the example room and select its furniture markers to see illustrative details and prices. Roomfound is currently a preview: uploading your own room, generating a design and shopping are not yet ready for customers.'],
-  ['Can I buy the furniture shown?', 'The rooms are AI-generated inspiration, not shoppable collections. Prices are illustrative, not retailer offers. We are working towards a collection with approved product images, exact variants and retailer links.'],
-  ['Will I be able to keep my own furniture?', 'That is part of the planned experience. Your room brief will cover what stays, what can change and practical needs such as storage, pets or easy-care fabrics.'],
-  ['Will the design guarantee everything fits?', 'No. A room visualisation helps you picture a design; it cannot guarantee fit or an exact product match. Room measurements, access and product dimensions will still need checking before buying.'],
-  ['Does the furniture budget include the design fee?', 'No. Furniture spending and any design-generation charge are separate. The £3,000 plan above is an example allocation, not a quote for the pictured room.'],
-  ['Will Roomfound work for bedrooms?', 'Living rooms are the focus of our first planned pilot. The bedroom transformation is inspiration only; bedroom generation is not available yet.'],
+  ['How will Roomfound work?', 'Start with a photo of your room, choose a style and set your furniture budget. Tell us what you want to keep, then review a coordinated furniture selection before seeing the proposed design in your space.'],
+  ['Will I be able to shop the furniture?', 'At launch, you will be able to explore the selected furniture from your room design, view product details and follow links to buy directly from the retailer. The retailer will handle your order, delivery and returns.'],
+  ['Can I keep furniture I already own?', 'Absolutely. Your room brief starts with what stays and what can change. Whether it is a favourite armchair or a much-loved table, those pieces help shape the new look.'],
+  ['What furniture budget should I allow?', 'Start with an amount you feel comfortable spending. Around £2,500–£4,000 is the range we are designing our first living-room collections around. A refresh can focus on fewer pieces, especially when you are keeping existing furniture.'],
+  ['Do I need to measure my room?', 'A photograph gives us the starting point. Key room measurements and the sizes of furniture you are keeping help with planning. Before ordering, check each product’s dimensions and the access through doors and stairs.'],
+  ['Is the design cost included in my furniture budget?', 'Your furniture budget is for the pieces you choose. Any design charge will be shown separately before you proceed, and delivery costs will be confirmed by the retailer.'],
 ];
 
 export function HomeBelowHero() {
@@ -23,7 +23,7 @@ export function HomeBelowHero() {
     <section className={`${styles.wrap} ${styles.stepsSection}`} id="reimagined" aria-labelledby="home-steps-title">
       <div className={styles.stepIntro}><p className={styles.kicker}>The experience we’re building</p><h2 id="home-steps-title">Your room.<br/><em>A clearer plan.</em></h2></div>
       <ol className={styles.steps}>{steps.map(([title,copy],index)=><li key={title}><span>0{index+1}</span><h3>{title}</h3><p>{copy}</p></li>)}</ol>
-      <p className={styles.betaNote}>Roomfound is currently a preview. Explore the example today; designing your own room and shopping will follow once our first furniture collection and design journey are ready.</p>
+      <p className={styles.betaNote}>A preview of the Roomfound experience. The room designs and furniture prices shown here are illustrative.</p>
     </section>
 
     <section className={styles.exampleSection} id="shop-room" aria-labelledby="home-example-title">
@@ -43,7 +43,7 @@ export function HomeBelowHero() {
       <aside className={styles.spendingPlan} aria-label="Illustrative furniture spending plan"><p className={styles.kicker}>An example spending plan</p><h3>Planning with £3,000</h3><p className={styles.planIntro}>Furnishing with £2,500–£4,000? Here is one way to plan a £3,000 furniture budget.</p><dl>{[['Seating','£1,400'],['Tables & storage','£500'],['Rug','£400'],['Lighting','£300'],['Finishing touches','£400']].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><p>This is a planning illustration, not a product total or a price for the pictured room. Allow separately for delivery and any design charge.</p></aside>
     </div></section>
 
-    <section className={`${styles.wrap} ${styles.faqSection}`} id="verified-room" aria-labelledby="home-faq-title"><div><p className={styles.kicker}>A few things worth knowing</p><h2 id="home-faq-title">Clear details.<br/><em>Considered decisions.</em></h2><p>What you can explore today, and what we’re working towards.</p></div><div className={styles.faqs}>{faqs.map(([question,answer])=><details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></section>
+    <section className={`${styles.wrap} ${styles.faqSection}`} id="verified-room" aria-labelledby="home-faq-title"><div><p className={styles.kicker}>A few things worth knowing</p><h2 id="home-faq-title">Clear details.<br/><em>Considered decisions.</em></h2><p>From keeping favourite pieces to planning your budget, here is how Roomfound will help.</p></div><div className={styles.faqs}>{faqs.map(([question,answer])=><details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></section>
 
     <section className={`${styles.wrap} ${styles.final}`} aria-labelledby="home-final-title"><p className={styles.kicker}>A little inspiration goes a long way</p><h2 id="home-final-title">Picture the possibilities.<br/><em>Find what feels like you.</em></h2><p>Explore the example room and discover the details you would make your own.</p><Link className="button buttonPrimary" href="#shop-room">Explore the furniture</Link></section>
     <footer className={`${styles.wrap} ${styles.footer}`}><span>Roomfound</span><span>Thoughtful interiors for real UK homes</span><Link href="/privacy">Privacy</Link></footer>

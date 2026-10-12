@@ -30,7 +30,7 @@ export function HomeRoomExample() {
         <h3>{piece.name}</h3><strong className={styles.price}>{piece.price}</strong><span className={styles.smallLabel}>Illustrative price</span>
         <p>{piece.description}</p><p className={styles.detailNote}>{piece.detail}</p>
       </div>
-      <p className={styles.disclosure}>AI-generated inspiration. Furniture and prices are illustrative, not verified retailer offers. There are no items to buy or retailer links in this example.</p>
+      <p className={styles.disclosure}>Example room design. Furniture and prices are illustrative.</p>
     </div>
   </div>;
 }

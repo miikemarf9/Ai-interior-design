@@ -5,7 +5,7 @@ import { ScrollMotion } from '@/components/ScrollMotion';
 import { HomeBelowHero } from '@/components/HomeBelowHero';
 
 const title = 'Roomfound — See the potential in your room';
-const description = 'Explore AI room-design inspiration for real UK homes, with ideas for your style, furniture budget and the pieces you want to keep. Currently in preview.';
+const description = 'Discover a new look for your home with Roomfound. Room-design inspiration shaped around your style, furniture budget and the pieces you love.';
 
 export const metadata: Metadata = {
   title: { absolute: title },
