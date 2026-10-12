@@ -132,7 +132,7 @@ export function HomeHeroImage({ room = 'living', paused = false, onReady }: {
             <Image
               className="heroRoomPhoto"
               src={after} fill sizes="100vw" priority quality={85}
-              alt={room === 'living' ? 'The same room furnished with an ivory sofa, walnut coffee table and terracotta lounge chair' : 'The same bedroom redesigned with an upholstered bed, modern wardrobe and walnut chest of drawers'}
+              alt={room === 'living' ? 'The same room furnished with an ivory sofa, walnut coffee table and terracotta lounge chair' : 'The same bedroom redesigned with an upholstered bed, bedside tables and walnut chest of drawers'}
               onLoad={() => setAfterLoaded(true)}
             />
           </div>

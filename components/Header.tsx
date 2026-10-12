@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Brand } from './Brand';
 
-export function Header() {
+export function Header({ preview = false }: { preview?: boolean }) {
   const [atTop, setAtTop] = useState(true);
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
@@ -42,13 +42,13 @@ export function Header() {
         <Brand />
         <nav className="desktopNav" aria-label="Primary navigation">
           <a href="#reimagined">How it works</a>
-          <a href="#shop-room">Shop the room</a>
+          <a href="#shop-room">{preview ? 'Explore the room' : 'Shop the room'}</a>
           <Link href="/ideas">Ideas</Link>
-          <a href="#verified-room">Verified Room</a>
+          <a href="#verified-room">{preview ? 'Your questions' : 'Verified Room'}</a>
         </nav>
         <div className="headerActions">
           <Link className="headerAccountLink" href="/account">My rooms</Link>
-          <Link className="button buttonPrimary buttonCompact" href="/design">Design my room</Link>
+          <Link className="button buttonPrimary buttonCompact" href={preview ? '#shop-room' : '/design'}>{preview ? 'Explore the room' : 'Design my room'}</Link>
         </div>
       </div>
     </header>

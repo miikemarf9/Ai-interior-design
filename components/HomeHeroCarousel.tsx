@@ -93,15 +93,15 @@ export function HomeHeroCarousel() {
           <div className="homeHeroShade" />
           <div key={`copy-${runs[index]}`} className="homeHeroContent shellWide">
             {index === 0 ? <>
-              <p className="eyebrow eyebrowLight heroLine heroLineOne">Your room · real products · UK prices</p>
-              <h1 className="heroLine heroLineTwo">Design a room<br />you can actually<br />buy.</h1>
-              <p className="heroLine heroLineThree">Upload a photo of your room. We’ll design around your space, style and budget using furniture you can actually buy.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Design my room</Link>
+              <p className="eyebrow eyebrowLight heroLine heroLineOne">Your space · your style · your budget</p>
+              <h1 className="heroLine heroLineTwo">See the potential<br />in your<br />room.</h1>
+              <p className="heroLine heroLineThree">A welcoming room starts with a little inspiration. Explore a fresh look for an everyday home, with ideas to help you plan your own.</p>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="#shop-room">Explore the room</Link>
             </> : <>
               <p className="eyebrow eyebrowLight heroLine heroLineOne">YOUR ROOM. REIMAGINED.</p>
               <h1 className="heroLine heroLineTwo">Fall in love with<br />your room again.</h1>
-              <p className="heroLine heroLineThree">Your room doesn&apos;t need to be empty. Keep what you love, change what you don&apos;t, and discover a fresh design with furniture to suit your style and budget.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Redesign my room</Link>
+              <p className="heroLine heroLineThree">You don&apos;t have to start from scratch. Find inspiration for a calmer, more personal space, with room for the pieces you already love.</p>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="#home-start-title">Find my inspiration</Link>
             </>}
           </div>
         </div>
