@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import { Brand } from "@/components/Brand";
 import { FormEvent, useEffect, useState } from "react";
 import { AccountPrivacyControls } from "@/components/AccountPrivacyControls";
 
@@ -243,7 +244,7 @@ export function AccountExperience() {
     return (
       <main className="accountPage">
         <header className="accountTopbar">
-          <Link href="/" className="accountBrand">Seemori</Link>
+          <Brand />
           <Link href="/design">Design a room</Link>
         </header>
 
@@ -314,7 +315,7 @@ export function AccountExperience() {
   return (
     <main className="accountPage accountDashboard">
       <header className="accountTopbar">
-        <Link href="/" className="accountBrand">Seemori</Link>
+        <Brand />
         <div>
           <Link href="/design">New room</Link>
           <button type="button" onClick={signOut}>Sign out</button>
