@@ -5,9 +5,9 @@ import { useState } from 'react';
 import styles from './HomeBelowHero.module.css';
 
 const pieces = [
-  { id:'sofa', name:'Three-seater sofa', price:'£1,295', x:35, y:58, position:'24% 72%', zoom:'210%', finish:'Warm ivory upholstery', shape:'Gently rounded arms', description:'A neutral anchor for the room, with olive and rust accents adding colour.' },
-  { id:'table', name:'Walnut coffee table', price:'£245', x:56, y:73, position:'61% 85%', zoom:'290%', finish:'Walnut-look finish', shape:'Oval top with a sculptural base', description:'The curved shape softens the seating area and the dark wood adds contrast.' },
-  { id:'pendant', name:'Pendant light', price:'£165', x:59, y:10, position:'61% 0%', zoom:'350%', finish:'Warm white shade', shape:'Softly rounded silhouette', description:'A simple overhead focal point that complements the warm, neutral room.' },
+  { id:'sofa', name:'Olive green sofa', price:'£1,295', x:63, y:52, position:'70% 55%', zoom:'210%', finish:'Deep olive velvet-look upholstery', shape:'Tailored low profile with slim wooden legs', description:'A rich, comfortable centrepiece that grounds the scheme without overwhelming the room.' },
+  { id:'table', name:'Oval walnut coffee table', price:'£245', x:49, y:73, position:'50% 87%', zoom:'260%', finish:'Warm walnut-look finish', shape:'Slim oval top and tapered legs', description:'The soft oval balances the sofa’s straight lines while echoing the timber elsewhere in the room.' },
+  { id:'sideboard', name:'Mid-century walnut sideboard', price:'£695', x:16, y:57, position:'6% 72%', zoom:'250%', finish:'Rich walnut-look woodgrain', shape:'Low cabinet, simple handles and tapered legs', description:'Low storage introduces the characterful mid-century silhouette and makes space for books and ceramics.' },
 ];
 
 export function HomeRoomExample() {
@@ -15,14 +15,14 @@ export function HomeRoomExample() {
   const [hideTooltip,setHideTooltip] = useState(false);
   const piece = pieces.find(p=>p.id===active)!;
   const cropStyle = (p: typeof pieces[number]) => ({
-    backgroundImage:'url(/images/hero-room-after.webp)',
+    backgroundImage:'url(/images/mid-century-living-room.avif)',
     backgroundSize:p.zoom, backgroundPosition:p.position,
   });
   return <div onKeyDown={event=>{if(event.key==='Escape')setHideTooltip(true);}}>
     <div className={styles.example}>
       <div className={styles.roomColumn}>
         <div className={styles.roomPicture}>
-          <Image src="/images/hero-room-after.webp" alt="Example living-room design with an ivory sofa, oval walnut table and sculptural pendant" width={1672} height={941} sizes="(max-width: 900px) 100vw, (max-width: 1424px) 65vw, 890px" quality={85}/>
+          <Image src="/images/mid-century-living-room.avif" alt="Mid-century modern living room with an olive sofa, walnut sideboard, oval coffee table and rich rust accents" width={960} height={640} sizes="(max-width: 900px) 100vw, (max-width: 1424px) 65vw, 890px" quality={85}/>
           {pieces.map((p,index)=><button key={p.id} type="button" className={styles.pin} style={{left:`${p.x}%`,top:`${p.y}%`}} data-hide-tooltip={hideTooltip} onFocus={()=>setHideTooltip(false)} onMouseEnter={()=>setHideTooltip(false)} aria-label={`${p.name}, illustrative price ${p.price}`} aria-pressed={active===p.id} aria-controls="example-furniture-details" onClick={()=>setActive(p.id)}>
             <span>{index+1}</span><span className={`${styles.pinLabel} ${p.y<20?styles.below:''}`} aria-hidden="true">{p.name}<strong>{p.price}</strong></span>
           </button>)}
@@ -49,15 +49,15 @@ export function HomeRoomExample() {
         <p className={styles.retailerNote}>Retailer details and buying links will accompany the launch collection.</p>
       </div>
     </div>
-    <div className={styles.exampleFootnote}><p>Example furniture and prices. Image details are taken from this room design.</p><p>Prices cover the marked pieces only, not the whole room.</p></div>
+    <div className={styles.exampleFootnote}><p>Illustrative room and furniture prices, not a retailer product listing.</p><p>Prices cover the marked pieces only, not the whole room.</p></div>
     <div className={styles.brief} aria-labelledby="example-brief-title">
-      <div><p className={styles.kicker}>Behind this design</p><h3 id="example-brief-title">An empty room.<br/>A coordinated plan.</h3></div>
+      <div><p className={styles.kicker}>Behind this design</p><h3 id="example-brief-title">Mid-century character.<br/>A coordinated room.</h3></div>
       <dl>
-        <div><dt>The starting point</dt><dd>An unfurnished living room with a bay window and beige carpet.</dd></div>
-        <div><dt>The look</dt><dd>Warm neutrals, walnut tones and a clay-coloured accent chair.</dd></div>
-        <div><dt>What stays</dt><dd>The bay window, room layout and fitted carpet.</dd></div>
+        <div><dt>The direction</dt><dd>A relaxed, welcoming living room with distinctive mid-century furniture.</dd></div>
+        <div><dt>The look</dt><dd>Olive upholstery, walnut wood, burnt orange accents and warm brass lighting.</dd></div>
+        <div><dt>The idea</dt><dd>Choose pieces with a shared palette and era, then balance their shapes and textures.</dd></div>
       </dl>
-      <p className={styles.briefNote}>For your room, the brief will also include your furniture budget and any pieces you want to keep. Your design charge and retailer delivery costs are separate from furniture spending.</p>
+      <p className={styles.briefNote}>Your own design starts with your photograph, budget and any pieces you want to keep. This is an illustrative style example; real furniture choices and retailer availability are confirmed separately.</p>
     </div>
   </div>;
 }
