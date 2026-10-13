@@ -4,11 +4,11 @@
   --ivory: #fbfaf7;
   --ink: #2b2927;
   --muted: #6d6d64;
-  --forest: #35483d;
-  --forest-dark: #26352c;
+  --forest: #156339;
+  --forest-dark: #104b2b;
   --clay: #9a624d;
-  --gold: #c7a33e;
-  --gold-deep: #936b32;
+  --brand-green: #156339;
+  --brand-green-deep: #104b2b;
   --line: rgba(32, 34, 29, 0.14);
   --line-strong: rgba(32, 34, 29, 0.26);
   --display: var(--font-display), 'Iowan Old Style', Baskerville, Georgia, serif;
@@ -1624,30 +1624,30 @@ p { line-height: 1.58; }
 }
 
 
-/* Gold editorial system */
+/* Seemori green editorial accents */
 .button,
 .buttonPrimary,
 .buttonLight,
 .buttonSecondary {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: #17140f;
+  background: var(--brand-green);
+  border-color: var(--brand-green);
+  color: #fbfaf7;
 }
 .button:hover,
 .buttonPrimary:hover,
 .buttonLight:hover,
 .buttonSecondary:hover {
-  background: var(--gold-deep);
-  border-color: var(--gold-deep);
+  background: var(--brand-green-deep);
+  border-color: var(--brand-green-deep);
   color: #fffdf7;
 }
 
 .eyebrow:not(.eyebrowLight) {
-  color: var(--gold-deep);
+  color: var(--brand-green-deep);
 }
 
 .titleGold {
-  color: var(--gold);
+  color: var(--brand-green);
   font-style: italic;
   font-weight: 500;
 }
@@ -1679,7 +1679,7 @@ p { line-height: 1.58; }
   color: var(--muted);
 }
 .actualRoomIntro .eyebrow {
-  color: var(--gold-deep);
+  color: var(--brand-green-deep);
 }
 
 .verifiedSection {
@@ -1709,7 +1709,7 @@ p { line-height: 1.58; }
   color: #416044;
 }
 .verificationRows .warn {
-  color: var(--gold-deep);
+  color: var(--brand-green-deep);
 }
 .verificationNote {
   color: var(--muted);
@@ -1717,21 +1717,21 @@ p { line-height: 1.58; }
 
 .budgetChoices button:hover,
 .budgetChoices button.isActive {
-  background: var(--gold);
-  color: #17140f;
+  background: var(--brand-green);
+  color: #fbfaf7;
 }
 .hotspot {
-  border-color: rgba(184,138,70,.95);
-  background: var(--gold);
-  color: #17140f;
+  border-color: var(--brand-green);
+  background: var(--brand-green);
+  color: #fbfaf7;
 }
 .hotspot:hover,
 .hotspot.isActive {
-  background: #c79a54;
+  background: var(--brand-green-deep);
 }
 
 .imageEditorialTitle em {
-  color: var(--gold);
+  color: var(--brand-green);
   font-style: italic;
   font-weight: 500;
 }
@@ -1767,7 +1767,7 @@ p { line-height: 1.58; }
 /* Roomfound service pillars */
 .titleGold,
 .splitHeading h2 em.titleGold {
-  color: var(--gold) !important;
+  color: var(--brand-green) !important;
 }
 
 .roomfoundPillars {
@@ -1793,7 +1793,7 @@ p { line-height: 1.58; }
   font-weight: 500;
 }
 .roomfoundPillarsIntro h2 em {
-  color: var(--gold);
+  color: var(--brand-green);
   font-style: italic;
   font-weight: 500;
 }
@@ -1852,7 +1852,7 @@ p { line-height: 1.58; }
   stroke-linejoin: round;
 }
 .roomfoundPillarMark .pillarAccentLine {
-  stroke: var(--gold);
+  stroke: var(--brand-green);
   stroke-width: 1.8;
 }
 .roomfoundPillar:hover .roomfoundPillarMark {
@@ -1867,7 +1867,7 @@ p { line-height: 1.58; }
   font-weight: 500;
 }
 .roomfoundPillar h3 em {
-  color: var(--gold);
+  color: var(--brand-green);
   font-style: italic;
   font-weight: 500;
 }
@@ -1886,7 +1886,7 @@ p { line-height: 1.58; }
   z-index: 2;
   top: 24px;
   right: 25px;
-  color: var(--gold-deep);
+  color: var(--brand-green-deep);
   font-family: var(--display);
   font-size: 24px;
   opacity: 0;
@@ -1983,7 +1983,7 @@ p { line-height: 1.58; }
   font-weight: 500;
 }
 .roomfoundPillarsIntro h2 em {
-  color: var(--gold) !important;
+  color: var(--brand-green) !important;
   font-style: italic;
   font-weight: 500;
 }
@@ -2018,7 +2018,7 @@ p { line-height: 1.58; }
   stroke-width: 1.15;
 }
 .roomfoundPillarMark .pillarAccentLine {
-  stroke: var(--gold);
+  stroke: var(--brand-green);
   stroke-width: 1.45;
 }
 .roomfoundPillar h3 {
@@ -2028,7 +2028,7 @@ p { line-height: 1.58; }
   font-weight: 500;
 }
 .roomfoundPillar h3 em {
-  color: var(--gold);
+  color: var(--brand-green);
   font-style: italic;
   font-weight: 500;
 }
@@ -2049,7 +2049,7 @@ p { line-height: 1.58; }
 
 .titleGold,
 .splitHeading h2 em.titleGold {
-  color: var(--gold) !important;
+  color: var(--brand-green) !important;
 }
 
 @media (max-width: 760px) {
@@ -2162,14 +2162,14 @@ p { line-height: 1.58; }
   min-height: 49px;
   padding-inline: 27px;
   border-radius: 0;
-  background: var(--gold);
-  border-color: var(--gold);
-  color: #17140f;
+  background: var(--brand-green);
+  border-color: var(--brand-green);
+  color: #fbfaf7;
 }
 
 .homeHero .button:hover {
-  background: var(--gold-deep);
-  border-color: var(--gold-deep);
+  background: var(--brand-green-deep);
+  border-color: var(--brand-green-deep);
   color: #fffdf7;
 }
 
@@ -2612,7 +2612,7 @@ p { line-height: 1.58; }
 }
 
 /* Hero polish: retain the existing tag shapes, with quieter colour and clear disclosure. */
-.heroRoomPrices .heroPrice strong { background: #35483D; color: #fff; }
+.heroRoomPrices .heroPrice strong { background: var(--forest); color: #fff; }
 .heroRoomPrices .heroPricesCaption {
   display: block; position: absolute; right: auto; bottom: auto;
   translate: -50% -50%; margin: 0; width: max-content;
@@ -2681,7 +2681,7 @@ p { line-height: 1.58; }
 .heroCarouselControls button { border: 0; color: inherit; background: transparent; }
 .heroCarouselControls svg, .heroCarouselPause svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .heroCarouselDot span { width: 7px; height: 7px; border: 1px solid #697368; border-radius: 50%; transition: background .2s; }
-.heroCarouselDot[aria-current] span { background: #35483d; border-color: #35483d; }
+.heroCarouselDot[aria-current] span { background: var(--forest); border-color: var(--forest); }
 .homeHero .heroCarouselPause { right: 5%; }
 .heroCarouselControls button:hover, .homeHero .heroCarouselPause:hover { background: #e9eae3; color: #252b25; }
 .heroCarouselControls button:focus-visible, .heroCarouselPause:focus-visible { outline: 3px solid #b69257; outline-offset: 3px; }
@@ -2699,7 +2699,7 @@ p { line-height: 1.58; }
   .heroCarouselDot span { transition: none; }
 }
 
-/* Seemori identity: original wordmark with gold e lettering. */
+/* Seemori identity: original wordmark with green e lettering. */
 .brand { color: var(--ink); flex-shrink: 0; }
 .seemoriWordmark { display: block; width: 174px; height: auto; }
 .siteHeaderInner { grid-template-columns: 1fr auto; }

@@ -11,7 +11,7 @@
 .copy { padding:45px; align-self:center; }
 .status { display:inline-block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--forest); border-bottom:1px solid var(--line-strong); padding-bottom:10px; margin:0 0 22px; }
 .copy h2 { font-size:clamp(36px,3.5vw,52px); line-height:1.08; margin:0 0 22px; }
-.copy h2 em { color:var(--gold-deep); font-weight:400; }
+.copy h2 em { color:var(--brand-green-deep); font-weight:400; }
 .copy>p:not(.status) { font-size:14px; line-height:1.75; color:var(--muted); margin:0 0 16px; }
 .copy a { margin-top:8px; }
 .copy small { display:block; font-size:11px; line-height:1.5; color:var(--muted); margin-top:16px; }
