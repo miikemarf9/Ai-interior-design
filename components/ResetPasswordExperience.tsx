@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import { Brand } from "@/components/Brand";
 import { FormEvent, useState } from "react";
 
 export function ResetPasswordExperience({ token }: { token: string }) {
@@ -41,7 +42,7 @@ export function ResetPasswordExperience({ token }: { token: string }) {
 
   return (
     <main className="accountPage resetPasswordPage">
-      <header className="accountTopbar"><Link href="/" className="accountBrand">Seemori</Link></header>
+      <header className="accountTopbar"><Brand /></header>
       <section className="resetPasswordCard">
         <p className="eyebrow">Account security</p>
         {done ? (
