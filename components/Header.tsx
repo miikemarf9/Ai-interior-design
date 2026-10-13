@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Brand } from './Brand';
 
-export function Header({ preview = false, anchorBase = "" }: { preview?: boolean; anchorBase?: string }) {
+export function Header(_props: { preview?: boolean; anchorBase?: string }) {
   const [atTop, setAtTop] = useState(true);
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
@@ -40,16 +40,10 @@ export function Header({ preview = false, anchorBase = "" }: { preview?: boolean
     <header className={`siteHeader ${atTop ? 'isAtTop' : 'isScrolled'} ${visible ? 'isVisible' : 'isHidden'}`}>
       <div className="siteHeaderInner shellWide">
         <Brand />
-        <nav className="desktopNav" aria-label="Primary navigation">
-          <a href={`${anchorBase}#reimagined`}>How it works</a>
-          <a href={`${anchorBase}#shop-room`}>{preview ? 'Explore the room' : 'Shop the room'}</a>
-          <Link href="/ideas">Ideas</Link>
-          <a href={`${anchorBase}#verified-room`}>{preview ? 'Your questions' : 'Verified Room'}</a>
-        </nav>
-        <div className="headerActions">
+        <nav className="headerActions" aria-label="Primary navigation">
           <Link className="headerAccountLink" href="/account">My rooms</Link>
           <Link className="button buttonPrimary buttonCompact" href="/design">Upload my room</Link>
-        </div>
+        </nav>
       </div>
     </header>
   );

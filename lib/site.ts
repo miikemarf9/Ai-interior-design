@@ -1,6 +1,6 @@
 export const site = {
-  name: 'Roomfound',
-  workingName: true,
+  name: 'Seemori',
+  workingName: false,
   proposition: 'Design a room you can actually buy.',
   description:
     'A UK-first interior design and commerce platform built around real rooms, real products, real prices and better buying confidence.',

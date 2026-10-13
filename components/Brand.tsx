@@ -1,11 +1,7 @@
 import Link from 'next/link';
 import { site } from '@/lib/site';
+import { SeemoriWordmark } from './SeemoriWordmark';
 
 export function Brand() {
-  return (
-    <Link className="brand" href="/" aria-label={`${site.name} home`}>
-      <span className="brandMark" aria-hidden="true">R</span>
-      <span className="brandWord">{site.name}</span>
-    </Link>
-  );
+  return <Link className="brand" href="/" aria-label={`${site.name} home`}><SeemoriWordmark /></Link>;
 }

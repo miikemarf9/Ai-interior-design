@@ -68,7 +68,7 @@ export function VerifiedRoomPanel({
         <div className="verifiedRoomIntro">
           <p className="eyebrow">Room checks</p>
           <h2>We will show what we can prove.</h2>
-          <p>Verification evidence is not available for this generation yet. Roomfound does not convert missing evidence into a green tick.</p>
+          <p>Verification evidence is not available for this generation yet. Seemori does not convert missing evidence into a green tick.</p>
         </div>
       </section>
     );

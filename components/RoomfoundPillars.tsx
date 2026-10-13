@@ -60,7 +60,7 @@ export function RoomfoundPillars() {
     <section className="roomfoundPillars" aria-labelledby="roomfound-pillars-title">
       <div className="roomfoundPillarsInner">
         <div className="roomfoundPillarsIntro" data-reveal>
-          <p className="eyebrow">Why Roomfound</p>
+          <p className="eyebrow">Why Seemori</p>
           <h2 id="roomfound-pillars-title">
             <em className="titleGold">What makes us</em> <span>different.</span>
           </h2>

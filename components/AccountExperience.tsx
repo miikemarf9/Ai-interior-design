@@ -105,7 +105,7 @@ export function AccountExperience() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
         });
-        setNotice("If that email has a Roomfound account, a reset link has been sent.");
+        setNotice("If that email has a Seemori account, a reset link has been sent.");
         return;
       }
 
@@ -232,7 +232,7 @@ export function AccountExperience() {
       <main className="accountPage">
         <div className="accountLoading shell">
           <p className="eyebrow">My rooms</p>
-          <h1>Opening your Roomfound account.</h1>
+          <h1>Opening your Seemori account.</h1>
           <div className="briefLoadingLine"><i /></div>
         </div>
       </main>
@@ -243,7 +243,7 @@ export function AccountExperience() {
     return (
       <main className="accountPage">
         <header className="accountTopbar">
-          <Link href="/" className="accountBrand">Roomfound</Link>
+          <Link href="/" className="accountBrand">Seemori</Link>
           <Link href="/design">Design a room</Link>
         </header>
 
@@ -270,7 +270,7 @@ export function AccountExperience() {
               </>
             ) : (
               <>
-                <span className="microLabel">{authMode === "signup" ? "Create your Roomfound account" : "Welcome back"}</span>
+                <span className="microLabel">{authMode === "signup" ? "Create your Seemori account" : "Welcome back"}</span>
                 <h2>{authMode === "signup" ? "Keep every room in one place." : "Open your saved rooms."}</h2>
                 {authMode === "signup" ? (
                   <>
@@ -314,7 +314,7 @@ export function AccountExperience() {
   return (
     <main className="accountPage accountDashboard">
       <header className="accountTopbar">
-        <Link href="/" className="accountBrand">Roomfound</Link>
+        <Link href="/" className="accountBrand">Seemori</Link>
         <div>
           <Link href="/design">New room</Link>
           <button type="button" onClick={signOut}>Sign out</button>

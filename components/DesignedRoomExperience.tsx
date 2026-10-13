@@ -424,7 +424,7 @@ export function DesignedRoomExperience({
   return (
     <main className={`designedRoom ${styles.experience}`}>
       <header className="roomChrome">
-        <Link className="roomBrand" href="/">Roomfound</Link>
+        <Link className="roomBrand" href="/">Seemori</Link>
         <div className="roomChromeTitle">
           <span>{shared ? "Shared design" : "Your designed room"}</span>
           <strong>{title}</strong>
@@ -557,7 +557,7 @@ export function DesignedRoomExperience({
         </section>
       ) : (
         <section className="sharedRoomCta">
-          <p className="eyebrow">Roomfound</p>
+          <p className="eyebrow">Seemori</p>
           <h2>Design a room you can actually buy.</h2>
           <Link className="button buttonLight" href="/design">Design my room</Link>
         </section>
@@ -657,7 +657,7 @@ function ProductDrawer({
         <div className="liveRetailerOffers">
           <div className="liveRetailerHeading">
             <span>Where to buy</span>
-            <small>Recorded offers · affiliate links may earn Roomfound a commission</small>
+            <small>Recorded offers · affiliate links may earn Seemori a commission</small>
           </div>
 
           {offersLoading ? <p className="offerLoading">Checking current price and availability…</p> : null}
@@ -682,7 +682,7 @@ function ProductDrawer({
           {!offersLoading && liveOffers.length === 0 ? (
             <div className="noLiveRetailer">
               <strong>The product stays in your design.</strong>
-              <p>Its retailer offer is currently unavailable. Roomfound will show another retailer here when the same variant has a recorded UK offer.</p>
+              <p>Its retailer offer is currently unavailable. Seemori will show another retailer here when the same variant has a recorded UK offer.</p>
             </div>
           ) : null}
         </div>

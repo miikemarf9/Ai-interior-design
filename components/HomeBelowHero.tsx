@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Brand } from './Brand';
 import { HomeRoomExample } from './HomeRoomExample';
 import styles from './HomeBelowHero.module.css';
 
@@ -31,6 +32,6 @@ export function HomeBelowHero() {
     <section className={`${styles.wrap} ${styles.faqSection}`} id="verified-room" aria-labelledby="home-faq-title"><div><h2 id="home-faq-title">Your <em>questions.</em></h2></div><div className={styles.faqs}>{faqs.map(([question,answer])=><details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></section>
 
     <section className={`${styles.wrap} ${styles.final}`} aria-labelledby="home-final-title"><h2 id="home-final-title">See the room.<br/><em>Explore the furniture.</em></h2><Link className="button buttonPrimary" href="#shop-room">See an example</Link></section>
-    <footer className={`${styles.wrap} ${styles.footer}`}><span>Roomfound</span><span>Thoughtful interiors for real UK homes</span><Link href="/privacy">Privacy</Link></footer>
+    <footer className={`${styles.wrap} ${styles.footer}`}><Brand/><nav className={styles.footerLinks} aria-label="Explore Seemori"><Link href="/#reimagined">How it works</Link><Link href="/#shop-room">Explore the room</Link><Link href="/ideas">Ideas</Link><Link href="/#verified-room">Your questions</Link></nav></footer>
   </div>;
 }

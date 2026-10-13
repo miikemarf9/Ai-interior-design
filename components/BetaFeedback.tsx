@@ -43,7 +43,7 @@ export function BetaFeedback({designId}:{designId?:string}){
         <h2>{sent ? "Thank you. That is useful." : "Tell us where the experience breaks down."}</h2>
         <p>{sent
           ? "Your feedback has been attached to the beta record."
-          : "We are testing whether Roomfound is genuinely useful, not looking for compliments. Tell us what felt confusing, slow, inaccurate or missing."}</p>
+          : "We are testing whether Seemori is genuinely useful, not looking for compliments. Tell us what felt confusing, slow, inaccurate or missing."}</p>
       </div>
 
       {!sent ? (

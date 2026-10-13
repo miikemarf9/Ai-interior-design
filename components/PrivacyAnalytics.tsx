@@ -99,7 +99,7 @@ export function CookieConsent(){
     <aside className="cookieConsent" aria-label="Cookie preferences">
       <div>
         <strong>Privacy first.</strong>
-        <p>Roomfound uses essential storage to keep the service working. Optional first-party analytics help us understand the beta. We do not run behavioural analytics unless you choose it.</p>
+        <p>Seemori uses essential storage to keep the service working. Optional first-party analytics help us understand the beta. We do not run behavioural analytics unless you choose it.</p>
       </div>
       <div className="cookieConsentActions">
         <button type="button" onClick={()=>choose("essential")}>Essential only</button>

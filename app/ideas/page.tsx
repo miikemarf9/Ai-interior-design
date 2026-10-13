@@ -23,10 +23,10 @@ export async function generateMetadata():Promise<Metadata>{
   const collections=await getCollections();
   const hasRooms=collections.some((collection)=>collection.roomCount>0);
   return {
-    title:{absolute:"Room ideas and inspiration | Roomfound"},
-    description:"Find inspiration for your home with Roomfound. Our first room-design collection is coming soon; explore an example living room today.",
+    title:{absolute:"Room ideas and inspiration | Seemori"},
+    description:"Find inspiration for your home with Seemori. Our first room-design collection is coming soon; explore an example living room today.",
     robots:{index:hasRooms,follow:true},
-    openGraph:{title:"Room ideas and inspiration | Roomfound",description:hasRooms ? "Explore room designs and find a style for your home." : "Our first room-design collection is coming soon. Explore the Roomfound example living room."},
+    openGraph:{title:"Room ideas and inspiration | Seemori",description:hasRooms ? "Explore room designs and find a style for your home." : "Our first room-design collection is coming soon. Explore the Seemori example living room."},
   };
 }
 
@@ -38,7 +38,7 @@ export default async function IdeasPage(){
     <main className={styles.page}>
       <Header preview anchorBase="/" />
       <section className={styles.intro}>
-        <p className="eyebrow">Roomfound ideas</p>
+        <p className="eyebrow">Seemori ideas</p>
         <h1>Room ideas for your home.</h1>
         <p>Find a style you love and discover the details that bring a room together.</p>
       </section>
@@ -57,7 +57,7 @@ export default async function IdeasPage(){
           </Link>
         ))}
       </section> : <IdeasPreview />}
-      <Link className={styles.back} href="/">Back to Roomfound</Link>
+      <Link className={styles.back} href="/">Back to Seemori</Link>
     </main>
   );
 }

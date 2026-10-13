@@ -590,7 +590,7 @@ export function DesignIntake() {
 
           {step === 7 ? (
             <>
-              <StepIntro eyebrow="8 · Total room budget" title="What is your furniture budget?" copy="Your allowance for new furniture and accessories. Roomfound image-generation charges are separate; delivery costs will be confirmed with the products." />
+              <StepIntro eyebrow="8 · Total room budget" title="What is your furniture budget?" copy="Your allowance for new furniture and accessories. Seemori image-generation charges are separate; delivery costs will be confirmed with the products." />
               <div className="intakeBudget">
                 <strong>{formatBudget(state.budget)}</strong>
                 <input

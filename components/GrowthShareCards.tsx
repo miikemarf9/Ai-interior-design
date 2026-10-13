@@ -27,7 +27,7 @@ export function GrowthShareCards({designId}:{designId:string}){
       <div>
         <p className="eyebrow">Share the transformation</p>
         <h2>Before → After → Shop this room.</h2>
-        <p>Roomfound builds the creative from this exact room and its current room total. Open a format, then save or share it to the channel you need.</p>
+        <p>Seemori builds the creative from this exact room and its current room total. Open a format, then save or share it to the channel you need.</p>
       </div>
       <div className="growthShareFormats">
         {formats.map((format)=>{

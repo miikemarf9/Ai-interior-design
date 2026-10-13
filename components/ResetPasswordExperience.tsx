@@ -41,7 +41,7 @@ export function ResetPasswordExperience({ token }: { token: string }) {
 
   return (
     <main className="accountPage resetPasswordPage">
-      <header className="accountTopbar"><Link href="/" className="accountBrand">Roomfound</Link></header>
+      <header className="accountTopbar"><Link href="/" className="accountBrand">Seemori</Link></header>
       <section className="resetPasswordCard">
         <p className="eyebrow">Account security</p>
         {done ? (

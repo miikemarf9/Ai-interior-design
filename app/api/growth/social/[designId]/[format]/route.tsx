@@ -87,7 +87,7 @@ export async function GET(
           justifyContent:"space-between",padding:vertical ? "0 58px" : "0 48px",
           borderBottom:"1px solid #b8b4aa",
         }}>
-          <span style={{fontFamily:"Georgia, serif",fontSize:vertical ? 42 : 32}}>Roomfound</span>
+          <span style={{fontFamily:"Georgia, serif",fontSize:vertical ? 42 : 32}}>Seemori</span>
           <span style={{fontSize:vertical ? 18 : 14,textTransform:"uppercase",letterSpacing:2}}>Real room · real products</span>
         </div>
 

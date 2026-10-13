@@ -72,3 +72,8 @@
 @media(max-width:1100px){.brief{grid-template-columns:1fr}.brief dl{gap:20px}.examplePanel{padding:20px}.pieceButtons{padding:14px;gap:8px}}
 @media(max-width:900px){.example{grid-template-columns:1fr}.examplePanel{border-left:0;border-top:1px solid var(--line)}.productImage{max-width:360px}.roomColumn{display:contents}.roomPicture{order:0}.examplePanel{order:1}.pieceButtons{order:2}.steps{gap:18px}}
 @media(max-width:700px){.wrap{width:calc(100% - 36px)}.stepsSection{padding-block:28px}.steps{grid-template-columns:1fr 1fr;gap:20px}.steps h3{font-size:20px}.heading{display:block}.heading>p{margin-top:16px;max-width:none}.exampleSection{padding-block:40px}.examplePanel{padding:20px}.productImage{max-width:none;aspect-ratio:2}.pieceButtons button>span:last-child{font-size:11px;padding:8px 7px 0}.pieceButtons{gap:8px;padding:14px}.brief{padding:24px;gap:24px;margin-top:24px}.brief dl{grid-template-columns:1fr;gap:18px}.brief dt{margin-bottom:4px}.faqSection{grid-template-columns:1fr;padding-block:50px;gap:24px}.final{padding-bottom:50px}.footer{flex-wrap:wrap;gap:16px}.pinLabel{width:135px}.home p{font-size:14px}}
+
+.footerLinks { display:flex; flex-wrap:wrap; align-items:center; gap:8px 28px; }
+.footerLinks a { display:inline-flex; align-items:center; min-height:44px; text-decoration:none; }
+.footerLinks a:hover { text-decoration:underline; text-underline-offset:4px; }
+@media(max-width:700px){.footerLinks{gap:4px 20px;width:100%}}

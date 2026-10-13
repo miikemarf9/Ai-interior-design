@@ -2,12 +2,12 @@
   --chalk: #f6f2ea;
   --bone: #e9e1d3;
   --ivory: #fbfaf7;
-  --ink: #20221d;
+  --ink: #2b2927;
   --muted: #6d6d64;
   --forest: #35483d;
   --forest-dark: #26352c;
   --clay: #9a624d;
-  --gold: #b88a46;
+  --gold: #c7a33e;
   --gold-deep: #936b32;
   --line: rgba(32, 34, 29, 0.14);
   --line-strong: rgba(32, 34, 29, 0.26);
@@ -2697,4 +2697,23 @@ p { line-height: 1.58; }
 @media (prefers-reduced-motion: reduce) {
   .heroSlide { transition: none; }
   .heroCarouselDot span { transition: none; }
+}
+
+/* Seemori identity: original wordmark with gold e lettering. */
+.brand { color: var(--ink); flex-shrink: 0; }
+.seemoriWordmark { display: block; width: 174px; height: auto; }
+.siteHeaderInner { grid-template-columns: 1fr auto; }
+.siteHeader.isAtTop .brand { color: var(--ivory); }
+.siteHeader.isScrolled .brand { color: var(--ink); }
+@media (max-width: 680px) {
+  .siteHeader .shellWide { width: calc(100% - 32px); }
+  .siteHeader .seemoriWordmark { width: 120px; }
+  .siteHeader .headerActions { gap: 12px; }
+  .siteHeader .headerAccountLink { display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; }
+  .siteHeader .buttonCompact { padding-inline: 12px; font-size: 10px; min-height: 44px; }
+}
+@media (max-width: 360px) {
+  .siteHeader .seemoriWordmark { width: 100px; }
+  .siteHeader .headerActions { gap: 8px; }
+  .siteHeader .buttonCompact { padding-inline: 9px; }
 }
