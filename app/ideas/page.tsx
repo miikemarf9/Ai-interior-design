@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Header } from "@/components/Header";
@@ -8,18 +9,29 @@ import styles from '@/components/IdeasPreview.module.css';
 
 export const dynamic="force-dynamic";
 
+// The collection preview remains available while publishing data is being prepared.
+const getCollections = cache(async () => {
+  try {
+    return await listGrowthCollections();
+  } catch {
+    console.error("Ideas collections unavailable; showing the collection preview.");
+    return [];
+  }
+});
+
 export async function generateMetadata():Promise<Metadata>{
-  const collections=await listGrowthCollections();
+  const collections=await getCollections();
   const hasRooms=collections.some((collection)=>collection.roomCount>0);
   return {
     title:{absolute:"Room ideas and inspiration | Roomfound"},
     description:"Find inspiration for your home with Roomfound. Our first room-design collection is coming soon; explore an example living room today.",
     robots:{index:hasRooms,follow:true},
+    openGraph:{title:"Room ideas and inspiration | Roomfound",description:hasRooms ? "Explore room designs and find a style for your home." : "Our first room-design collection is coming soon. Explore the Roomfound example living room."},
   };
 }
 
 export default async function IdeasPage(){
-  const collections=await listGrowthCollections();
+  const collections=await getCollections();
 
   const published = collections.filter(collection=>collection.roomCount>0);
   return (
