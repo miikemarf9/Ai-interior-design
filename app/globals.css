@@ -2,7 +2,7 @@
   --chalk: #f6f2ea;
   --bone: #e9e1d3;
   --ivory: #fbfaf7;
-  --ink: #2b2927;
+  --ink: #252320;
   --muted: #6d6d64;
   --forest: #156339;
   --forest-dark: #104b2b;
@@ -1306,7 +1306,7 @@ p { line-height: 1.65; }
 
 
 /* Stage 13 — beta hardening */
-:focus-visible { outline:3px solid #9a624d; outline-offset:3px; }
+:focus-visible { outline:3px solid var(--brand-green); outline-offset:3px; }
 .skipLink {
   position:fixed; z-index:9999; left:14px; top:14px; transform:translateY(-180%);
   padding:11px 14px; background:#20221d; color:white; font-size:12px; font-weight:700;
@@ -1741,7 +1741,7 @@ p { line-height: 1.58; }
 
 .homeHero .eyebrowLight,
 .finalDesignCta .eyebrowLight {
-  color: #d7b16f;
+  color: rgba(255,255,255,.82);
 }
 
 .siteHeader .button,
@@ -2485,7 +2485,7 @@ p { line-height: 1.58; }
   min-width: 72px;
   margin: 0 0 -2px 0;
   padding: 8px 18px 8px 12px;
-  background: #11912a;
+  background: var(--brand-green);
   color: #fff;
   clip-path: polygon(0 0, 82% 0, 100% 50%, 82% 100%, 0 100%);
   font-size: 20px;
@@ -2684,7 +2684,7 @@ p { line-height: 1.58; }
 .heroCarouselDot[aria-current] span { background: var(--forest); border-color: var(--forest); }
 .homeHero .heroCarouselPause { right: 5%; }
 .heroCarouselControls button:hover, .homeHero .heroCarouselPause:hover { background: #e9eae3; color: #252b25; }
-.heroCarouselControls button:focus-visible, .heroCarouselPause:focus-visible { outline: 3px solid #b69257; outline-offset: 3px; }
+.heroCarouselControls button:focus-visible, .heroCarouselPause:focus-visible { outline: 3px solid var(--brand-green); outline-offset: 3px; }
 .heroCarouselControls button:disabled { opacity: .45; cursor: default; }
 .heroCarouselPause:disabled { cursor: default; }
 @media (max-width: 680px) {
@@ -2718,5 +2718,64 @@ p { line-height: 1.58; }
   .siteHeader .buttonCompact { padding-inline: 9px; }
 }
 
-/* Lighter logo accent only while the homepage header overlays photography. */
-.homePage .siteHeader.isAtTop .seemoriWordmark path:last-child { fill: #85c99f; }
+
+
+
+/* Seemori identity refresh — keep the original #156339 e's and black wordmark.
+   The hero photography remains unchanged; every header provides a calm,
+   legible surface for the same logo on desktop and mobile. */
+.siteHeader.isAtTop,
+.siteHeader.isScrolled {
+  background: rgba(251, 250, 247, .965);
+  color: var(--ink);
+  border-bottom: 1px solid rgba(37, 35, 32, .12);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+.siteHeader.isAtTop { box-shadow: 0 4px 24px rgba(25, 34, 27, .065); }
+.siteHeader.isScrolled { box-shadow: 0 9px 30px rgba(25, 34, 27, .095); }
+.siteHeader.isAtTop .brand,
+.siteHeader.isScrolled .brand,
+.siteHeader.isAtTop .headerAccountLink,
+.siteHeader.isScrolled .headerAccountLink { color: var(--ink); }
+.siteHeader .headerAccountLink { text-underline-offset: 5px; transition: color .18s ease; }
+.siteHeader .headerAccountLink:hover,
+.siteHeader .headerAccountLink:focus-visible { color: var(--brand-green-deep); text-decoration: underline; }
+.seemoriWordmark path:last-child { fill: var(--brand-green); }
+
+/* One hierarchy for actions: solid forest primary, restrained neutral secondary. */
+.button,
+.siteHeader .button,
+.homeHero .button,
+.wholeRoomSection .button,
+.finalDesignCta .button { border-radius: 4px; }
+.buttonPrimary { background: var(--brand-green); border-color: var(--brand-green); color: #fff; }
+.buttonPrimary:hover { background: var(--brand-green-deep); border-color: var(--brand-green-deep); color: #fff; }
+.buttonSecondary { background: transparent; border-color: var(--line-strong); color: var(--ink); }
+.buttonSecondary:hover { background: var(--chalk); border-color: var(--brand-green); color: var(--brand-green-deep); }
+.buttonLight { background: var(--ivory); border-color: var(--ivory); color: var(--ink); }
+.buttonLight:hover { background: #fff; border-color: #fff; color: var(--brand-green-deep); }
+.button:focus-visible,
+.siteHeader a:focus-visible { outline: 3px solid var(--brand-green); outline-offset: 4px; }
+:focus-visible { outline-color: var(--brand-green); }
+::selection { background: #d9eade; color: var(--ink); }
+
+/* Account, password reset and room-view chrome reuse the actual vector logo. */
+.accountTopbar { background: var(--ivory); }
+.accountTopbar .brand { color: var(--ink); }
+.accountTopbar .seemoriWordmark { width: 150px; }
+.roomChrome .brand {
+  padding: 7px 12px;
+  border-radius: 4px;
+  background: var(--ivory);
+  color: var(--ink);
+}
+.roomChrome .seemoriWordmark { width: 120px; }
+.accountAuthCard input:focus-visible,
+.resetPasswordCard input:focus-visible { border-color: var(--brand-green); outline: 2px solid var(--brand-green); outline-offset: 1px; }
+
+@media (max-width: 680px) {
+  .accountTopbar .seemoriWordmark { width: 125px; }
+  .roomChrome .brand { padding: 7px 9px; }
+  .roomChrome .seemoriWordmark { width: 100px; }
+}
