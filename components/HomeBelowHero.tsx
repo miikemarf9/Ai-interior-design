@@ -25,7 +25,7 @@ export function HomeBelowHero() {
     </section>
 
     <section className={styles.exampleSection} id="shop-room" aria-labelledby="home-example-title">
-      <div className={styles.wrap}><div className={styles.heading}><div><h2 id="home-example-title">Your room design.<br/><em>The furniture to match.</em></h2></div><p>Select a piece to see its details.</p></div><HomeRoomExample/></div>
+      <div className={styles.wrap}><div className={styles.heading}><div><h2 id="home-example-title">Whatever your style.<br/>Your room design.<br/><em>The furniture to match.</em></h2></div><p>Explore a different look. Select a piece to see its details.</p></div><HomeRoomExample/></div>
     </section>
 
     <section className={`${styles.wrap} ${styles.faqSection}`} id="verified-room" aria-labelledby="home-faq-title"><div><h2 id="home-faq-title">Your <em>questions.</em></h2></div><div className={styles.faqs}>{faqs.map(([question,answer])=><details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></section>
