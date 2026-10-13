@@ -23,8 +23,8 @@ export default function StyleGuidePage() {
         <div className="swatchGrid">
           <div className="swatch"><span className="swatchColour chalk" /><strong>Chalk</strong><small>#F6F2EA</small></div>
           <div className="swatch"><span className="swatchColour bone" /><strong>Bone</strong><small>#E9E1D3</small></div>
-          <div className="swatch"><span className="swatchColour ink" /><strong>Soft black</strong><small>#20221D</small></div>
-          <div className="swatch"><span className="swatchColour forest" /><strong>Forest</strong><small>#35483D</small></div>
+          <div className="swatch"><span className="swatchColour ink" /><strong>Near-black</strong><small>#252320</small></div>
+          <div className="swatch"><span className="swatchColour forest" /><strong>Seemori forest</strong><small>#156339</small></div>
           <div className="swatch"><span className="swatchColour clay" /><strong>Clay</strong><small>#9A624D</small></div>
         </div>
       </section>
