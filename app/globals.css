@@ -2717,3 +2717,6 @@ p { line-height: 1.58; }
   .siteHeader .headerActions { gap: 8px; }
   .siteHeader .buttonCompact { padding-inline: 9px; }
 }
+
+/* Lighter logo accent only while the homepage header overlays photography. */
+.homePage .siteHeader.isAtTop .seemoriWordmark path:last-child { fill: #85c99f; }
