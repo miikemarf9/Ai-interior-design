@@ -96,12 +96,12 @@ export function HomeHeroCarousel() {
               <p className="eyebrow eyebrowLight heroLine heroLineOne">Room design & furniture selection</p>
               <h1 className="heroLine heroLineTwo">Upload your room.<br />See it redesigned.</h1>
               <p className="heroLine heroLineThree">Choose your style and budget. Get a design for your space, with furniture selected to work together and links to buy it.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="#shop-room">See an example</Link>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Upload my room</Link>
             </> : <>
               <p className="eyebrow eyebrowLight heroLine heroLineOne">Refresh your existing room</p>
               <h1 className="heroLine heroLineTwo">Keep what you love.<br />Redesign the rest.</h1>
               <p className="heroLine heroLineThree">Upload a room photo and tell us what stays. See a new look built around your furniture, style and budget.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="#shop-room">See an example</Link>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Upload my room</Link>
             </>}
           </div>
         </div>
