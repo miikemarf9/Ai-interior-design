@@ -2724,7 +2724,7 @@ p { line-height: 1.58; }
 /* The original homepage header sits transparently over the hero, with
    light text and a brighter logo accent only against photography.
    Scrolling down hides it; scrolling up brings back the ivory header. */
-.homePage .siteHeader.isAtTop .seemoriWordmark path:last-child { fill: #85c99f; }
+/* Both e's retain their original #156339 green on every page and scroll state. */
 
 /* One hierarchy for actions: solid forest primary, restrained neutral secondary. */
  .button,
