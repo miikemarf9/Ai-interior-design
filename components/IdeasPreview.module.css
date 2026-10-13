@@ -18,3 +18,5 @@
 .preview a:focus-visible { outline:3px solid var(--forest); outline-offset:5px; }
 .back { display:block; width:min(1280px,calc(100% - 64px)); margin:0 auto; font-size:13px; text-decoration:underline; text-underline-offset:5px; }
 @media(max-width:800px){.intro{padding-top:125px}.preview{grid-template-columns:1fr}.visual img{height:auto;min-height:0;aspect-ratio:1.65}.copy{padding:30px}.intro,.preview,.back{width:calc(100% - 36px)}.page{padding-bottom:50px}}
+
+.page :global(.siteHeader.isAtTop .brandMark), .page :global(.siteHeader.isAtTop .brandWord) { color:var(--ink); }
