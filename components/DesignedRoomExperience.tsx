@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import { Brand } from "@/components/Brand";
 import { RoomHotspotEditor } from './RoomHotspotEditor';
 import styles from './RoomExploration.module.css';
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -424,7 +425,7 @@ export function DesignedRoomExperience({
   return (
     <main className={`designedRoom ${styles.experience}`}>
       <header className="roomChrome">
-        <Link className="roomBrand" href="/">Seemori</Link>
+        <Brand />
         <div className="roomChromeTitle">
           <span>{shared ? "Shared design" : "Your designed room"}</span>
           <strong>{title}</strong>
