@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Brand } from './Brand';
 
-export function Header({ preview = false }: { preview?: boolean }) {
+export function Header({ preview = false, anchorBase = "" }: { preview?: boolean; anchorBase?: string }) {
   const [atTop, setAtTop] = useState(true);
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
@@ -41,14 +41,14 @@ export function Header({ preview = false }: { preview?: boolean }) {
       <div className="siteHeaderInner shellWide">
         <Brand />
         <nav className="desktopNav" aria-label="Primary navigation">
-          <a href="#reimagined">How it works</a>
-          <a href="#shop-room">{preview ? 'Explore the room' : 'Shop the room'}</a>
+          <a href={`${anchorBase}#reimagined`}>How it works</a>
+          <a href={`${anchorBase}#shop-room`}>{preview ? 'Explore the room' : 'Shop the room'}</a>
           <Link href="/ideas">Ideas</Link>
-          <a href="#verified-room">{preview ? 'Your questions' : 'Verified Room'}</a>
+          <a href={`${anchorBase}#verified-room`}>{preview ? 'Your questions' : 'Verified Room'}</a>
         </nav>
         <div className="headerActions">
           <Link className="headerAccountLink" href="/account">My rooms</Link>
-          <Link className="button buttonPrimary buttonCompact" href={preview ? '#shop-room' : '/design'}>{preview ? 'See an example' : 'Design my room'}</Link>
+          <Link className="button buttonPrimary buttonCompact" href={preview ? `${anchorBase}#shop-room` : '/design'}>{preview ? 'See an example' : 'Design my room'}</Link>
         </div>
       </div>
     </header>

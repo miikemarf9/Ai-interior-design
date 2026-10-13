@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { getGrowthCollection, siteUrl } from "@/lib/growth";
 
+import { IdeasPreview } from '@/components/IdeasPreview';
+import styles from '@/components/IdeasPreview.module.css';
+
 export const dynamic="force-dynamic";
 
 function money(minor:number|null){
@@ -19,6 +22,12 @@ export async function generateMetadata({
   const {slug}=await params;
   const collection=await getGrowthCollection(slug);
   if(!collection) return {};
+  if(!collection.rooms.length) return {
+    title:{absolute:`${collection.title} | Roomfound`},
+    description:'A new collection of room designs is coming soon. Explore the Roomfound example living room in the meantime.',
+    robots:{index:false,follow:true},
+    openGraph:{title:`${collection.title} | Roomfound`,description:'A new room-design collection is coming soon.'},
+  };
   const base=siteUrl();
   const first=collection.rooms[0];
   return {
@@ -45,6 +54,13 @@ export default async function GrowthCollectionPage({
   const collection=await getGrowthCollection(slug);
   if(!collection) notFound();
 
+  if(!collection.rooms.length) return <main className={styles.page}>
+    <Header preview anchorBase="/" />
+    <section className={styles.intro}><p className="eyebrow">Roomfound ideas</p><h1>{collection.title}</h1><p>A new collection of room inspiration is on its way.</p></section>
+    <IdeasPreview />
+    <Link className={styles.back} href="/ideas">Back to all ideas</Link>
+  </main>;
+
   const base=siteUrl();
   const jsonLd={
     "@context":"https://schema.org",
@@ -65,7 +81,7 @@ export default async function GrowthCollectionPage({
 
   return (
     <main className="growthPage">
-      <Header />
+      <Header preview anchorBase="/" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(jsonLd)}} />
 
       <section className="growthCollectionHero shellWide">
@@ -97,12 +113,7 @@ export default async function GrowthCollectionPage({
           ))}
         </section>
       ) : (
-        <section className="growthEmpty shellWide">
-          <span className="microLabel">Not published yet</span>
-          <h2>We are waiting for real rooms, not filling the page with generic content.</h2>
-          <p>This collection remains out of search until enough genuine Roomfound designs qualify.</p>
-          <Link className="button buttonPrimary" href="/design">Design my room</Link>
-        </section>
+        <IdeasPreview />
       )}
     </main>
   );
