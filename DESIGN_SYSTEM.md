@@ -1,4 +1,4 @@
-# Stage 1 Design System
+# Seemori Design System
 
 ## Positioning
 
@@ -11,7 +11,7 @@ The product should feel like an interiors and commerce brand first. AI is infras
 - Large visual surfaces before grids of cards.
 - Warm, quiet backgrounds rather than stark SaaS white.
 - Editorial display typography paired with neutral interface typography.
-- Deep forest green for primary action and trust; clay only as an accent.
+- Use the Seemori logo's exact forest green for primary actions and trust; ink text on warm ivory for all navigation surfaces. Clay remains a restrained supporting accent.
 - Rounded controls can exist; photography and large content areas should not all be rounded.
 - Avoid excessive pills, gradients, floating glass panels and feature-icon grids.
 - Mobile layouts keep the same hierarchy rather than simply shrinking desktop.
@@ -34,9 +34,11 @@ The reasoning is progressive disclosure: visible on hover/focus/tap, not permane
 
 - Chalk `#F6F2EA`
 - Bone `#E9E1D3`
-- Soft black `#20221D`
-- Forest `#35483D`
-- Clay `#9A624D`
+- Ivory `#FBFAF7` — primary background and logo surface
+- Near-black `#252320` — lettering and body copy
+- Forest `#156339` — exact Seemori logo e's and primary buttons
+- Deep forest `#104B2B` — hover, selected states and high-contrast green text
+- Clay `#9A624D` — occasional supporting accent (never the primary CTA)
 
 ## Accessibility
 
