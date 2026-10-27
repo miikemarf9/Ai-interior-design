@@ -21,7 +21,7 @@ export async function generateMetadata({
   if(!room) return {};
   const base=siteUrl();
   return {
-    title:{absolute:`${room.title} | Shop the room | Seemori`},
+    title:{absolute:`${room.title} | Shop the room | Transform My Room`},
     description:room.excerpt,
     alternates:{canonical:`${base}/rooms/${room.slug}`},
     robots:{index:room.verificationStatus!=="failed",follow:true},
@@ -57,7 +57,7 @@ export default async function PublicRoomPage({
     url:`${base}/rooms/${room.slug}`,
     image:`${base}${room.imageUrl}`,
     datePublished:room.publishedAt || undefined,
-    isPartOf:{"@type":"WebSite",name:"Seemori",url:base},
+    isPartOf:{"@type":"WebSite",name:"Transform My Room",url:base},
   };
 
   return (
@@ -69,7 +69,7 @@ export default async function PublicRoomPage({
         <img src={room.imageUrl} alt={room.title} fetchPriority="high" decoding="async" />
         <div className="publicRoomShade" />
         <div className="publicRoomHeroCopy">
-          <p>Real Seemori design · {products.length} products</p>
+          <p>Real Transform My Room design · {products.length} products</p>
           <h1>{room.title}</h1>
           <strong>{money(total)} <span>current room total</span></strong>
         </div>
@@ -92,7 +92,7 @@ export default async function PublicRoomPage({
         <div className="publicRoomProductsHeading">
           <p className="eyebrow">Shop this room</p>
           <h2>The actual products.</h2>
-          <p className="affiliateDisclosure">Retailer links may be affiliate links. Seemori may earn a commission if you buy after following one.</p>
+          <p className="affiliateDisclosure">Retailer links may be affiliate links. Transform My Room may earn a commission if you buy after following one.</p>
         </div>
 
         <div className="publicProductGrid">

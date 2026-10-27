@@ -2,7 +2,7 @@ export default function Loading(){
   return (
     <main className="globalStatePage" aria-live="polite" aria-busy="true">
       <div className="shell">
-        <p className="eyebrow">Seemori</p>
+        <p className="eyebrow">Transform My Room</p>
         <h1>Loading the room.</h1>
         <div className="briefLoadingLine"><i /></div>
         <p>We keep slow network work visible rather than leaving the page looking frozen.</p>

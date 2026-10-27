@@ -106,7 +106,7 @@ export function AccountExperience() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
         });
-        setNotice("If that email has a Seemori account, a reset link has been sent.");
+        setNotice("If that email has a Transform My Room account, a reset link has been sent.");
         return;
       }
 
@@ -233,7 +233,7 @@ export function AccountExperience() {
       <main className="accountPage">
         <div className="accountLoading shell">
           <p className="eyebrow">My rooms</p>
-          <h1>Opening your Seemori account.</h1>
+          <h1>Opening your Transform My Room account.</h1>
           <div className="briefLoadingLine"><i /></div>
         </div>
       </main>
@@ -271,7 +271,7 @@ export function AccountExperience() {
               </>
             ) : (
               <>
-                <span className="microLabel">{authMode === "signup" ? "Create your Seemori account" : "Welcome back"}</span>
+                <span className="microLabel">{authMode === "signup" ? "Create your Transform My Room account" : "Welcome back"}</span>
                 <h2>{authMode === "signup" ? "Keep every room in one place." : "Open your saved rooms."}</h2>
                 {authMode === "signup" ? (
                   <>

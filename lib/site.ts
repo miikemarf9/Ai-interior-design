@@ -1,5 +1,5 @@
 export const site = {
-  name: 'Seemori',
+  name: 'Transform My Room',
   workingName: false,
   proposition: 'Design a room you can actually buy.',
   description:

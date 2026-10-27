@@ -60,14 +60,14 @@ export function AccountPrivacyControls({
       <div>
         <p className="eyebrow">Privacy & preferences</p>
         <h2>Your data stays under your control.</h2>
-        <p>Download what Seemori currently holds, manage optional marketing or submit a privacy request.</p>
+        <p>Download what Transform My Room currently holds, manage optional marketing or submit a privacy request.</p>
       </div>
 
       <div className="accountPrivacyControls">
         <label className="privacyToggle">
           <span>
             <strong>Design follow-up emails</strong>
-            <small>Email me about unfinished Seemori designs and relevant Seemori product/design updates.</small>
+            <small>Email me about unfinished Transform My Room designs and relevant Transform My Room product/design updates.</small>
           </span>
           <input
             type="checkbox"

@@ -2760,3 +2760,21 @@ p { line-height: 1.58; }
   .roomChrome .brand { padding: 7px 9px; }
   .roomChrome .seemoriWordmark { width: 100px; }
 }
+
+/* Compact room-and-doorway identity; header variants preserve photograph contrast. */
+.transformBrand { display:inline-flex; align-items:center; gap:10px; text-decoration:none; }
+.transformBrandMark { flex:none; width:30px; height:34px; color:var(--brand-green); }
+.transformBrandText { display:flex; gap:.28em; font-family:var(--font-sans),Arial,sans-serif; font-size:21px; font-weight:500; line-height:1.12; letter-spacing:-.045em; white-space:nowrap; }
+.transformBrandAccent { color:var(--brand-green); }
+.homePage .siteHeader.isAtTop .transformBrand { color:#fffdf8; filter:drop-shadow(0 1px 3px #0006); }
+.homePage .siteHeader.isAtTop .transformBrandAccent { color:#fffdf8; }
+.homePage .siteHeader.isAtTop .transformBrandMark { color:#b1ddbf; }
+@media(max-width:680px) {
+  .siteHeader .transformBrand { gap:7px; }
+  .siteHeader .transformBrandMark { width:25px; height:32px; }
+  .siteHeader .transformBrandText { flex-direction:column; gap:1px; font-size:16px; letter-spacing:-.035em; }
+}
+@media(max-width:360px) {
+  .siteHeader .transformBrandMark { width:21px; }
+  .siteHeader .transformBrandText { font-size:14px; }
+}

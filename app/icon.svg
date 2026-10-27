@@ -1,9 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <style>.mark{color:#156339}@media(prefers-color-scheme:dark){.mark{color:#85C99F}}</style>
-  <g class="mark" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M15 32V26c0-9 5-14 14-14h4c9 0 14 5 14 14v6"/>
-    <path d="M17 41v-4a6 6 0 0 0-12 0v8c0 5 3 8 8 8h36c5 0 8-3 8-8v-8a6 6 0 0 0-12 0v4Z"/>
-    <path d="M13 54v5m36-5v5"/>
-  </g>
-  <path class="mark" fill="currentColor" d="m53 2 2.8 6.2L62 11l-6.2 2.8L53 20l-2.8-6.2L44 11l6.2-2.8Z"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><style>path{stroke:#156339}@media(prefers-color-scheme:dark){path{stroke:#B1DDBF}}</style><path d="M6 5v38l18-7V13L6 5Zm18 8 18-8v38m-9-26v19l9 7" fill="none" stroke="#156339" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>

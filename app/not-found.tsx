@@ -7,7 +7,7 @@ export default function NotFound(){
         <p className="eyebrow">404</p>
         <h1>That room is not here.</h1>
         <p>The link may have expired, the room may no longer be public, or the address may be incorrect.</p>
-        <Link className="button buttonPrimary" href="/">Back to Seemori</Link>
+        <Link className="button buttonPrimary" href="/">Back to Transform My Room</Link>
       </div>
     </main>
   );

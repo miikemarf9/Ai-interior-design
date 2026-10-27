@@ -23,10 +23,10 @@ export async function generateMetadata({
   const collection=await getGrowthCollection(slug);
   if(!collection) return {};
   if(!collection.rooms.length) return {
-    title:{absolute:`${collection.title} | Seemori`},
-    description:'A new collection of room designs is coming soon. Explore the Seemori example living room in the meantime.',
+    title:{absolute:`${collection.title} | Transform My Room`},
+    description:'A new collection of room designs is coming soon. Explore the Transform My Room example living room in the meantime.',
     robots:{index:false,follow:true},
-    openGraph:{title:`${collection.title} | Seemori`,description:'A new room-design collection is coming soon.'},
+    openGraph:{title:`${collection.title} | Transform My Room`,description:'A new room-design collection is coming soon.'},
   };
   const base=siteUrl();
   const first=collection.rooms[0];
@@ -56,7 +56,7 @@ export default async function GrowthCollectionPage({
 
   if(!collection.rooms.length) return <main className={styles.page}>
     <Header preview anchorBase="/" />
-    <section className={styles.intro}><p className="eyebrow">Seemori ideas</p><h1>{collection.title}</h1><p>A new collection of room inspiration is on its way.</p></section>
+    <section className={styles.intro}><p className="eyebrow">Transform My Room ideas</p><h1>{collection.title}</h1><p>A new collection of room inspiration is on its way.</p></section>
     <IdeasPreview />
     <Link className={styles.back} href="/ideas">Back to all ideas</Link>
   </main>;
@@ -86,7 +86,7 @@ export default async function GrowthCollectionPage({
 
       <section className="growthCollectionHero shellWide">
         <div>
-          <p className="eyebrow">{collection.eyebrow || "Real Seemori designs"}</p>
+          <p className="eyebrow">{collection.eyebrow || "Real Transform My Room designs"}</p>
           <h1>{collection.title}</h1>
         </div>
         <p>{collection.intro}</p>

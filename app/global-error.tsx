@@ -11,10 +11,10 @@ export default function GlobalError({
       <body>
         <main className="globalStatePage" role="alert">
           <div className="shell">
-            <p className="eyebrow">Seemori</p>
+            <p className="eyebrow">Transform My Room</p>
             <h1>We could not open the experience.</h1>
             <p>No new render should be started until this page has recovered.</p>
-            <button className="button buttonPrimary" type="button" onClick={reset}>Reload Seemori</button>
+            <button className="button buttonPrimary" type="button" onClick={reset}>Reload Transform My Room</button>
           </div>
         </main>
       </body>

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata:Metadata={
-  title:{absolute:"Privacy | Seemori"},
-  description:"How Seemori handles account data, room photographs, AI design information, retailer interactions and optional analytics during the UK beta.",
+  title:{absolute:"Privacy | Transform My Room"},
+  description:"How Transform My Room handles account data, room photographs, AI design information, retailer interactions and optional analytics during the UK beta.",
   robots:{index:true,follow:true},
 };
 
@@ -13,9 +13,9 @@ export default function PrivacyPage(){
   return (
     <main className="legalPage">
       <div className="legalPageInner shell">
-        <p className="eyebrow">Seemori UK beta</p>
+        <p className="eyebrow">Transform My Room UK beta</p>
         <h1>Privacy.</h1>
-        <p className="legalLead">This notice explains what Seemori collects, why it is needed, where it can be shared and the controls available to you. It describes the beta product currently implemented.</p>
+        <p className="legalLead">This notice explains what Transform My Room collects, why it is needed, where it can be shared and the controls available to you. It describes the beta product currently implemented.</p>
 
         <section>
           <h2>What we collect</h2>
@@ -32,7 +32,7 @@ export default function PrivacyPage(){
         <section>
           <h2>AI and service providers</h2>
           <p>Room photographs, product-reference images and design instructions may be sent to the configured AI provider when you request an AI operation. The current beta uses OpenAI APIs for AI design work. Database records are stored in Neon. Transactional account emails can be sent through Resend. Hosting and affiliate-network providers process the information needed to provide their part of the service.</p>
-          <p>Seemori does not sell personal data to advertisers. Affiliate retailers may receive normal web-request information when you choose to leave Seemori and visit their site.</p>
+          <p>Transform My Room does not sell personal data to advertisers. Affiliate retailers may receive normal web-request information when you choose to leave Transform My Room and visit their site.</p>
         </section>
 
         <section>
