@@ -5,3 +5,6 @@ out
 .env.local
 .DS_Store
 *.log
+.open-next
+.wrangler
+cloudflare-env.d.ts
