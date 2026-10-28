@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "transformmyroom",
+  "name": "ai-interior-design",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-10-28",
   "compatibility_flags": [
