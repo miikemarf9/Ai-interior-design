@@ -30,6 +30,9 @@ export const metadata: Metadata = {
     template: `%s | ${site.name}`,
   },
   description: site.description,
+  other: {
+    'affiliate-network': 'Awin',
+  },
   openGraph: {
     siteName: site.name,
     type: 'website',
