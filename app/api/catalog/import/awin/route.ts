@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isUsefulLivingRoomCandidate, normalizeLegacyAwinRow, type FeedCandidate } from "@/lib/catalog/ingest/awin";
 import { readCsvObjects } from "@/lib/catalog/ingest/csv";
-import { getFeedSource, stageFeedCandidates } from "@/lib/catalog/ingest/stage";
+import { getFeedSource, rejectFeedCandidates, stageFeedCandidates } from "@/lib/catalog/ingest/stage";
 import { getCatalogDb } from "@/lib/catalog/neon";
 
 export const runtime = "nodejs";
@@ -92,6 +92,7 @@ export async function POST(request: Request) {
   let qualityAtLeast55 = 0;
   let sampleColumns: string[] = [];
   const byCategory = new Map<string, FeedCandidate[]>();
+  const ineligibleExternalIds: string[] = [];
 
   try {
     const response = await fetch(feedUrl, {
@@ -118,7 +119,10 @@ export async function POST(request: Request) {
       if (["in_stock", "low_stock", "preorder"].includes(candidate.availability)) available += 1;
       if (candidate.qualityScore >= 55) qualityAtLeast55 += 1;
 
-      if (!isUsefulLivingRoomCandidate(candidate) || !candidate.normalizedCategorySlug) continue;
+      if (!isUsefulLivingRoomCandidate(candidate) || !candidate.normalizedCategorySlug) {
+        ineligibleExternalIds.push(candidate.externalProductId);
+        continue;
+      }
 
       const bucket = byCategory.get(candidate.normalizedCategorySlug) ?? [];
       if (bucket.length >= PER_CATEGORY_LIMIT) continue;
@@ -129,6 +133,7 @@ export async function POST(request: Request) {
 
     const candidates = [...byCategory.values()].flat();
     const staged = await stageFeedCandidates(source, candidates);
+    const rejected = await rejectFeedCandidates(source, ineligibleExternalIds);
 
     await sql.query(
       `update public.catalog_sync_runs
@@ -155,6 +160,7 @@ export async function POST(request: Request) {
       scanned,
       accepted,
       staged,
+      rejected,
       categories: Object.fromEntries([...byCategory].map(([key, value]) => [key, value.length])),
       diagnostics: {
         feedColumns: sampleColumns,
