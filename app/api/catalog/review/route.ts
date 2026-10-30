@@ -51,7 +51,7 @@ export async function GET(request: Request) {
      where c.candidate_status = 'pending'
        and r.slug = 'aosom-uk'
      order by c.normalized_category_slug, c.quality_score desc, c.title
-     limit 200`,
+     limit 500`,
   ) as Array<Record<string, unknown>>;
 
   const progressRows = await sql.query(
