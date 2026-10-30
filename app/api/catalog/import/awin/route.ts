@@ -33,7 +33,7 @@ async function decompressGzipIfNeeded(body: ReadableStream<Uint8Array>) {
   });
 
   if (prefix.length >= 2 && prefix[0] === 0x1f && prefix[1] === 0x8b) {
-    return replay.pipeThrough(new DecompressionStream("gzip"));
+    return replay.pipeThrough(new DecompressionStream("gzip") as unknown as ReadableWritablePair<Uint8Array, Uint8Array>);
   }
 
   return replay;
