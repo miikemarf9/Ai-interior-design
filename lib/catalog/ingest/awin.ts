@@ -114,7 +114,16 @@ function normalizeAvailability(row: Record<string, unknown>): Availability {
 
 function mapCategory(text: string) {
   const haystack = text.toLowerCase();
+  const escaped = (term: string) => term
+    .replace(/[.*+?^${}()|[\\]\\\\]/g, "\\function mapCategory(text: string) {
+  const haystack = text.toLowerCase();
   return CATEGORY_RULES.find((rule) => rule.terms.some((term) => haystack.includes(term)))?.slug ?? null;
+}")
+    .replace(/\\s+/g, "\\\\s+");
+
+  return CATEGORY_RULES.find((rule) => rule.terms.some((term) =>
+    new RegExp(`\\\\b${escaped(term)}s?\\\\b`, "i").test(haystack),
+  ))?.slug ?? null;
 }
 
 function inferMaterials(text: string) {
@@ -239,7 +248,7 @@ export function normalizeLegacyAwinRow(row: Record<string, unknown>): FeedCandid
     ean: first(row.ean, row.product_GTIN) || null,
     mpn: first(row.mpn, row.model_number) || null,
     sourceUpdatedAt: first(row.last_updated) || null,
-    normalizedCategorySlug: mapCategory(searchText),
+    normalizedCategorySlug: mapCategory([title, categoryPath].filter(Boolean).join(" ")),
     inferredStyleSlugs: inferStyles(searchText),
     inferredMaterialSlugs: inferMaterials(searchText),
     inferredColourSlugs: inferColours(searchText),
