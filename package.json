@@ -30,6 +30,7 @@
     "wrangler": "4.154.0"
   },
   "overrides": {
-    "postcss": "8.5.24"
+    "postcss": "8.5.24",
+    "@smithy/core": "3.38.0"
   }
 }
