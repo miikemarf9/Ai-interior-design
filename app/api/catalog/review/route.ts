@@ -75,6 +75,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "A valid candidate ID is required." }, { status: 400 });
   }
 
+  const sql = getCatalogDb();
+  const eligibleRows = await sql.query(
+    `select c.id::text as id
+     from public.catalog_feed_candidates c
+     join public.retailers r on r.id = c.retailer_id
+     where c.id = $1::uuid
+       and c.candidate_status = 'pending'
+       and r.slug = 'aosom-uk'
+     limit 1`,
+    [candidateId],
+  ) as Array<{ id: string }>;
+
+  if (!eligibleRows.length) {
+    return NextResponse.json({ error: "This Aosom item is no longer pending review." }, { status: 409 });
+  }
+
   if (body.action === "keep") {
     const promoted = await promoteFeedCandidate(candidateId);
     if (!promoted) {
@@ -87,7 +103,6 @@ export async function POST(request: Request) {
   }
 
   if (body.action === "reject") {
-    const sql = getCatalogDb();
     const rows = await sql.query(
       \`update public.catalog_feed_candidates c
        set candidate_status = 'rejected',
