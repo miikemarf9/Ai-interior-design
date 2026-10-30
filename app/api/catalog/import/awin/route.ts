@@ -132,7 +132,7 @@ export async function POST(request: Request) {
         withCategory,
         withPrice,
         withImage,
-        gbp,
+        gbp: withGbp,
         available,
         qualityAtLeast55,
       },
