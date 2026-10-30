@@ -102,7 +102,8 @@ export async function POST(request: Request) {
       throw new Error(`Awin feed returned HTTP ${response.status}`);
     }
 
-    const csvBody = await decompressGzipIfNeeded(response.body);\n    for await (const row of readCsvObjects(csvBody)) {
+    const csvBody = await decompressGzipIfNeeded(response.body);
+    for await (const row of readCsvObjects(csvBody)) {
       scanned += 1;
       if (sampleColumns.length === 0) sampleColumns = Object.keys(row);
       if (scanned > SCAN_LIMIT) break;
