@@ -1,25 +1,9 @@
 import type { Metadata } from 'next';
-import type { ReactNode } from 'react';
-import { Cormorant_Garamond, Manrope } from 'next/font/google';
+import type { CSSProperties, ReactNode } from 'react';
 import './globals.css';
 import { site } from '@/lib/site';
 import { AnalyticsClient, CookieConsent } from '@/components/PrivacyAnalytics';
 import { LegalFooter } from '@/components/LegalFooter';
-
-const displayFont = Cormorant_Garamond({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  style: ['normal', 'italic'],
-  variable: '--font-display',
-  display: 'swap',
-});
-
-const sansFont = Manrope({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-sans',
-  display: 'swap',
-});
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || 'http://localhost:3000';
 
@@ -63,7 +47,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           })();
         ` }} />
       </head>
-      <body className={`${displayFont.variable} ${sansFont.variable}`}>
+      <body style={{ '--font-display': "'Cormorant Garamond'", '--font-sans': "'Manrope'" } as CSSProperties}>
         <a className="skipLink" href="#roomfound-main">Skip to main content</a>
         <div id="roomfound-main">{children}</div>
         <LegalFooter />
