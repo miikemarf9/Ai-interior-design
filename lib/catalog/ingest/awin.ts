@@ -112,7 +112,11 @@ function normalizeAvailability(row: Record<string, unknown>): Availability {
   return "unknown";
 }
 
-function mapCategory(text: string) {
+function mapCategory(text: string, categoryPath: string | null) {
+  if (categoryPath && /(?:^|[>/])\s*(animals?|pet supplies|pets|garden|outdoor|baby|toddler|office|kitchen|dining|hardware|health & beauty|personal care|sports|automotive|tools?)\b/i.test(categoryPath)) {
+    return null;
+  }
+
   const haystack = text.toLowerCase();
   return CATEGORY_RULES.find((rule) => rule.terms.some((term) => {
     const pattern = term.replace(/\s+/g, "\\s+");
@@ -241,7 +245,7 @@ export function normalizeLegacyAwinRow(row: Record<string, unknown>): FeedCandid
     ean: first(row.ean, row.product_GTIN) || null,
     mpn: first(row.mpn, row.model_number) || null,
     sourceUpdatedAt: first(row.last_updated) || null,
-    normalizedCategorySlug: mapCategory([title, categoryPath].filter(Boolean).join(" ")),
+    normalizedCategorySlug: mapCategory([title, categoryPath].filter(Boolean).join(" "), categoryPath),
     inferredStyleSlugs: inferStyles(searchText),
     inferredMaterialSlugs: inferMaterials(searchText),
     inferredColourSlugs: inferColours(searchText),
