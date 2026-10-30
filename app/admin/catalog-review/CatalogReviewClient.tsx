@@ -38,6 +38,7 @@ export default function CatalogReviewClient() {
   const [key, setKey] = useState("");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [category, setCategory] = useState("all");
+  const [minimumPrice, setMinimumPrice] = useState(50);
   const [busyId, setBusyId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -47,9 +48,12 @@ export default function CatalogReviewClient() {
     () => [...new Set(candidates.map((item) => item.normalized_category_slug || "uncategorised"))].sort(),
     [candidates],
   );
-  const visible = category === "all"
+  const categoryCandidates = category === "all"
     ? candidates
     : candidates.filter((item) => (item.normalized_category_slug || "uncategorised") === category);
+  const visible = categoryCandidates
+    .filter((item) => minimumPrice === 0 || (item.price_minor ?? 0) >= minimumPrice * 100)
+    .sort((a, b) => (b.price_minor ?? 0) - (a.price_minor ?? 0));
 
   async function loadProducts(secret: string) {
     setLoading(true);
@@ -122,14 +126,26 @@ export default function CatalogReviewClient() {
         ) : (
           <>
             <div className={styles.toolbar}>
-              <p className={styles.pendingCount}><strong>{candidates.length}</strong> products still waiting for a decision</p>
-              <label className={styles.filterLabel}>
-                <span>Show category</span>
-                <select value={category} onChange={(event) => setCategory(event.target.value)} className={styles.select}>
-                  <option value="all">All categories</option>
-                  {categories.map((item) => <option key={item} value={item}>{pretty(item)}</option>)}
-                </select>
-              </label>
+              <p className={styles.pendingCount}>Showing <strong>{visible.length}</strong> of <strong>{categoryCandidates.length}</strong> pending {category === "all" ? "products" : "in this category"}. {minimumPrice > 0 && <span>{categoryCandidates.length - visible.length} under £{minimumPrice} hidden; still pending.</span>}</p>
+              <div className={styles.filters}>
+                <label className={styles.filterLabel}>
+                  <span>Minimum price</span>
+                  <select value={minimumPrice} onChange={(event) => setMinimumPrice(Number(event.target.value))} className={styles.select}>
+                    <option value={0}>Any price</option>
+                    <option value={25}>£25 and up</option>
+                    <option value={50}>£50 and up</option>
+                    <option value={75}>£75 and up</option>
+                    <option value={100}>£100 and up</option>
+                  </select>
+                </label>
+                <label className={styles.filterLabel}>
+                  <span>Category</span>
+                  <select value={category} onChange={(event) => setCategory(event.target.value)} className={styles.select}>
+                    <option value="all">All categories</option>
+                    {categories.map((item) => <option key={item} value={item}>{pretty(item)}</option>)}
+                  </select>
+                </label>
+              </div>
             </div>
             {notice && <p role="status" className={styles.notice}>{notice}</p>}
             {error && <p role="alert" className={styles.error}>{error}</p>}
