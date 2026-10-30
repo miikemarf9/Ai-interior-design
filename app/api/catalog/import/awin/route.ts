@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isUsefulLivingRoomCandidate, normalizeLegacyAwinRow, type FeedCandidate } from "@/lib/catalog/ingest/awin";
 import { readCsvObjects } from "@/lib/catalog/ingest/csv";
@@ -42,10 +43,18 @@ async function decompressGzipIfNeeded(body: ReadableStream<Uint8Array>) {
   return replay;
 }
 
+function matchesSecret(expected: string | undefined, supplied: string | null) {
+  if (!expected || !supplied) return false;
+  const expectedBytes = Buffer.from(expected);
+  const suppliedBytes = Buffer.from(supplied);
+  return expectedBytes.length === suppliedBytes.length && timingSafeEqual(expectedBytes, suppliedBytes);
+}
+
 function authorized(request: Request) {
-  const secret = process.env.CATALOG_IMPORT_SECRET;
-  if (!secret) return false;
-  return request.headers.get("authorization") === `Bearer ${secret}`;
+  const importSecret = process.env.CATALOG_IMPORT_SECRET;
+  const reviewSecret = process.env.CATALOG_REVIEW_SECRET;
+  return matchesSecret(importSecret, request.headers.get("authorization")?.replace(/^Bearer /, "") ?? null)
+    || matchesSecret(reviewSecret, request.headers.get("x-catalog-review-key"));
 }
 
 export async function POST(request: Request) {
