@@ -54,8 +54,28 @@ export async function GET(request: Request) {
      limit 200`,
   ) as Array<Record<string, unknown>>;
 
+  const progressRows = await sql.query(
+    `select
+       coalesce((run.metadata->>'scan_offset')::integer + run.records_seen, 1_000)::integer as next_scan_offset,
+       coalesce((run.metadata->>'reached_end')::boolean, false) as feed_complete
+     from public.catalog_sync_runs run
+     join public.catalog_sources source on source.id = run.source_id
+     join public.retailers retailer on retailer.id = source.retailer_id
+     where retailer.slug = 'aosom-uk'
+       and run.status = 'succeeded'
+       and run.metadata ? 'scan_offset'
+     order by run.finished_at desc
+     limit 1`,
+  ) as Array<{ next_scan_offset: number; feed_complete: boolean }>;
+  const progress = progressRows[0];
+
   return NextResponse.json(
-    { candidates: rows, count: rows.length },
+    {
+      candidates: rows,
+      count: rows.length,
+      nextScanOffset: progress?.next_scan_offset ?? 1_000,
+      feedComplete: progress?.feed_complete ?? false,
+    },
     { headers: { "Cache-Control": "no-store, private" } },
   );
 }
