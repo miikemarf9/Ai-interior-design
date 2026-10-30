@@ -10,6 +10,35 @@ export const maxDuration = 60;
 const PER_CATEGORY_LIMIT = 80;
 const SCAN_LIMIT = 20_000;
 
+async function decompressGzipIfNeeded(body: ReadableStream<Uint8Array>) {
+  const reader = body.getReader();
+  const first = await reader.read();
+  if (first.done) {
+    return new ReadableStream<Uint8Array>({ start(controller) { controller.close(); } });
+  }
+
+  const prefix = first.value;
+  const replay = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(prefix);
+    },
+    async pull(controller) {
+      const next = await reader.read();
+      if (next.done) controller.close();
+      else controller.enqueue(next.value);
+    },
+    cancel(reason) {
+      return reader.cancel(reason);
+    },
+  });
+
+  if (prefix.length >= 2 && prefix[0] === 0x1f && prefix[1] === 0x8b) {
+    return replay.pipeThrough(new DecompressionStream("gzip"));
+  }
+
+  return replay;
+}
+
 function authorized(request: Request) {
   const secret = process.env.CATALOG_IMPORT_SECRET;
   if (!secret) return false;
@@ -73,7 +102,7 @@ export async function POST(request: Request) {
       throw new Error(`Awin feed returned HTTP ${response.status}`);
     }
 
-    for await (const row of readCsvObjects(response.body)) {
+    const csvBody = await decompressGzipIfNeeded(response.body);\n    for await (const row of readCsvObjects(csvBody)) {
       scanned += 1;
       if (sampleColumns.length === 0) sampleColumns = Object.keys(row);
       if (scanned > SCAN_LIMIT) break;
