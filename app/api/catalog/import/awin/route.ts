@@ -97,7 +97,6 @@ export async function POST(request: Request) {
 
   let scanned = 0;
   let accepted = 0;
-  let rowIndex = 0;
   let reachedEnd = true;
   let mappedRows = 0;
   let withCategory = 0;
@@ -120,9 +119,7 @@ export async function POST(request: Request) {
     }
 
     const csvBody = await decompressGzipIfNeeded(response.body);
-    for await (const row of readCsvObjects(csvBody)) {
-      const currentRowIndex = rowIndex++;
-      if (currentRowIndex < scanOffset) continue;
+    for await (const row of readCsvObjects(csvBody, ",", scanOffset)) {
       if (scanned >= SCAN_LIMIT) {
         reachedEnd = false;
         break;
@@ -177,9 +174,9 @@ export async function POST(request: Request) {
            finished_at=now(),
            records_seen=$2,
            records_inserted=$3,
-           metadata=jsonb_build_object('retailer_slug',$4::text,'category_counts',$5::jsonb,'scan_offset',$6::integer,'minimum_price_minor',$7::integer)
+           metadata=jsonb_build_object('retailer_slug',$4::text,'category_counts',$5::jsonb,'scan_offset',$6::integer,'minimum_price_minor',$7::integer,'reached_end',$8::boolean)
        where id=$1::uuid`,
-      [runId, scanned, staged, retailerSlug, JSON.stringify(selectedCategoryCounts), scanOffset, minimumPriceMinor],
+      [runId, scanned, staged, retailerSlug, JSON.stringify(selectedCategoryCounts), scanOffset, minimumPriceMinor, reachedEnd],
     );
 
     await sql.query(
