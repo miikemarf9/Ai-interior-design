@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const PER_CATEGORY_LIMIT = 80;
-const SCAN_LIMIT = 20_000;
+const SCAN_LIMIT = 1_000;
 
 async function decompressGzipIfNeeded(body: ReadableStream<Uint8Array>) {
   const reader = body.getReader();
