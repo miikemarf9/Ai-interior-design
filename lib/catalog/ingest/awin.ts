@@ -114,18 +114,11 @@ function normalizeAvailability(row: Record<string, unknown>): Availability {
 
 function mapCategory(text: string) {
   const haystack = text.toLowerCase();
-  const escaped = (term: string) => term
-    .replace(/[.*+?^${}()|[\\]\\\\]/g, "\\function mapCategory(text: string) {
-  const haystack = text.toLowerCase();
-  return CATEGORY_RULES.find((rule) => rule.terms.some((term) => haystack.includes(term)))?.slug ?? null;
-}")
-    .replace(/\\s+/g, "\\\\s+");
-
-  return CATEGORY_RULES.find((rule) => rule.terms.some((term) =>
-    new RegExp(`\\\\b${escaped(term)}s?\\\\b`, "i").test(haystack),
-  ))?.slug ?? null;
+  return CATEGORY_RULES.find((rule) => rule.terms.some((term) => {
+    const pattern = term.replace(/\s+/g, "\\s+");
+    return new RegExp(`\\b${pattern}s?\\b`, "i").test(haystack);
+  }))?.slug ?? null;
 }
-
 function inferMaterials(text: string) {
   const haystack = text.toLowerCase().replace(/bouclé/g, "boucle");
   return MATERIALS.filter((material) => haystack.includes(material));
