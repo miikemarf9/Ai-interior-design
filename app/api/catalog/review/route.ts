@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
   const sql = getCatalogDb();
   const rows = await sql.query(
-    \`select
+    `select
        c.id::text as id,
        c.title,
        c.description,
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
      where c.candidate_status = 'pending'
        and r.slug = 'aosom-uk'
      order by c.normalized_category_slug, c.quality_score desc, c.title
-     limit 200\`,
+     limit 200`,
   ) as Array<Record<string, unknown>>;
 
   return NextResponse.json(
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
 
   if (body.action === "reject") {
     const rows = await sql.query(
-      \`update public.catalog_feed_candidates c
+      `update public.catalog_feed_candidates c
        set candidate_status = 'rejected',
            review_notes = concat_ws(E'\\\\n', nullif(c.review_notes, ''), 'Rejected during manual catalogue review.'),
            updated_at = now()
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
          and c.id = $1::uuid
          and c.candidate_status = 'pending'
          and r.slug = 'aosom-uk'
-       returning c.id::text as id\`,
+       returning c.id::text as id`,
       [candidateId],
     ) as Array<{ id: string }>;
 
