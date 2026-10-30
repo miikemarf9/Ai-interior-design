@@ -39,6 +39,10 @@ export default function CatalogReviewClient() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [category, setCategory] = useState("all");
   const [minimumPrice, setMinimumPrice] = useState(50);
+  const [nextScanOffset, setNextScanOffset] = useState(1_000);
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState("");
+  const [feedComplete, setFeedComplete] = useState(false);
   const [busyId, setBusyId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -102,6 +106,61 @@ export default function CatalogReviewClient() {
     }
   }
 
+  async function importMore() {
+    if (!key || importing || feedComplete) return;
+    setImporting(true);
+    setError("");
+    setNotice("");
+    let offset = nextScanOffset;
+    let totalScanned = 0;
+    let totalStaged = 0;
+    let reachedFeedEnd = false;
+
+    try {
+      for (let batch = 0; batch < 12; batch += 1) {
+        setImportProgress("Checking feed rows " + (offset + 1).toLocaleString("en-GB") + "–" + (offset + 1_000).toLocaleString("en-GB") + "…");
+        const response = await fetch("/api/catalog/import/awin", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-catalog-review-key": key },
+          body: JSON.stringify({ retailerSlug: "aosom-uk", scanOffset: offset, minimumPriceMinor: 5_000 }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "The Aosom feed scan failed.");
+        totalScanned += Number(result.scanned || 0);
+        totalStaged += Number(result.staged || 0);
+        offset += Number(result.scanned || 0);
+        setNextScanOffset(offset);
+        if (result.reachedEnd || Number(result.scanned || 0) === 0) {
+          reachedFeedEnd = true;
+          break;
+        }
+      }
+
+      const refresh = await fetch("/api/catalog/review", {
+        headers: { "x-catalog-review-key": key },
+        cache: "no-store",
+      });
+      const review = await refresh.json();
+      if (!refresh.ok) throw new Error(review.error || "The new products were staged, but the review list could not refresh.");
+      setCandidates(review.candidates || []);
+      setFeedComplete(reachedFeedEnd);
+      setNotice(
+        "Scanned " + totalScanned.toLocaleString("en-GB") + " more feed rows and staged " +
+        totalStaged.toLocaleString("en-GB") + " new £50+ candidates for review. They are not live yet." +
+        (reachedFeedEnd ? " The remaining Aosom feed has been checked." : " Click the button again to keep scanning."),
+      );
+    } catch (problem) {
+      setNextScanOffset(offset);
+      setError(
+        (problem instanceof Error ? problem.message : "The feed scan failed.") +
+        " You can click the scan button again to continue from the next batch.",
+      );
+    } finally {
+      setImporting(false);
+      setImportProgress("");
+    }
+  }
+
   return (
     <main className={styles.page}>
       <div className={styles.container}>
@@ -147,6 +206,15 @@ export default function CatalogReviewClient() {
                 </label>
               </div>
             </div>
+            <section className={styles.importPanel}>
+              <div>
+                <h2>Find more higher-priced Aosom items</h2>
+                <p>Scans the rest of Aosom’s feed in small batches. Only £50+ living-room products with stronger data are added to this review list. They won’t be approved automatically.</p>
+              </div>
+              <button onClick={() => void importMore()} disabled={importing || feedComplete} className={styles.importButton}>
+                {importing ? importProgress : feedComplete ? "Aosom feed checked" : "Find more £50+ items"}
+              </button>
+            </section>
             {notice && <p role="status" className={styles.notice}>{notice}</p>}
             {error && <p role="alert" className={styles.error}>{error}</p>}
             {visible.length === 0 ? (
