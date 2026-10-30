@@ -54,6 +54,14 @@ export async function POST(request: Request) {
 
   let scanned = 0;
   let accepted = 0;
+  let mappedRows = 0;
+  let withCategory = 0;
+  let withPrice = 0;
+  let withImage = 0;
+  let withGbp = 0;
+  let available = 0;
+  let qualityAtLeast55 = 0;
+  let sampleColumns: string[] = [];
   const byCategory = new Map<string, FeedCandidate[]>();
 
   try {
@@ -67,10 +75,20 @@ export async function POST(request: Request) {
 
     for await (const row of readCsvObjects(response.body)) {
       scanned += 1;
+      if (sampleColumns.length === 0) sampleColumns = Object.keys(row);
       if (scanned > SCAN_LIMIT) break;
 
       const candidate = normalizeLegacyAwinRow(row);
-      if (!candidate || !isUsefulLivingRoomCandidate(candidate) || !candidate.normalizedCategorySlug) continue;
+      if (!candidate) continue;
+      mappedRows += 1;
+      if (candidate.normalizedCategorySlug) withCategory += 1;
+      if (candidate.priceMinor !== null) withPrice += 1;
+      if (candidate.imageUrl) withImage += 1;
+      if (candidate.currency === "GBP") withGbp += 1;
+      if (["in_stock", "low_stock", "preorder"].includes(candidate.availability)) available += 1;
+      if (candidate.qualityScore >= 55) qualityAtLeast55 += 1;
+
+      if (!isUsefulLivingRoomCandidate(candidate) || !candidate.normalizedCategorySlug) continue;
 
       const bucket = byCategory.get(candidate.normalizedCategorySlug) ?? [];
       if (bucket.length >= PER_CATEGORY_LIMIT) continue;
@@ -88,7 +106,7 @@ export async function POST(request: Request) {
            finished_at=now(),
            records_seen=$2,
            records_inserted=$3,
-           metadata=jsonb_build_object('retailer_slug',$4,'category_counts',$5::jsonb)
+           metadata=jsonb_build_object('retailer_slug',$4::text,'category_counts',$5::jsonb)
        where id=$1::uuid`,
       [runId, scanned, staged, retailerSlug, JSON.stringify(Object.fromEntries([...byCategory].map(([key, value]) => [key, value.length])))],
     );
@@ -108,6 +126,16 @@ export async function POST(request: Request) {
       accepted,
       staged,
       categories: Object.fromEntries([...byCategory].map(([key, value]) => [key, value.length])),
+      diagnostics: {
+        feedColumns: sampleColumns,
+        mappedRows,
+        withCategory,
+        withPrice,
+        withImage,
+        gbp,
+        available,
+        qualityAtLeast55,
+      },
       promoted: 0,
       message: "Candidates staged for curation. Nothing was made customer-visible automatically.",
     });
