@@ -105,6 +105,32 @@
 .filterLabel { display: flex; align-items: center; gap: 10px; color: #55574f; font-size: 13px; white-space: nowrap; }
 .pendingCount span { display: block; margin-top: 4px; color: #74756d; font-size: 12px; }
 .select { min-height: 40px; max-width: 220px; padding: 0 30px 0 11px; font-size: 13px; }
+.importPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  margin: 0 0 20px;
+  border: 1px solid #d7d8cd;
+  border-radius: 15px;
+  background: #eef1e8;
+  padding: 18px;
+}
+.importPanel h2 { margin: 0 0 5px; font-family: var(--sans); font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+.importPanel p { max-width: 720px; margin: 0; color: #62645d; font-size: 13px; line-height: 1.5; }
+.importButton {
+  flex: 0 0 auto;
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: #354330;
+  color: white;
+  padding: 0 17px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.importButton:hover { background: #263323; }
+.importButton:disabled { cursor: wait; opacity: .55; }
 .notice, .error { border-radius: 10px; padding: 12px 15px; font-size: 14px; }
 .notice { background: #e6eee1; color: #354330; }
 .error { background: #fff0ed; color: #8d2c1c; }
@@ -169,6 +195,7 @@
   .loginCard { padding: 22px; }
   .toolbar { align-items: stretch; flex-direction: column; }
   .filters { align-items: stretch; flex-direction: column; gap: 10px; }
+  .importPanel { align-items: stretch; flex-direction: column; }
   .filterLabel { justify-content: space-between; }
   .select { max-width: 62%; }
   .grid { grid-template-columns: 1fr; gap: 15px; }
