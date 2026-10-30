@@ -71,6 +71,8 @@ export default function CatalogReviewClient() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not open the review list.");
       setCandidates(result.candidates || []);
+      setNextScanOffset(Number(result.nextScanOffset ?? 1_000));
+      setFeedComplete(Boolean(result.feedComplete));
       setKey(secret);
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : "Could not open the review list.");
@@ -143,7 +145,8 @@ export default function CatalogReviewClient() {
       const review = await refresh.json();
       if (!refresh.ok) throw new Error(review.error || "The new products were staged, but the review list could not refresh.");
       setCandidates(review.candidates || []);
-      setFeedComplete(reachedFeedEnd);
+      setNextScanOffset(Number(review.nextScanOffset ?? offset));
+      setFeedComplete(Boolean(review.feedComplete) || reachedFeedEnd);
       setNotice(
         "Scanned " + totalScanned.toLocaleString("en-GB") + " more feed rows and staged " +
         totalStaged.toLocaleString("en-GB") + " new £50+ candidates for review. They are not live yet." +
