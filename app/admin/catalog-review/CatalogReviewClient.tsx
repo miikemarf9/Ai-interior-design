@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./CatalogReview.module.css";
 
 type Candidate = {
@@ -34,8 +35,6 @@ const pretty = (value: string | null) =>
   value ? value.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) : "Uncategorised";
 
 export default function CatalogReviewClient() {
-  const [passcode, setPasscode] = useState("");
-  const [key, setKey] = useState("");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [category, setCategory] = useState("all");
   const [minimumPrice, setMinimumPrice] = useState(50);
@@ -47,6 +46,8 @@ export default function CatalogReviewClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [accessIssue, setAccessIssue] = useState<"signed-out" | "not-admin" | "">("");
+  const [loaded, setLoaded] = useState(false);
 
   const categories = useMemo(
     () => [...new Set(candidates.map((item) => item.normalized_category_slug || "uncategorised"))].sort(),
@@ -59,28 +60,29 @@ export default function CatalogReviewClient() {
     .filter((item) => minimumPrice === 0 || (item.price_minor ?? 0) >= minimumPrice * 100)
     .sort((a, b) => (b.price_minor ?? 0) - (a.price_minor ?? 0));
 
-  async function loadProducts(secret: string) {
+  async function loadProducts() {
     setLoading(true);
     setError("");
     setNotice("");
+    setAccessIssue("");
     try {
-      const response = await fetch("/api/catalog/review", {
-        headers: { "x-catalog-review-key": secret },
-        cache: "no-store",
-      });
+      const response = await fetch("/api/catalog/review", { cache: "no-store" });
       const result = await response.json();
+      if (response.status === 401) { setLoaded(false); setCandidates([]); setAccessIssue("signed-out"); return; }
+      if (response.status === 403) { setLoaded(false); setCandidates([]); setAccessIssue("not-admin"); return; }
       if (!response.ok) throw new Error(result.error || "Could not open the review list.");
       setCandidates(result.candidates || []);
       setNextScanOffset(Number(result.nextScanOffset ?? 1_000));
       setFeedComplete(Boolean(result.feedComplete));
-      setKey(secret);
+      setLoaded(true);
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : "Could not open the review list.");
-      setKey("");
     } finally {
       setLoading(false);
     }
   }
+
+  useEffect(() => { void loadProducts(); }, []);
 
   async function decide(item: Candidate, action: "keep" | "reject") {
     const prompt = action === "keep"
@@ -94,7 +96,7 @@ export default function CatalogReviewClient() {
     try {
       const response = await fetch("/api/catalog/review", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-catalog-review-key": key },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ candidateId: item.id, action }),
       });
       const result = await response.json();
@@ -109,7 +111,7 @@ export default function CatalogReviewClient() {
   }
 
   async function importMore() {
-    if (!key || importing || feedComplete) return;
+    if (importing || feedComplete) return;
     setImporting(true);
     setError("");
     setNotice("");
@@ -123,7 +125,7 @@ export default function CatalogReviewClient() {
         setImportProgress("Checking feed rows " + (offset + 1).toLocaleString("en-GB") + "–" + (offset + 1_000).toLocaleString("en-GB") + "…");
         const response = await fetch("/api/catalog/import/awin", {
           method: "POST",
-          headers: { "content-type": "application/json", "x-catalog-review-key": key },
+          headers: { "content-type": "application/json" },
           body: JSON.stringify({ retailerSlug: "aosom-uk", scanOffset: offset, minimumPriceMinor: 5_000 }),
         });
         const result = await response.json();
@@ -139,7 +141,6 @@ export default function CatalogReviewClient() {
       }
 
       const refresh = await fetch("/api/catalog/review", {
-        headers: { "x-catalog-review-key": key },
         cache: "no-store",
       });
       const review = await refresh.json();
@@ -173,19 +174,25 @@ export default function CatalogReviewClient() {
             <h1 className={styles.title}>Review Aosom products</h1>
             <p className={styles.intro}>Check each item before it is added to the catalogue. Keeping an item makes it available in the live product catalogue; rejecting removes it from this review list.</p>
           </div>
-          {key && <button onClick={() => { setKey(""); setPasscode(""); setCandidates([]); setNotice(""); }} className={styles.lockButton}>Lock review page</button>}
+          {loaded && <button type="button" onClick={() => void loadProducts()} disabled={loading} className={styles.lockButton}>{loading ? "Refreshing…" : "Refresh list"}</button>}
         </header>
 
-        {!key ? (
-          <form onSubmit={(event) => { event.preventDefault(); void loadProducts(passcode); }} className={styles.loginCard}>
-            <h2 className={styles.loginTitle}>Enter your private passcode</h2>
-            <p className={styles.muted}>This page is private. Enter the passcode provided to you to load the pending Aosom products.</p>
-            <label className={styles.label} htmlFor="review-passcode">Passcode</label>
-            <input id="review-passcode" type="password" autoComplete="current-password" value={passcode} onChange={(event) => setPasscode(event.target.value)} className={styles.input} />
-            {error && <p role="alert" className={styles.error}>{error}</p>}
-            <button disabled={loading || !passcode} className={styles.primaryButton}>{loading ? "Opening list…" : "Open product list"}</button>
-          </form>
-        ) : (
+        {loading && !loaded && <p role="status" className={styles.muted}>Loading pending Aosom items…</p>}
+        {accessIssue === "signed-out" && (
+          <section className={styles.loginCard}>
+            <h2 className={styles.loginTitle}>Sign in to review products</h2>
+            <p className={styles.muted}>Use your verified owner account. No separate product passcode or API key is needed.</p>
+            <Link href="/account" className={styles.primaryButton}>Open account sign-in</Link>
+          </section>
+        )}
+        {accessIssue === "not-admin" && (
+          <section className={styles.loginCard}>
+            <h2 className={styles.loginTitle}>Owner access required</h2>
+            <p className={styles.muted}>Sign out and use the verified owner account connected to your Transform My Room site.</p>
+            <Link href="/account" className={styles.primaryButton}>Open My account</Link>
+          </section>
+        )}
+        {loaded && (
           <>
             <div className={styles.toolbar}>
               <p className={styles.pendingCount}>Showing <strong>{visible.length}</strong> of <strong>{categoryCandidates.length}</strong> pending {category === "all" ? "products" : "in this category"}. {minimumPrice > 0 && <span>{categoryCandidates.length - visible.length} under £{minimumPrice} hidden; still pending.</span>}</p>
@@ -258,6 +265,7 @@ export default function CatalogReviewClient() {
             )}
           </>
         )}
+
       </div>
     </main>
   );

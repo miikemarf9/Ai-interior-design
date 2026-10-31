@@ -1,26 +1,23 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getCatalogDb } from "@/lib/catalog/neon";
+import { getCurrentAccount } from "@/lib/auth";
+import { isAdminAccount } from "@/lib/auth/admin";
+
 import { promoteFeedCandidate } from "@/lib/catalog/ingest/promote";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function authorized(request: Request) {
-  const expected = process.env.CATALOG_REVIEW_SECRET;
-  const supplied = request.headers.get("x-catalog-review-key");
-  if (!expected || !supplied) return false;
-  const expectedBytes = Buffer.from(expected);
-  const suppliedBytes = Buffer.from(supplied);
-  return expectedBytes.length === suppliedBytes.length && timingSafeEqual(expectedBytes, suppliedBytes);
-}
-
-function unauthorized() {
-  return NextResponse.json({ error: "Passcode is incorrect." }, { status: 401, headers: { "Cache-Control": "no-store" } });
+async function requireCatalogAdmin() {
+  const account = await getCurrentAccount();
+  if (!account) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  if (!isAdminAccount(account)) return NextResponse.json({ error: "Owner access is required." }, { status: 403 });
+  return null;
 }
 
 export async function GET(request: Request) {
-  if (!authorized(request)) return unauthorized();
+  const denied = await requireCatalogAdmin();
+  if (denied) return denied;
 
   const sql = getCatalogDb();
   const rows = await sql.query(
@@ -81,7 +78,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!authorized(request)) return unauthorized();
+  const denied = await requireCatalogAdmin();
+  if (denied) return denied;
 
   let body: { candidateId?: string; action?: string };
   try {

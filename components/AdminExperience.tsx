@@ -55,7 +55,7 @@ export function AdminExperience() {
   }), { rooms: 0, images: 0, cost: 0 });
 
   return <main className="pageShell adminShell">
-    <div className="pageTop"><Brand /><div className="adminTopActions"><Link href="/account" className="textLink">My account</Link><span className="adminOwnerMark">Owner workspace</span></div></div>
+    <div className="pageTop"><Brand /><div className="adminTopActions"><Link href="/admin/catalog-review" className="textLink">Review products</Link><Link href="/account" className="textLink">My account</Link><span className="adminOwnerMark">Owner workspace</span></div></div>
     <section className="adminPage" id="roomfound-main">
       <div className="adminIntro"><div><p className="eyebrow">Transform My Room · Owner dashboard</p><h1>Your workspace</h1><p className="adminLead">A clear view of customer activity and image usage.</p></div>
         {allowed && <button type="button" className="button buttonSecondary buttonCompact" onClick={() => void load()} disabled={loading}>{loading ? "Refreshing…" : "Refresh data"}</button>}

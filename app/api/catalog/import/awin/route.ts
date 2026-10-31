@@ -1,9 +1,11 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isUsefulLivingRoomCandidate, normalizeLegacyAwinRow, type FeedCandidate } from "@/lib/catalog/ingest/awin";
 import { readCsvObjects } from "@/lib/catalog/ingest/csv";
 import { getFeedSource, rejectFeedCandidates, stageFeedCandidates } from "@/lib/catalog/ingest/stage";
 import { getCatalogDb } from "@/lib/catalog/neon";
+import { getCurrentAccount } from "@/lib/auth";
+import { isAdminAccount } from "@/lib/auth/admin";
+
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -43,24 +45,16 @@ async function decompressGzipIfNeeded(body: ReadableStream<Uint8Array>) {
   return replay;
 }
 
-function matchesSecret(expected: string | undefined, supplied: string | null) {
-  if (!expected || !supplied) return false;
-  const expectedBytes = Buffer.from(expected);
-  const suppliedBytes = Buffer.from(supplied);
-  return expectedBytes.length === suppliedBytes.length && timingSafeEqual(expectedBytes, suppliedBytes);
-}
-
-function authorized(request: Request) {
-  const importSecret = process.env.CATALOG_IMPORT_SECRET;
-  const reviewSecret = process.env.CATALOG_REVIEW_SECRET;
-  return matchesSecret(importSecret, request.headers.get("authorization")?.replace(/^Bearer /, "") ?? null)
-    || matchesSecret(reviewSecret, request.headers.get("x-catalog-review-key"));
+async function requireCatalogAdmin() {
+  const account = await getCurrentAccount();
+  if (!account) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  if (!isAdminAccount(account)) return NextResponse.json({ error: "Owner access is required." }, { status: 403 });
+  return null;
 }
 
 export async function POST(request: Request) {
-  if (!authorized(request)) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const denied = await requireCatalogAdmin();
+  if (denied) return denied;
 
   const body = await request.json() as { retailerSlug?: string; scanOffset?: number; minimumPriceMinor?: number };
   const scanOffset = Number.isSafeInteger(body.scanOffset) ? Math.max(0, body.scanOffset as number) : 0;
