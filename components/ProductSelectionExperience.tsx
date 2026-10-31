@@ -130,7 +130,7 @@ export function ProductSelectionExperience() {
       {selection.notes.map(note => <p key={note}>{note}</p>)}
     </section>
     <section className="selectedProducts" aria-label="Recommended furniture">
-      {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onBrowse={() => setBrowseProduct(product)} />)}
+      {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onBrowse={() => setBrowseProduct(product)} retailerHref={retailerHref} />)}
     </section>
     {browseProduct && intake && brief && selection ? <InventoryPicker category={browseProduct.slot} categoryLabel={browseProduct.slotLabel} initialStyle={intake.styles[0] || ''} onClose={() => setBrowseProduct(null)} onChoose={(variantId) => {
       const nextChoices = choices(selection).map(choice => choice.slot === browseProduct.slot ? { ...choice, variantId } : choice);
@@ -151,7 +151,7 @@ function ProductPhoto({ item }: { item: SelectionCandidate }) {
   const [failed, setFailed] = useState(false);
   return !failed && item.image ? <img src={item.image.url} alt={item.image.altText || name(item)} loading="lazy" decoding="async" onError={() => setFailed(true)} /> : <div className="imagePending">Product photograph unavailable. Check the retailer before deciding.</div>;
 }
-function ProductCard({ product, index, disabled, onChange, onBrowse }: { product: ProposedProduct; index: number; disabled: boolean; onChange: (variantId: string, quantity: number) => void; onBrowse: () => void }) {
+function ProductCard({ product, index, disabled, onChange, onBrowse, retailerHref }: { product: ProposedProduct; index: number; disabled: boolean; onChange: (variantId: string, quantity: number) => void; onBrowse: () => void; retailerHref: (offerId: string) => string }) {
   const [open, setOpen] = useState(false);
   const item = product.selected;
   return <article className="selectedProductCard">
