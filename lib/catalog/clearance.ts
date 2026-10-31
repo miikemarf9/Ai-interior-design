@@ -20,8 +20,61 @@ export type CatalogueClearance = {
   deliveryDetails: string;
 };
 
-// Stage 2 outcome, 11 October 2026: 0 cleared products. Deliberately empty.
-export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [];
+// Three Aosom living-room pilot products reviewed against their exact feed photos and listings on 31 October 2026.
+// The photos appear in the affiliate product picker; product photos are not sent to the image model.
+export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
+  {
+    productId: 'cbbeafca-74f8-45a0-9bff-5657d837408f',
+    variantId: 'd094ea50-ef93-41f8-9e1e-c302d0f6b5b4',
+    offerId: '10c81fad-d1da-4fa3-ab7c-9327537be1a0',
+    imageUrl: 'https://img.aosomcdn.com/100/product/2025/11/26/RnL45419abe961f76.jpg',
+    exactVariantName: 'Warm brown mango wood',
+    packSize: 1,
+    unitLabel: 'coffee table',
+    displayEvidence: 'Aosom UK Awin feed photo and exact product listing reviewed 2026-10-31; display is limited to the affiliate product picker with the retailer destination.',
+    aiReferenceEvidence: 'Product photo is not sent to OpenAI. The written brief may use broad material and style cues only; exact product replication is not promised.',
+    customerOutputEvidence: 'The generated room is labelled illustrative. The real retailer product remains separately shown with its live offer link; no exact-match or fit guarantee is made.',
+    dataEvidence: 'Aosom UK feed candidate F-AFU-B2743P403489; GBP price and in-stock state checked in the imported feed; photo and listing reviewed 2026-10-31. Demand on Transform My Room is untested.',
+    reviewedAt: '2026-10-31T16:00:00.000Z',
+    expiresAt: '2026-11-07T16:00:00.000Z',
+    deliveryBasis: 'unknown',
+    deliveryDetails: 'Delivery charge, lead time and postcode availability are not confirmed here; check the Aosom listing and checkout.',
+  },
+  {
+    productId: 'e22306f7-944d-4452-b5ac-cb2242ff76c8',
+    variantId: 'e9cce523-1138-4d9a-a2e4-9fb9fdca4694',
+    offerId: 'dc119dc8-365e-46eb-8026-2aeefe63cbea',
+    imageUrl: 'https://img.aosomcdn.com/100/product/2025/11/26/s403ee19abe961fa1.jpg',
+    exactVariantName: 'Warm brown mango wood',
+    packSize: 1,
+    unitLabel: 'TV unit',
+    displayEvidence: 'Aosom UK Awin feed photo and exact product listing reviewed 2026-10-31; display is limited to the affiliate product picker with the retailer destination.',
+    aiReferenceEvidence: 'Product photo is not sent to OpenAI. The written brief may use broad material and style cues only; exact product replication is not promised.',
+    customerOutputEvidence: 'The generated room is labelled illustrative. The real retailer product remains separately shown with its live offer link; no exact-match or fit guarantee is made.',
+    dataEvidence: 'Aosom UK feed candidate F-AFU-B2743P403490; GBP price and in-stock state checked in the imported feed; photo and listing reviewed 2026-10-31. Demand on Transform My Room is untested.',
+    reviewedAt: '2026-10-31T16:00:00.000Z',
+    expiresAt: '2026-11-07T16:00:00.000Z',
+    deliveryBasis: 'unknown',
+    deliveryDetails: 'Delivery charge, lead time and postcode availability are not confirmed here; check the Aosom listing and checkout.',
+  },
+  {
+    productId: 'a3838162-5a67-449d-8dcb-fabff7560830',
+    variantId: 'd0a68616-abd6-465a-93b4-44aa138fa75d',
+    offerId: 'c82212a3-dab3-4928-8a10-7a3daf14d72f',
+    imageUrl: 'https://img.aosomcdn.com/100/product/2024/09/29/mJEe3a1923d065c71.jpeg',
+    exactVariantName: 'Forest green chenille chair with crescent ottoman',
+    packSize: 1,
+    unitLabel: 'chair set',
+    displayEvidence: 'Aosom UK Awin feed photo and exact product listing reviewed 2026-10-31; display is limited to the affiliate product picker with the retailer destination.',
+    aiReferenceEvidence: 'Product photo is not sent to OpenAI. The written brief may use broad material and style cues only; exact product replication is not promised.',
+    customerOutputEvidence: 'The generated room is labelled illustrative. The real retailer product remains separately shown with its live offer link; no exact-match or fit guarantee is made.',
+    dataEvidence: 'Aosom UK feed candidate F-DEK-W1397P154376; GBP price and in-stock state checked in the imported feed; photo and listing reviewed 2026-10-31. Demand on Transform My Room is untested.',
+    reviewedAt: '2026-10-31T16:00:00.000Z',
+    expiresAt: '2026-11-07T16:00:00.000Z',
+    deliveryBasis: 'unknown',
+    deliveryDetails: 'Delivery charge, lead time and postcode availability are not confirmed here; check the Aosom listing and checkout.',
+  },
+];
 
 export function currentClearances(now = Date.now(), entries = CLEARED_CATALOGUE) {
   return entries.filter(entry => entry.productId && entry.variantId && entry.offerId
