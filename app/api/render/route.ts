@@ -253,9 +253,9 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    if (wallet.balance < 1) {
+    if (wallet.balance < 1 && !wallet.siteCreditExempt) {
       return NextResponse.json({
-        error: "You do not have enough design credits for another render.",
+        error: "You have used your free image. Buy 10 more image credits for £2 from your account page.",
         code: "NO_RENDER_CREDIT",
         balance: wallet.balance,
       }, { status: 402 });

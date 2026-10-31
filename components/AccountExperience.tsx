@@ -17,7 +17,9 @@ type AccountPayload = {
   credits: {
     balance: number;
     verificationStatus: string;
+    siteCreditExempt: boolean;
   };
+  paymentsEnabled: boolean;
   primaryHomeId: string;
   preferences: {
     marketingEmails: boolean;
@@ -90,6 +92,17 @@ export function AccountExperience() {
 
   useEffect(() => {
     void loadAccount();
+    const purchase = new URLSearchParams(window.location.search).get("purchase");
+    if (purchase === "success") {
+      setNotice("Payment received. Your 10 image credits should appear shortly.");
+      const timer = window.setTimeout(() => { void loadAccount(); }, 2500);
+      window.history.replaceState({}, "", window.location.pathname);
+      return () => window.clearTimeout(timer);
+    }
+    if (purchase === "cancelled") {
+      setNotice("Checkout was cancelled. No payment was taken.");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, []);
 
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
@@ -147,7 +160,7 @@ export function AccountExperience() {
       if (authMode === "signup") {
         setNotice(
           data.emailSent
-            ? "Account created. Check your email to verify it and unlock your 3 design credits."
+            ? "Account created. Check your email to verify it and unlock your free image."
             : "Account created. Email delivery is not configured yet, so verification is still pending.",
         );
       }
@@ -173,6 +186,20 @@ export function AccountExperience() {
     await fetch("/api/auth/logout", { method: "POST" });
     setPayload(null);
     setAuthMode("login");
+  }
+
+  async function buyImageCredits() {
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/credits/checkout", { method: "POST" });
+      const data = await response.json() as { url?: string; error?: string };
+      if (!response.ok || !data.url) throw new Error(data.error || "Could not open checkout.");
+      window.location.assign(data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not open checkout.");
+      setBusy(false);
+    }
   }
 
   async function openRoom(id: string) {
@@ -331,6 +358,7 @@ export function AccountExperience() {
       <header className="accountTopbar">
         <Brand />
         <div>
+          {payload.credits.siteCreditExempt ? <Link href="/admin">Admin area</Link> : null}
           <Link href="/design">New room</Link>
           <button type="button" onClick={signOut}>Sign out</button>
         </div>
@@ -343,9 +371,11 @@ export function AccountExperience() {
           <p>Every room keeps its original photo, design decisions and shopping plan together.</p>
         </div>
         <aside className="accountCredits">
-          <span>Design credits</span>
-          <strong>{payload.credits.balance}</strong>
-          <small>{payload.account.verified ? "Verified account" : "Verify your email to unlock 3 free credits"}</small>
+          <span>Image credits</span>
+          <strong>{payload.credits.siteCreditExempt ? "API limit" : payload.credits.balance}</strong>
+          <small>{payload.credits.siteCreditExempt ? "Image API account limit applies" : payload.account.verified ? "1 free image · then £2 for 10" : "Verify your email to unlock 1 free image"}</small>
+          {payload.account.verified && !payload.credits.siteCreditExempt && payload.paymentsEnabled ? <button type="button" className="button buttonSecondary buttonCompact" onClick={buyImageCredits} disabled={busy}>Buy 10 images · £2</button> : null}
+          {payload.account.verified && !payload.credits.siteCreditExempt && !payload.paymentsEnabled ? <small>Payments are being set up.</small> : null}
         </aside>
       </section>
 

@@ -43,7 +43,7 @@ export async function sendVerificationEmail(email: string, token: string, origin
     subject: "Verify your Roomfound account",
     html: `<div style="font-family:Arial,sans-serif;color:#172019;max-width:560px;margin:auto;padding:32px">
       <h1 style="font-family:Georgia,serif;font-weight:400">Verify your Roomfound account</h1>
-      <p>Confirm your email to secure your saved rooms and unlock your 3 free design credits.</p>
+      <p>Confirm your email to secure your saved rooms and unlock your 1 free image.</p>
       <p style="margin:28px 0"><a href="${url}" style="background:#172019;color:white;padding:13px 18px;text-decoration:none;border-radius:999px">Verify my email</a></p>
       <p style="font-size:12px;color:#687168">This link expires in 24 hours.</p>
     </div>`,

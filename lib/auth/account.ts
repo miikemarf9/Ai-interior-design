@@ -1,6 +1,7 @@
 import { creditPolicy } from "@/lib/credits";
 import { getCatalogDb } from "@/lib/catalog/neon";
 import { canonicalOwnerKey } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/auth/admin";
 
 export async function ensurePrimaryHome(accountId: string) {
   const sql = getCatalogDb();
@@ -137,15 +138,17 @@ export async function enqueueCrmEvent(
 export async function accountCreditBalance(accountId: string) {
   const sql = getCatalogDb();
   const rows = await sql.query(
-    `select balance, verification_status
-     from public.design_credit_wallets
-     where account_id=$1::uuid
+    `select w.balance, w.verification_status,a.email,a.email_verified_at::text as email_verified_at
+     from public.design_credit_wallets w
+     join public.customer_accounts a on a.id=w.account_id
+     where w.account_id=$1::uuid
      limit 1`,
     [accountId],
-  ) as Array<{ balance: number; verification_status: string }>;
+  ) as Array<{ balance: number; verification_status: string; email: string; email_verified_at: string | null }>;
 
   return {
     balance: rows[0]?.balance ?? 0,
     verificationStatus: rows[0]?.verification_status ?? "unverified",
+    siteCreditExempt: Boolean(rows[0]?.email_verified_at && isAdminEmail(rows[0]?.email)),
   };
 }
