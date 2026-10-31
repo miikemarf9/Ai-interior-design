@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const candidates = await getLiveSelectionCandidates();
     let selection = buildProductSelection(body.intake, body.brief, candidates);
     try {
-      if (body.choices) selection = applySelectionChoices(selection, body.choices);
+      if (body.choices) selection = applySelectionChoices(selection, body.choices, candidates);
     } catch (error) {
       return NextResponse.json({ selection, approved: false, warning: error instanceof Error ? error.message : 'Please review the refreshed collection.' });
     }
