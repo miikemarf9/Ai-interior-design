@@ -432,7 +432,7 @@ export function DesignedRoomExperience({
           <strong>{title}</strong>
         </div>
         <div className="roomChromeActions">
-          <div className="roomTotal"><span>Whole room</span><strong>{money(data.selection.totalMinor)}</strong></div>
+          <div className="roomTotal"><span>{data.selection.products.length ? "Furniture total" : "Furniture collection"}</span><strong>{data.selection.products.length ? money(data.selection.totalMinor) : "Not selected"}</strong></div>
           <button className="roomShareButton" type="button" onClick={shareRoom}>{shareLabel}</button>
         </div>
       </header>
@@ -471,14 +471,14 @@ export function DesignedRoomExperience({
               <span>After</span>
             </div>
           ) : <span className="sharedRoomLabel">Finished room</span>}
-          <button type="button" onClick={() => setShowPins((value) => !value)}>
+          {data.selection.products.length > 0 ? <button type="button" onClick={() => setShowPins((value) => !value)}>
             {showPins ? "Hide products" : "Show products"}
-          </button>
+          </button> : null}
         </div>
 
       </section>
 
-      <p className={styles.notice}>Markers identify visually checked products, not guaranteed exact matches. Prices are recorded product prices; confirm price, availability and fit with the retailer. Unmarked products remain in the list.</p>
+      <p className={styles.notice}>This AI room image is an illustration, not an exact product photograph or a guarantee of fit. Product cards below show the retailer items and prices available to shop.</p>
       {activeProduct ? (
         <ProductDrawer
           key={activeProduct.slot}
