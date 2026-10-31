@@ -498,7 +498,7 @@ export function DesignIntake() {
                   </select>
                 </label>
               </div>
-              {state.roomType === 'bedroom' && <p className={ui.note}>You can prepare and edit a bedroom brief. Bedroom furniture selection and image generation are not available yet.</p>}
+              {state.roomType === 'bedroom' && <p className={ui.note}>Bedroom furniture is still being reviewed for the product list. You can continue with an illustrative bedroom design.</p>}
 
             </>
           ) : null}
@@ -524,7 +524,7 @@ export function DesignIntake() {
                 <p className="choiceHint">There are no reviewed {roomName} products to tick yet. You can still save your room plan.</p>
               ) : null}
               {!catalogueLoading && !catalogueError && comingSoonItems.length ? <p className="choiceHint">Coming to the reviewed catalogue: {comingSoonItems.join(' · ')}.</p> : null}
-              {state.roomType === 'bedroom' ? <p className={ui.note}>Bedroom products and image generation are not available yet; this list is for planning only.</p> : null}
+              {state.roomType === 'bedroom' ? <p className={ui.note}>Bedroom products are still being reviewed and may not appear in this list yet. You can still generate an illustrative design from your room photo and style choices.</p> : null}
               {availableRecommendedItems.length ? (
                 <button className="selectAllButton" type="button" onClick={() => setState((current) => ({ ...current, change: availableRecommendedItems.filter(item => !current.keep.includes(item)) }))}>
                   Use suggested items
