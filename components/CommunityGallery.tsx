@@ -119,7 +119,7 @@ export function CommunityGallery(){
                 <div className={styles.cardFooter}>
                   <span>{room.votes} {room.votes===1 ? "thumbs-up" : "thumbs-up votes"}</span>
                   <button type="button" aria-pressed={room.voted} onClick={()=>vote(room)} disabled={votingId===room.id}>
-                    <span aria-hidden="true">{room.voted ? "👍" : "♡"}</span>
+                    <span aria-hidden="true">👍</span>
                     {votingId===room.id ? "Saving…" : room.voted ? "Liked" : "Like this room"}
                   </button>
                 </div>
