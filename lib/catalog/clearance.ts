@@ -20,7 +20,7 @@ export type CatalogueClearance = {
   deliveryDetails: string;
 };
 
-// Four Aosom living-room pilot products reviewed against their exact feed photos and listings on 31 October 2026.
+// Six Aosom living-room pilot products reviewed against their exact feed photos and listings on 31 October 2026.
 // The photos appear in the affiliate product picker; product photos are not sent to the image model.
 export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
   {
@@ -90,6 +90,41 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     expiresAt: '2026-11-07T16:00:00.000Z',
     deliveryBasis: 'per_order',
     deliveryDetails: 'Aosom states free UK mainland delivery; Northern Ireland courier fees apply. Guernsey and Jersey availability is restricted. Confirm current postcode delivery at checkout.',
+  },
+
+  {
+    productId: '3d4b64f7-3f28-4606-93b2-ea52c3f3cb86',
+    variantId: '3da48ba7-eb99-446b-8cb0-b73145e01166',
+    offerId: '1aad4485-a894-42c9-abaa-09ae90309487',
+    imageUrl: 'https://img.aosomcdn.com/100/product/2025/03/27/mz5849195d76450e6.jpg',
+    exactVariantName: 'Brown fabric three-seater sofa, 196 × 80.5 × 89 cm',
+    packSize: 1,
+    unitLabel: 'three-seat sofa',
+    displayEvidence: 'Aosom UK Awin feed photo and exact product listing verified 2026-10-31; display is limited to the affiliate product picker with the retailer destination.',
+    aiReferenceEvidence: 'Product photo is not sent to OpenAI. The written brief may use broad upholstery, colour and style cues only; exact product replication is not promised.',
+    customerOutputEvidence: 'Generated rooms are labelled illustrative. The real retailer product is shown separately with its current offer link; no exact-match or fit guarantee is made.',
+    dataEvidence: 'Aosom UK feed candidate 839-499V71BN; listing verified 2026-10-31 at £369.99 and in stock. Aosom identifies a 3-seat brown polyester-fabric sofa with rubberwood legs, 196 × 80.5 × 89 cm, and 4.2/5 from 6 ratings. It fits Contemporary Classic and Modern Country.',
+    reviewedAt: '2026-10-31T00:00:00.000Z',
+    expiresAt: '2026-11-07T00:00:00.000Z',
+    deliveryBasis: 'per_order',
+    deliveryDetails: 'Aosom states free UK mainland delivery; the page showed 05/11/2026–09/11/2026. Confirm current postcode delivery at checkout.',
+  },
+  {
+    productId: '45459ec0-16c4-4235-b417-77a6cb8e87ee',
+    variantId: 'bc814259-ea3f-4daf-a15d-521e26032a05',
+    offerId: 'b69b0eb0-2d0f-440d-9a58-131d0302824e',
+    imageUrl: 'https://img.aosomcdn.com/100/product/2026/04/17/BSKe2719d994e3bc0.jpg',
+    exactVariantName: 'Beige oversized two-seater corduroy sofa, 224 × 81 × 81 cm',
+    packSize: 1,
+    unitLabel: 'two-seat sofa',
+    displayEvidence: 'Aosom UK Awin feed photo and exact product listing verified 2026-10-31; display is limited to the affiliate product picker with the retailer destination.',
+    aiReferenceEvidence: 'Product photo is not sent to OpenAI. The written brief may use broad upholstery, colour and style cues only; exact product replication is not promised.',
+    customerOutputEvidence: 'Generated rooms are labelled illustrative. The real retailer product is shown separately with its current offer link; no exact-match or fit guarantee is made.',
+    dataEvidence: 'Aosom UK feed candidate F-GOM-W2678S00031; listing verified 2026-10-31 at £359.99 and in stock. Aosom identifies a beige two-seat corduroy sofa with solid-wood/plywood frame, 224 × 81 × 81 cm, and 4.5/5 from 38 ratings. It fits Modern Organic.',
+    reviewedAt: '2026-10-31T00:00:00.000Z',
+    expiresAt: '2026-11-07T00:00:00.000Z',
+    deliveryBasis: 'per_order',
+    deliveryDetails: 'Aosom states free UK mainland delivery; the page showed 04/11/2026–12/11/2026. Confirm current postcode delivery at checkout.',
   },
 ];
 
