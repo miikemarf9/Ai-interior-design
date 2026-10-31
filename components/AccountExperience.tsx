@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Brand } from "@/components/Brand";
 import { FormEvent, useEffect, useState } from "react";
 import { AccountPrivacyControls } from "@/components/AccountPrivacyControls";
+import ui from "./RoomBrief.module.css";
 
 type AccountPayload = {
   account: {
@@ -64,6 +65,7 @@ export function AccountExperience() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [marketingEmails, setMarketingEmails] = useState(false);
 
   async function loadAccount() {
     setLoading(true);
@@ -119,6 +121,7 @@ export function AccountExperience() {
       if (authMode === "signup") {
         body.displayName = String(form.get("displayName") || "");
         body.inviteCode = String(form.get("inviteCode") || "");
+        body.marketingEmails = marketingEmails;
       }
 
       const response = await fetch(authMode === "signup" ? "/api/auth/signup" : "/api/auth/login", {
@@ -259,8 +262,8 @@ export function AccountExperience() {
 
           <form className="accountAuthCard" onSubmit={submitAuth}>
             <div className="accountAuthTabs">
-              <button type="button" className={authMode === "login" ? "isActive" : ""} onClick={() => setAuthMode("login")}>Sign in</button>
-              <button type="button" className={authMode === "signup" ? "isActive" : ""} onClick={() => setAuthMode("signup")}>Create account</button>
+              <button type="button" className={authMode === "login" ? "isActive" : ""} onClick={() => { setMarketingEmails(false); setAuthMode("login"); }}>Sign in</button>
+              <button type="button" className={authMode === "signup" ? "isActive" : ""} onClick={() => { setMarketingEmails(false); setAuthMode("signup"); }}>Create account</button>
             </div>
 
             {authMode === "forgot" ? (
@@ -286,6 +289,17 @@ export function AccountExperience() {
                 ) : null}
                 <label><span>Email</span><input name="email" type="email" autoComplete="email" required /></label>
                 <label><span>Password</span><input name="password" type="password" autoComplete={authMode === "signup" ? "new-password" : "current-password"} minLength={10} required /></label>
+                    {authMode === "signup" ? (
+                      <label className={ui.marketingOptIn}>
+                        <input
+                          name="marketingEmails"
+                          type="checkbox"
+                          checked={marketingEmails}
+                          onChange={(event) => setMarketingEmails(event.target.checked)}
+                        />
+                        <span>Email me occasional Transform My Room news, design tips and selected furniture offers. I can unsubscribe at any time.</span>
+                      </label>
+                    ) : null}
               </>
             )}
 
@@ -297,7 +311,7 @@ export function AccountExperience() {
             </button>
 
             {authMode === "login" ? (
-              <button className="accountTextButton" type="button" onClick={() => setAuthMode("forgot")}>Forgot password?</button>
+              <button className="accountTextButton" type="button" onClick={() => { setMarketingEmails(false); setAuthMode("forgot"); }}>Forgot password?</button>
             ) : null}
             {authMode === "forgot" ? (
               <button className="accountTextButton" type="button" onClick={() => setAuthMode("login")}>Back to sign in</button>

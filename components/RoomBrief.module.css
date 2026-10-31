@@ -20,3 +20,7 @@
 .error { color: #842f25; padding: 12px 0; }
 .summary { display: flex; gap: 12px 24px; flex-wrap: wrap; margin: 24px 0; font-size: 14px; }
 @media (max-width: 680px) { .setup { grid-template-columns: 1fr; gap: 16px; } .marking h2 { font-size: 23px; } }
+
+.marketingOptIn { display:flex; align-items:flex-start; gap:10px; margin:18px 0; color:var(--muted); font-size:12px; line-height:1.5; }
+.marketingOptIn input { flex:0 0 auto; width:18px; height:18px; min-height:18px; margin:1px 0 0; accent-color:var(--forest); }
+.marketingOptIn span { margin:0; color:var(--muted); font-size:12px; font-weight:400; line-height:1.5; text-transform:none; }
