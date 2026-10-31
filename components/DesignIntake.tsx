@@ -203,7 +203,7 @@ export function DesignIntake() {
     setCatalogueLoading(true);
     setCatalogueError('');
 
-    fetch(`/api/products/categories?roomType=${encodeURIComponent(state.roomType)}`, { cache: 'no-store', signal: controller.signal })
+    fetch(`/api/products/categories?roomType=${encodeURIComponent(state.roomType || 'living_room')}`, { cache: 'no-store', signal: controller.signal })
       .then(async response => {
         const payload = await response.json() as { items?: CatalogueItemChoice[]; error?: string };
         if (!response.ok || !Array.isArray(payload.items)) throw new Error(payload.error || 'The product list could not be checked.');
