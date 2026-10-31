@@ -3,6 +3,7 @@
  * Evidence references identify private approval records; never return them to the browser.
  */
 export type CatalogueClearance = {
+  roomType: 'living_room' | 'bedroom';
   productId: string;
   variantId: string;
   offerId: string;
@@ -24,6 +25,7 @@ export type CatalogueClearance = {
 // The photos appear in the affiliate product picker; product photos are not sent to the image model.
 export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
   {
+    roomType: 'living_room',
     productId: 'cbbeafca-74f8-45a0-9bff-5657d837408f',
     variantId: 'd094ea50-ef93-41f8-9e1e-c302d0f6b5b4',
     offerId: '10c81fad-d1da-4fa3-ab7c-9327537be1a0',
