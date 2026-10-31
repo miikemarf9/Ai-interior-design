@@ -16,6 +16,7 @@ const allowedEvents=new Set([
   "render_failed",
   "room_shared",
   "retailer_clicked",
+  "style_choices_submitted",
   "web_vital",
 ]);
 
