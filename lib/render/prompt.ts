@@ -66,9 +66,9 @@ Room measurements: width ${intake.measurements.width || "unknown"} cm; length ${
 Additional room restrictions: ${intake.measurements.notes || "none supplied"}.
 Product prices and budgets are not visual content. Never put prices, product information or shopping labels inside the image.
 
-APPROVED REAL PRODUCT SET
-The product reference images start at reference image 2. Use the selected products as the design anchors rather than inventing substitutes.
-${productLines.join("\n")}
+ILLUSTRATIVE FURNITURE CUES
+${productLines.length ? "The selected products, if any, are broad style cues only. Their exact appearance is not promised; do not depict or label the generated image as an exact product match." : "No retailer products are selected. Furnish the room according to the approved brief using plausible illustrative furniture."}
+${productLines.join("\n") || "No exact retailer-product likeness is requested."}
 
 COMPOSITION
 - Place illustrative furniture naturally and at believable scale.
