@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isUsefulLivingRoomCandidate, normalizeLegacyAwinRow, type FeedCandidate } from "@/lib/catalog/ingest/awin";
+import { isUsefulCatalogCandidate, normalizeLegacyAwinRow, type FeedCandidate } from "@/lib/catalog/ingest/awin";
 import { readCsvObjects } from "@/lib/catalog/ingest/csv";
 import { getFeedSource, stageFeedCandidates } from "@/lib/catalog/ingest/stage";
 import { getCatalogDb } from "@/lib/catalog/neon";
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       if (scanned > SCAN_LIMIT) break;
 
       const candidate = normalizeLegacyAwinRow(row);
-      if (!candidate || !isUsefulLivingRoomCandidate(candidate) || !candidate.normalizedCategorySlug) continue;
+      if (!candidate || !isUsefulCatalogCandidate(candidate) || !candidate.normalizedCategorySlug) continue;
 
       const bucket = byCategory.get(candidate.normalizedCategorySlug) ?? [];
       if (bucket.length >= PER_CATEGORY_LIMIT) continue;
