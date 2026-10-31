@@ -60,7 +60,15 @@ export function ProductSelectionExperience() {
       const data = await response.json();
       if (!response.ok || data.selection?.version !== 2) throw new Error(data.error || 'The collection could not be checked. Your brief is still saved.');
       setSelection(data.selection); setApproved(Boolean(data.approved)); setNotice(data.warning || ''); save(data.selection, Boolean(data.approved));
-      if (data.approved) trackRoomfound('products_approved', { productCount: data.selection.products.length, totalMinor: data.selection.totalMinor });
+      if (data.approved) trackRoomfound('products_approved', {
+        roomType: room.roomType || 'living_room',
+        styles: room.styles,
+        selectedProducts: data.selection.products.map((product: ProposedProduct) => ({
+          productId: product.selected.productId,
+          category: product.slot,
+        })),
+        totalMinor: data.selection.totalMinor,
+      });
       if (data.warning) setAcknowledged(false);
     } catch (err) { setError(err instanceof Error ? err.message : 'Please try again.'); }
     finally { setLoading(false); setBusy(false); }
