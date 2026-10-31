@@ -1,8 +1,10 @@
 # Cleared catalogue pilot — Stage 4
 
-Stage 2 (11 October 2026) cleared **zero products**. The application deliberately
-ships with an empty `CLEARED_CATALOGUE` register. Research candidates, active
-retailers and curated database records do not establish permission.
+Stage 2 (11 October 2026) cleared **zero products**. On 31 October 2026, a
+four-item Aosom living-room pilot was reviewed and added to `CLEARED_CATALOGUE`.
+The live picker is limited to those exact product, variant, offer and image IDs.
+Research candidates, active retailers and curated database records do not by
+themselves establish display or AI-use permission.
 
 ## Enabling an approved pilot collection
 
@@ -21,9 +23,10 @@ retailers and curated database records do not establish permission.
    unit or retailer order. Conditional/postcode-dependent fees stay unknown until
    the conditions can be established. Use delivery details for lead times, access,
    assembly and postcode limitations.
-5. Check the Vercel database connection against the intended catalogue. The prior
-   connection error remains unverified: an empty register avoids a database query,
-   which is a clearance gate, not a database repair.
+5. Check the Vercel database connection against the intended catalogue. The
+   repository queries only product, variant and offer IDs from the clearance
+   register; an empty register avoids the query, but does not repair a database
+   connection.
 6. Run the selection tests, then verify real photographs, variant destinations,
    mobile layout, current prices, approved swaps and a saved customer collection
    against the imported data. Do not claim the real-product pilot is complete until

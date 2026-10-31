@@ -3,7 +3,7 @@ import type { ProductSelection } from "@/lib/catalog/selection";
 
 import type { Placement } from "@/lib/render/pilot";
 
-export const RENDER_PROMPT_VERSION = "living-room-pilot-v2";
+export const RENDER_PROMPT_VERSION = "living-room-illustrative-v3";
 
 export type RenderProductReference = {
   quantity?: number;
@@ -36,12 +36,12 @@ export function buildRoomRenderPrompt(
       .join(" × ");
 
     return [
-      `Reference image ${index + 2}: ${product.categoryName} — ${product.brandName ? `${product.brandName} ` : ""}${product.name}${product.variantName ? ` / ${product.variantName}` : ""}.`,
-      `Intended placement: ${placements.find(item => item.variantId === product.variantId)?.instruction || "Not supplied — do not infer an approved position"}. Quantity: ${product.quantity ?? 1}. Use this exact real product design as faithfully as possible. Dimensions W × D × H: ${dimensions}.`,
+      `Style cue: ${product.categoryName} — ${product.brandName ? `${product.brandName} ` : ""}${product.name}${product.variantName ? ` / ${product.variantName}` : ""}.`,
+      `Intended placement: ${placements.find(item => item.variantId === product.variantId)?.instruction || "Not supplied — do not infer an approved position"}. Quantity: ${product.quantity ?? 1}. Use this only as a broad visual cue; the generated room is illustrative, not an exact product match. Dimensions W × D × H: ${dimensions}.`,
     ].join(" ");
   });
 
-  return `Edit reference image 1, which is the customer's real living room, into a photorealistic finished interior design.
+  return `Edit reference image 1, which is the customer's real living room, into a photorealistic illustrative interior design concept.
 
 NON-NEGOTIABLE ROOM RULES
 - Preserve the exact camera viewpoint, perspective, room geometry, ceiling height, windows, doors, openings, fireplace/chimney structure, radiators and fixed architectural features visible in reference image 1.
@@ -66,20 +66,20 @@ Room measurements: width ${intake.measurements.width || "unknown"} cm; length ${
 Additional room restrictions: ${intake.measurements.notes || "none supplied"}.
 Product prices and budgets are not visual content. Never put prices, product information or shopping labels inside the image.
 
-APPROVED REAL PRODUCT SET
-The product reference images start at reference image 2. Use the selected products as the design anchors rather than inventing substitutes.
-${productLines.join("\n")}
+ILLUSTRATIVE FURNITURE CUES
+${productLines.length ? "The selected products, if any, are broad style cues only. Their exact appearance is not promised; do not depict or label the generated image as an exact product match." : "No retailer products are selected. Furnish the room according to the approved brief using plausible illustrative furniture."}
+${productLines.join("\n") || "No exact retailer-product likeness is requested."}
 
 COMPOSITION
-- Place the approved products naturally and at believable scale.
-- Preserve retained furniture and integrate it with the selected new products.
+- Place illustrative furniture naturally and at believable scale.
+- Preserve retained furniture and integrate it with the concept.
 - Follow the approved palette, materials, style and practical requirements.
-- Do not silently replace an approved real product with a different-looking product.
+- Do not imply that furniture in the render is an exact retailer item.
 - If a selected product cannot be placed plausibly, prioritise room geometry and realism rather than distorting the room or product.
 - Lighting should look natural and photographic, with coherent shadows and reflections.
 - The final image should feel premium and editorial but still recognisably be the customer's original room.
 
 ${correction ? `CONTROLLED CORRECTION
-The final reference image (${products.length + 2}) is the previous failed result, not an architectural reference. Reference image 1 remains the source of truth for the room. Correct only these identified issues: ${correction}
+Reference image 2 is the previous failed result, not an architectural reference. Reference image 1 remains the source of truth for the room. Correct only these identified issues: ${correction}
 Preserve successful areas. Do not inherit distorted architecture or altered products from the failed result.` : 'This is the initial living-room pilot attempt.'} Accuracy to the room and selected products is more important than novelty.`;
 }

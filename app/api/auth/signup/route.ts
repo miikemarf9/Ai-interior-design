@@ -25,11 +25,13 @@ export async function POST(request: Request) {
     displayName?: string;
     ownerKey?: string;
     inviteCode?: string;
+    marketingEmails?: boolean;
   };
 
   const email = normalizeEmail(body.email || "");
   const password = body.password || "";
   const displayName = (body.displayName || "").trim().slice(0, 80) || null;
+  const marketingEmails = body.marketingEmails === true;
 
   const rate = await checkAuthRateLimit({ request, action: "signup", identity: email, limit: 5 });
   if (!rate.allowed) {
@@ -64,12 +66,12 @@ export async function POST(request: Request) {
 
   const rows = await sql.query(
     `insert into public.customer_accounts (
-      email,password_hash,display_name
+      email,password_hash,display_name,marketing_email_consent_at
     )
-    values ($1,$2,$3)
-    returning id::text as id,email,display_name`,
-    [email, hashPassword(password), displayName],
-  ) as Array<{ id: string; email: string; display_name: string | null }>;
+    values ($1,$2,$3,case when $4::boolean then now() else null end)
+    returning id::text as id,email,display_name,marketing_email_consent_at::text as marketing_email_consent_at`,
+    [email, hashPassword(password), displayName, marketingEmails],
+  ) as Array<{ id: string; email: string; display_name: string | null; marketing_email_consent_at: string | null }>;
 
   const account = rows[0];
   const homeId = await ensurePrimaryHome(account.id);
@@ -86,6 +88,8 @@ export async function POST(request: Request) {
     email,
     displayName,
     primaryHomeId: homeId,
+    marketingEmails: Boolean(account.marketing_email_consent_at),
+    marketingEmailConsentAt: account.marketing_email_consent_at,
   });
 
   const claimedRoomIds = await claimAnonymousRooms(account.id, body.ownerKey || null);

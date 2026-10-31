@@ -73,9 +73,9 @@ New verified accounts receive **3 free design credits**.
 
 See `CREDIT_POLICY.md`.
 
-## Working name
+## Product name
 
-`Roomfound` is still a working product name and is isolated in `lib/site.ts`.
+The customer-facing name is Transform My Room. Existing `roomfound-*` storage and analytics identifiers are internal compatibility keys and are retained.
 
 ## Current stage
 

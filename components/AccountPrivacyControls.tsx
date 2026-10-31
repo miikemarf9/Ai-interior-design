@@ -66,8 +66,8 @@ export function AccountPrivacyControls({
       <div className="accountPrivacyControls">
         <label className="privacyToggle">
           <span>
-            <strong>Design follow-up emails</strong>
-            <small>Email me about unfinished Transform My Room designs and relevant Transform My Room product/design updates.</small>
+            <strong>Marketing emails</strong>
+            <small>Email me occasional Transform My Room news, design tips and selected furniture offers. You can unsubscribe at any time.</small>
           </span>
           <input
             type="checkbox"

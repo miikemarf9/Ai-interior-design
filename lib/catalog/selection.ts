@@ -84,6 +84,7 @@ const SLOT_DEFINITIONS: SlotDefinition[] = [
   { category: "sofas", label: "Sofa", weight: 0.38, keywords: ["sofa", "settee", "couch"] },
   { category: "armchairs", label: "Armchair", weight: 0.16, keywords: ["armchair", "chair"], minBudget: 1200 },
   { category: "coffee-tables", label: "Coffee table", weight: 0.09, keywords: ["coffee table"] },
+  { category: "tv-units", label: "TV unit", weight: 0.1, keywords: ["tv unit", "media unit", "media cabinet", "tv stand"] },
   { category: "side-tables", label: "Side table", weight: 0.055, keywords: ["side table", "end table"], minBudget: 1000 },
   { category: "rugs", label: "Rug", weight: 0.11, keywords: ["rug"] },
   { category: "floor-lamps", label: "Floor lamp", weight: 0.055, keywords: ["floor lamp", "lamp"], minBudget: 900 },
@@ -92,6 +93,12 @@ const SLOT_DEFINITIONS: SlotDefinition[] = [
 ];
 
 const STYLE_ALIASES: Record<string, string> = {
+  "modern organic": "warm-minimal",
+  "modern country": "modern-british",
+  japandi: "scandi",
+  "mid-century modern": "mid-century",
+  "bold & colourful": "colourful",
+  "contemporary classic": "classic",
   "warm minimal": "warm-minimal",
   "modern british": "modern-british",
   "mid-century": "mid-century",
@@ -310,12 +317,54 @@ function chooseAlternative(
   return best ? { kind, candidate: best.candidate, score: best.score, reasons: best.reasons } : null;
 }
 
+function allocateSlotBudgets(
+  slots: Array<SlotDefinition & { budgetMinor: number }>,
+  candidates: SelectionCandidate[],
+  totalBudgetMinor: number,
+) {
+  const stocked = slots.map(slot => {
+    const prices = candidates
+      .filter(candidate => eligibleForSlot(candidate, slot.category))
+      .map(candidate => candidate.offer.priceMinor)
+      .filter(price => Number.isSafeInteger(price) && price > 0);
+    return { slot, minimumPrice: prices.length ? Math.min(...prices) : null };
+  }).filter((entry): entry is { slot: SlotDefinition & { budgetMinor: number }; minimumPrice: number } => entry.minimumPrice !== null);
+
+  if (!stocked.length) return slots.map(slot => ({ ...slot, budgetMinor: 0 }));
+
+  const minimumTotal = stocked.reduce((sum, entry) => sum + entry.minimumPrice, 0);
+  const availableBudget = Math.max(0, Math.floor(totalBudgetMinor));
+  const distribute = minimumTotal <= availableBudget;
+  const baseTotal = distribute ? minimumTotal : 0;
+  const remaining = availableBudget - baseTotal;
+  const totalWeight = stocked.reduce((sum, entry) => sum + entry.slot.weight, 0) || 1;
+  const budgets = new Map<string, number>();
+  let allocated = 0;
+
+  for (const entry of stocked) {
+    const share = Math.floor(remaining * entry.slot.weight / totalWeight);
+    const budget = (distribute ? entry.minimumPrice : 0) + share;
+    budgets.set(entry.slot.category, budget);
+    allocated += share;
+  }
+
+  let leftover = remaining - allocated;
+  for (const entry of stocked) {
+    if (leftover <= 0) break;
+    budgets.set(entry.slot.category, (budgets.get(entry.slot.category) || 0) + 1);
+    leftover -= 1;
+  }
+
+  return slots.map(slot => ({ ...slot, budgetMinor: budgets.get(slot.category) || 0 }));
+}
+
 export function buildProductSelection(
   intake: IntakeForBrief,
   brief: DesignBrief,
   candidates: SelectionCandidate[],
 ): ProductSelection {
-  const slots = intake.roomType === 'bedroom' ? [] : buildSlots(intake, brief);
+  const eligibleSlots = intake.roomType === 'bedroom' ? [] : buildSlots(intake, brief);
+  const slots = allocateSlotBudgets(eligibleSlots, candidates, intake.budget * 100);
   const usedProducts = new Set<string>();
   const products: ProposedProduct[] = [];
 
@@ -394,22 +443,29 @@ export function selectionTotals(products: ProposedProduct[], budgetMinor: number
 }
 
 export type SelectionChoice = { slot: string; variantId: string; quantity: number };
-export function applySelectionChoices(selection: ProductSelection, choices: SelectionChoice[]) {
+export function applySelectionChoices(
+  selection: ProductSelection,
+  choices: SelectionChoice[],
+  candidatePool: SelectionCandidate[] = [],
+) {
   if (choices.length > 15 || new Set(choices.map(item => item.slot)).size !== choices.length) throw new Error('Invalid product choices.');
   for (const choice of choices) {
     const product = selection.products.find(item => item.slot === choice.slot);
     if (!product || !Number.isInteger(choice.quantity) || choice.quantity < 1 || choice.quantity > 10) throw new Error('Your saved collection has changed. Please review a fresh recommendation.');
     if (choice.variantId !== product.selected.variantId) {
       const alternative = product.alternatives.find(item => item.candidate.variantId === choice.variantId);
-      if (!alternative) throw new Error('A selected variant is no longer available for this brief. Please refresh the collection.');
-      const previous = { kind: alternative.kind, candidate: product.selected, score: product.score, reasons: product.reasons };
-      product.selected = alternative.candidate;
-      product.score = alternative.score;
-      product.reasons = alternative.reasons;
+      const picked = alternative?.candidate || candidatePool.find(candidate => candidate.variantId === choice.variantId);
+      if (!picked || !eligibleForSlot(picked, product.slot)) throw new Error('That product is not currently cleared for this item. Please refresh the catalogue.');
+      const previous = { kind: alternative?.kind || 'similar', candidate: product.selected, score: product.score, reasons: product.reasons };
+      product.selected = picked;
+      product.score = alternative?.score ?? product.score;
+      product.reasons = alternative?.reasons ?? ['Customer-selected from the cleared inventory.'];
       product.alternatives = [previous, ...product.alternatives.filter(item => item.candidate.variantId !== choice.variantId)].slice(0, 3);
     }
     product.quantity = choice.quantity;
   }
+  const productIds = selection.products.map(item => item.selected.productId);
+  if (new Set(productIds).size !== productIds.length) throw new Error('Choose a different item in each furniture category.');
   return { ...selection, ...selectionTotals(selection.products, selection.budgetMinor) };
 }
 
