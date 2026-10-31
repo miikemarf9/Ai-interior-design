@@ -84,6 +84,7 @@ const SLOT_DEFINITIONS: SlotDefinition[] = [
   { category: "sofas", label: "Sofa", weight: 0.38, keywords: ["sofa", "settee", "couch"] },
   { category: "armchairs", label: "Armchair", weight: 0.16, keywords: ["armchair", "chair"], minBudget: 1200 },
   { category: "coffee-tables", label: "Coffee table", weight: 0.09, keywords: ["coffee table"] },
+  { category: "tv-units", label: "TV unit", weight: 0.1, keywords: ["tv unit", "media unit", "media cabinet", "tv stand"] },
   { category: "side-tables", label: "Side table", weight: 0.055, keywords: ["side table", "end table"], minBudget: 1000 },
   { category: "rugs", label: "Rug", weight: 0.11, keywords: ["rug"] },
   { category: "floor-lamps", label: "Floor lamp", weight: 0.055, keywords: ["floor lamp", "lamp"], minBudget: 900 },
@@ -316,12 +317,54 @@ function chooseAlternative(
   return best ? { kind, candidate: best.candidate, score: best.score, reasons: best.reasons } : null;
 }
 
+function allocateSlotBudgets(
+  slots: Array<SlotDefinition & { budgetMinor: number }>,
+  candidates: SelectionCandidate[],
+  totalBudgetMinor: number,
+) {
+  const stocked = slots.map(slot => {
+    const prices = candidates
+      .filter(candidate => eligibleForSlot(candidate, slot.category))
+      .map(candidate => candidate.offer.priceMinor)
+      .filter(price => Number.isSafeInteger(price) && price > 0);
+    return { slot, minimumPrice: prices.length ? Math.min(...prices) : null };
+  }).filter((entry): entry is { slot: SlotDefinition & { budgetMinor: number }; minimumPrice: number } => entry.minimumPrice !== null);
+
+  if (!stocked.length) return slots.map(slot => ({ ...slot, budgetMinor: 0 }));
+
+  const minimumTotal = stocked.reduce((sum, entry) => sum + entry.minimumPrice, 0);
+  const availableBudget = Math.max(0, Math.floor(totalBudgetMinor));
+  const distribute = minimumTotal <= availableBudget;
+  const baseTotal = distribute ? minimumTotal : 0;
+  const remaining = availableBudget - baseTotal;
+  const totalWeight = stocked.reduce((sum, entry) => sum + entry.slot.weight, 0) || 1;
+  const budgets = new Map<string, number>();
+  let allocated = 0;
+
+  for (const entry of stocked) {
+    const share = Math.floor(remaining * entry.slot.weight / totalWeight);
+    const budget = (distribute ? entry.minimumPrice : 0) + share;
+    budgets.set(entry.slot.category, budget);
+    allocated += share;
+  }
+
+  let leftover = remaining - allocated;
+  for (const entry of stocked) {
+    if (leftover <= 0) break;
+    budgets.set(entry.slot.category, (budgets.get(entry.slot.category) || 0) + 1);
+    leftover -= 1;
+  }
+
+  return slots.map(slot => ({ ...slot, budgetMinor: budgets.get(slot.category) || 0 }));
+}
+
 export function buildProductSelection(
   intake: IntakeForBrief,
   brief: DesignBrief,
   candidates: SelectionCandidate[],
 ): ProductSelection {
-  const slots = intake.roomType === 'bedroom' ? [] : buildSlots(intake, brief);
+  const eligibleSlots = intake.roomType === 'bedroom' ? [] : buildSlots(intake, brief);
+  const slots = allocateSlotBudgets(eligibleSlots, candidates, intake.budget * 100);
   const usedProducts = new Set<string>();
   const products: ProposedProduct[] = [];
 

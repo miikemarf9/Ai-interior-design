@@ -12,6 +12,7 @@ const categories=new Set([
   "floor-lamps",
   "table-lamps",
   "storage-cabinets",
+  "tv-units",
 ]);
 const styleSlugs:Record<string,string>={
   "Modern Organic":"warm-minimal",
