@@ -12,7 +12,7 @@ type IntakeState = IntakeForBrief;
 const initialState: IntakeState = {
   roomType: 'living_room', projectGoal: 'refresh', retainedFurniture: [],
   keep: [],
-  change: [],
+  change: ['Sofa', 'Armchairs', 'Coffee table', 'TV unit', 'Rug', 'Lighting'],
   styles: [],
   colours: [],
   materials: [],
@@ -123,6 +123,7 @@ export function DesignIntake() {
   const roomName = state.roomType === 'bedroom' ? 'bedroom' : 'living room';
   const keepItems = state.roomType === 'bedroom' ? ['Bed', 'Bedside tables', 'Wardrobe', 'Chest of drawers', 'Flooring', 'Curtains', 'Lighting', 'Artwork'] : livingKeepItems;
   const changeItems = state.roomType === 'bedroom' ? ['Bed', 'Bedside tables', 'Wardrobe', 'Chest of drawers', 'Rug', 'Lighting', 'Curtains', 'Artwork', 'Accessories'] : livingChangeItems;
+  const recommendedItems = state.roomType === 'bedroom' ? ['Bed', 'Bedside tables', 'Wardrobe', 'Lighting', 'Rug'] : ['Sofa', 'Armchairs', 'Coffee table', 'TV unit', 'Rug', 'Lighting'];
   const uses = state.roomType === 'bedroom' ? [
     { name: 'Sleeping', detail: 'A calm, comfortable place to rest' },
     { name: 'Storage', detail: 'Clothes, bedding and everyday belongings' },
@@ -205,17 +206,17 @@ export function DesignIntake() {
     if (photoUrl.startsWith('blob:')) URL.revokeObjectURL(photoUrl);
   }, [photoUrl]);
 
-  const progress = complete ? 100 : ((step + 1) / 10) * 100;
+  const progress = complete ? 100 : ((step + 1) / 11) * 100;
 
   const stepLabel = useMemo(() => {
-    const labels = ['Your room', 'What stays', 'What changes', 'Style', 'Colour + material', 'Dislikes', 'How you live', 'Budget', 'Measurements', 'Creative freedom'];
+    const labels = ['Your room', 'Choose items', 'Add your photo', 'What stays', 'Style', 'Colour + material', 'Dislikes', 'How you live', 'Budget', 'Measurements', 'Creative freedom'];
     return labels[step];
   }, [step]);
 
   const canContinue = useMemo(() => {
-    if (step === 0) return Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto);
-    if (step === 8) return validMeasurements;
-    if (step === 3) return state.styles.length > 0;
+    if (step === 2) return Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto);
+    if (step === 9) return validMeasurements;
+    if (step === 4) return state.styles.length > 0;
     return true;
   }, [step, photoUrl, designId, roomAssetId, uploadingPhoto, state.styles.length, validMeasurements]);
 
@@ -242,7 +243,7 @@ export function DesignIntake() {
         });
         if (!response.ok) throw new Error('Room type could not be saved. Please try again.');
       }
-      setState(current => ({ ...current, roomType, keep: [], change: [], uses: [], retainedFurniture: [] }));
+      setState(current => ({ ...current, roomType, keep: [], change: roomType === 'bedroom' ? ['Bed', 'Bedside tables', 'Wardrobe', 'Lighting', 'Rug'] : ['Sofa', 'Armchairs', 'Coffee table', 'TV unit', 'Rug', 'Lighting'], uses: [], retainedFurniture: [] }));
     } catch (error) {
       setPhotoError(error instanceof Error ? error.message : 'Room type could not be saved.');
     } finally { setUploadingPhoto(false); }
@@ -338,26 +339,26 @@ export function DesignIntake() {
 
   function next() {
     if (!canContinue) return;
-    if (step === 3) {
+    if (step === 4) {
       trackRoomfound('style_choices_submitted', {
         roomType: state.roomType || 'living_room',
         styles: [...state.styles],
         styleCount: state.styles.length,
       });
     }
-    if (step === 9) {
+    if (step === 10) {
       setComplete(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    setStep((value) => Math.min(9, value + 1));
+    setStep((value) => Math.min(10, value + 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function back() {
     if (complete) {
       setComplete(false);
-      setStep(9);
+      setStep(10);
       return;
     }
     setStep((value) => Math.max(0, value - 1));
@@ -446,7 +447,7 @@ export function DesignIntake() {
         <section className="intakeStep">
           {step === 0 ? (
             <>
-              <StepIntro eyebrow="1 · Your room" title="Show us the room as it is today." copy="One clear photograph is enough to start. We want the real space, not the perfect angle." />
+              <StepIntro eyebrow="1 · Your room" title="Which room are we planning?" copy="Choose the room first. Next, you will pick the items you want us to consider." />
               <div className={ui.setup}>
                 <label className={ui.field}>Room type
                   <select value={state.roomType} disabled={uploadingPhoto} onChange={event => changeRoomType(event.target.value as 'living_room' | 'bedroom')}>
@@ -460,6 +461,32 @@ export function DesignIntake() {
                 </label>
               </div>
               {state.roomType === 'bedroom' && <p className={ui.note}>You can prepare and edit a bedroom brief. Bedroom furniture selection and image generation are not available yet.</p>}
+
+            </>
+          ) : null}
+
+          {step === 1 ? (
+            <>
+              <StepIntro eyebrow="2 · Choose items" title="What would you like us to include?" copy={state.roomType === 'bedroom' ? "Choose the furniture types to plan around. Bedroom product recommendations are being prepared; you can still save your room plan." : "Tick the things you would like us to consider. We have suggested a starting list for a living room; you can change any of it."} />
+              <div className="choiceHint">
+                <span className="microLabel">Suggested for a {roomName}</span>
+                <p>{recommendedItems.join(' · ')}</p>
+              </div>
+              <ChoiceGrid
+                items={changeItems.filter(item => !state.keep.includes(item))}
+                selected={state.change}
+                onChange={(value) => setState((current) => ({ ...current, change: toggle(current.change, value) }))}
+              />
+              <button className="selectAllButton" type="button" onClick={() => setState((current) => ({ ...current, change: recommendedItems.filter(item => !current.keep.includes(item)) }))}>
+                Use suggested items
+              </button>
+              {state.roomType === 'bedroom' ? <p className={ui.note}>Bedroom designs can be saved, but bedroom product selection and AI image generation are not available yet.</p> : <p className="choiceHint">We will recommend products only where the live, reviewed catalogue has a suitable match.</p>}
+            </>
+          ) : null}
+
+          {step === 2 ? (
+            <>
+              <StepIntro eyebrow="3 · Add your photo" title="Now show us the room." copy="A clear photo helps us work with the real layout. On a phone, the upload button can open your camera." />
               <div className="photoStepGrid">
                 <button className={`roomUploader ${photoUrl ? 'hasPhoto' : ''}`} type="button" onClick={() => fileInput.current?.click()}>
                   {photoUrl ? (
@@ -475,7 +502,7 @@ export function DesignIntake() {
                     </span>
                   )}
                 </button>
-                <input ref={fileInput} className="visuallyHidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhoto} />
+                <input ref={fileInput} className="visuallyHidden" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={handlePhoto} />
                 {uploadingPhoto ? <p className="photoUploadState">Securing your room photograph…</p> : null}
                 {photoError ? <p className="photoUploadError">{photoError}</p> : null}
                 <aside className="photoGuidance">
@@ -484,33 +511,24 @@ export function DesignIntake() {
                   <div><strong>02</strong><p>Use daylight if you can. Avoid strong filters or portrait mode.</p></div>
                   <div><strong>03</strong><p>Leave the room as it really is. Existing furniture helps us understand it.</p></div>
                   {state.roomType !== 'bedroom' && <button className="textArrowLink buttonAsText" type="button" disabled={uploadingPhoto} onClick={useExampleRoom}>Try with an example room <span>→</span></button>}
+                <div><strong>04</strong><p>Your photo is saved privately in your room gallery. Sharing a finished design publicly is a separate choice.</p></div>
                 </aside>
               </div>
             </>
           ) : null}
 
-          {step === 1 ? (
+          {step === 3 ? (
             <>
-              <StepIntro eyebrow="2 · What stays" title="What already belongs in the room?" copy="Select the things you want the design to respect and work around." />
+              <StepIntro eyebrow="4 · What stays" title="What already belongs in the room?" copy="Select the things you want the design to respect and work around." />
               <ChoiceGrid items={keepItems} selected={state.keep} onChange={(value) => setState((current) => ({ ...current, keep: toggle(current.keep, value), change: current.change.filter(item => item !== value) }))} />
               {photoUrl && <RetainedFurniture photoUrl={photoUrl} items={state.retainedFurniture || []} onChange={items => setState(current => ({ ...current, retainedFurniture: items }))} />}
               <p className="choiceHint">Not sure? Leave it unselected. You can refine this in the written brief.</p>
             </>
           ) : null}
 
-          {step === 2 ? (
+          {step === 4 ? (
             <>
-              <StepIntro eyebrow="3 · What can change" title="Where do we have permission to redesign?" copy="Choose what we can replace or add. Anything marked to keep is protected, even within these categories." />
-              <ChoiceGrid items={changeItems.filter(item => !state.keep.includes(item))} selected={state.change} onChange={(value) => setState((current) => ({ ...current, change: toggle(current.change, value) }))} />
-              <button className="selectAllButton" type="button" onClick={() => setState((current) => ({ ...current, change: current.change.length ? [] : changeItems.filter(item => !current.keep.includes(item)) }))}>
-                {state.change.length ? 'Clear selections' : 'Select everything I am not keeping'}
-              </button>
-            </>
-          ) : null}
-
-          {step === 3 ? (
-            <>
-              <StepIntro eyebrow="4 · Style discovery" title="Which style feels like home?" copy="Choose the look you want to start with. You can select more than one." />
+              <StepIntro eyebrow="5 · Style discovery" title="Which style feels like home?" copy="Choose the look you want to start with. You can select more than one." />
               <div className="styleDiscoveryGrid">
                 {styles.map((style) => {
                   const active = state.styles.includes(style.name);
@@ -533,9 +551,9 @@ export function DesignIntake() {
             </>
           ) : null}
 
-          {step === 4 ? (
+          {step === 5 ? (
             <>
-              <StepIntro eyebrow="5 · Colour + material" title="What do you want the room to feel made from?" copy="Pick any colours and materials you are naturally drawn to. Leaving this open is completely fine." />
+              <StepIntro eyebrow="6 · Colour + material" title="What do you want the room to feel made from?" copy="Pick any colours and materials you are naturally drawn to. Leaving this open is completely fine." />
               <div className="preferenceBlock">
                 <span className="microLabel">Colours</span>
                 <div className="colourChoices">
@@ -567,9 +585,9 @@ export function DesignIntake() {
             </>
           ) : null}
 
-          {step === 5 ? (
+          {step === 6 ? (
             <>
-              <StepIntro eyebrow="6 · Dislikes" title="Tell us what should never make the shortlist." copy="Avoiding the wrong things is often as useful as knowing what you like." />
+              <StepIntro eyebrow="7 · Dislikes" title="Tell us what should never make the shortlist." copy="Avoiding the wrong things is often as useful as knowing what you like." />
               <div className="dislikePrompt">
                 <label htmlFor="dislikes">I really do not want…</label>
                 <textarea
@@ -587,9 +605,9 @@ export function DesignIntake() {
             </>
           ) : null}
 
-          {step === 6 ? (
+          {step === 7 ? (
             <>
-              <StepIntro eyebrow="7 · How you live" title="A beautiful room still has to work on a Tuesday night." copy="Select anything that materially changes how the room needs to perform." />
+              <StepIntro eyebrow="8 · How you live" title="A beautiful room still has to work on a Tuesday night." copy="Select anything that materially changes how the room needs to perform." />
               <div className="lifestyleGrid">
                 {uses.map((item) => {
                   const active = state.uses.includes(item.name);
@@ -605,9 +623,9 @@ export function DesignIntake() {
             </>
           ) : null}
 
-          {step === 7 ? (
+          {step === 8 ? (
             <>
-              <StepIntro eyebrow="8 · Total room budget" title="What is your furniture budget?" copy="Your allowance for new furniture and accessories. Transform My Room image-generation charges are separate; delivery costs will be confirmed with the products." />
+              <StepIntro eyebrow="9 · Total room budget" title="What is your furniture budget?" copy="Your allowance for new furniture and accessories. Transform My Room image-generation charges are separate; delivery costs will be confirmed with the products." />
               <div className="intakeBudget">
                 <strong>{formatBudget(state.budget)}</strong>
                 <input
@@ -630,9 +648,9 @@ export function DesignIntake() {
             </>
           ) : null}
 
-          {step === 8 ? (
+          {step === 9 ? (
             <>
-              <StepIntro eyebrow="9 · Measurements" title="Measurements help us design with more confidence." copy="They are optional for now. Approximate measurements are still useful, and you can add better ones before fit checking." />
+              <StepIntro eyebrow="10 · Measurements" title="Measurements help us design with more confidence." copy="They are optional for now. Approximate measurements are still useful, and you can add better ones before fit checking." />
               <label className={ui.field}>How were these measurements taken?
                 <select value={state.measurements.accuracy || 'unknown'} onChange={event => setState(current => ({ ...current, measurements: { ...current.measurements, accuracy: event.target.value as 'measured' | 'approximate' | 'unknown' } }))}>
                   <option value="unknown">Not measured / not sure yet</option><option value="approximate">My approximate estimates</option><option value="measured">Measured by me</option>
@@ -658,9 +676,9 @@ export function DesignIntake() {
             </>
           ) : null}
 
-          {step === 9 ? (
+          {step === 10 ? (
             <>
-              <StepIntro eyebrow="10 · Creative freedom" title="How much should we challenge your first instinct?" copy="This controls how adventurous the design direction can be while still respecting everything you have told us." />
+              <StepIntro eyebrow="11 · Creative freedom" title="How much should we challenge your first instinct?" copy="This controls how adventurous the design direction can be while still respecting everything you have told us." />
               <div className="freedomGrid">
                 {freedomOptions.map((option) => {
                   const active = state.freedom === option.name;
@@ -682,9 +700,9 @@ export function DesignIntake() {
 
           <div className="intakeNav">
             <button className="textButton" type="button" onClick={back} disabled={step === 0}>← Back</button>
-            <span>{step + 1} / 10</span>
+            <span>{step + 1} / 11</span>
             <button className="button buttonPrimary" type="button" onClick={next} disabled={!canContinue}>
-              {step === 9 ? 'Review my room brief' : 'Continue'}
+              {step === 10 ? 'Review my room brief' : 'Continue'}
             </button>
           </div>
         </section>
