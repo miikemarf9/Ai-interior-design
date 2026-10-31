@@ -129,7 +129,7 @@ export function DesignIntake() {
   const availableItemChoices = catalogueItems.filter(item => item.available);
   const recommendedItems = catalogueItems.filter(item => item.recommended).map(item => item.label);
   const availableRecommendedItems = catalogueItems.filter(item => item.recommended && item.available).map(item => item.label);
-  const comingSoonItems = catalogueItems.filter(item => item.recommended && !item.available).map(item => item.label);
+  const comingSoonItems = catalogueItems.filter(item => !item.available).map(item => item.label);
   const uses = state.roomType === 'bedroom' ? [
     { name: 'Sleeping', detail: 'A calm, comfortable place to rest' },
     { name: 'Storage', detail: 'Clothes, bedding and everyday belongings' },
@@ -505,7 +505,7 @@ export function DesignIntake() {
 
           {step === 1 ? (
             <>
-              <StepIntro eyebrow="2 · Choose items" title="What would you like us to include?" copy={state.roomType === 'bedroom' ? "Choose the furniture types to plan around. Bedroom product recommendations are being prepared; you can still save your room plan." : "Tick the things you would like us to consider. We have suggested a starting list for a living room; you can change any of it."} />
+              <StepIntro eyebrow="2 · Choose items" title="What would you like us to include?" copy={state.roomType === 'bedroom' ? "Choose the furniture types to plan around. Bedroom product recommendations are being prepared; you can still save your room plan." : "Tick the things you would like us to consider. Suggested choices without reviewed products are clearly marked as coming soon."} />
               <div className="choiceHint">
                 <span className="microLabel">Suggested for a {roomName}</span>
                 <p>{recommendedItems.length ? recommendedItems.join(' · ') : 'Checking suggestions…'}</p>
