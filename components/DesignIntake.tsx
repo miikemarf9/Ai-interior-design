@@ -377,11 +377,28 @@ export function DesignIntake() {
 
   function next() {
     if (!canContinue) return;
+    if (step === 1) {
+      const categoryMap: Record<string,string> = {
+        'Sofa':'sofas','Armchairs':'armchairs','Coffee table':'coffee-tables','TV unit':'tv-units',
+        'Side tables':'side-tables','Rug':'rugs','Lighting':'lighting','Storage':'storage-cabinets',
+        'Bed':'beds','Bedside tables':'bedside-tables','Wardrobe':'wardrobes','Chest of drawers':'chest-of-drawers',
+      };
+      trackRoomfound('item_choices_submitted', {
+        roomType: state.roomType || 'living_room',
+        categories: [...state.change].map(item => categoryMap[item]).filter(Boolean),
+        keptCategories: [...state.keep].map(item => categoryMap[item]).filter(Boolean),
+      });
+    }
     if (step === 4) {
+      const styleMap: Record<string,string> = {
+        'Modern Organic':'modern-organic','Modern Country':'modern-country','Japandi':'japandi',
+        'Mid-Century Modern':'mid-century-modern','Bold & Colourful':'bold-colourful',
+        'Contemporary Classic':'contemporary-classic',
+      };
+      const selectedStyles = state.styles.map(style => styleMap[style]).filter(Boolean);
       trackRoomfound('style_choices_submitted', {
         roomType: state.roomType || 'living_room',
-        styles: [...state.styles],
-        styleCount: state.styles.length,
+        styles: selectedStyles,
       });
     }
     if (step === 10) {
