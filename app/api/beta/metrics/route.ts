@@ -26,6 +26,7 @@ export async function GET(request:Request){
     economicsRows,
     commerceRows,
     analyticsRows,
+    styleChoiceRows,
   ]=await Promise.all([
     sql.query(
       `select
@@ -203,6 +204,30 @@ export async function GET(request:Request){
        from public.analytics_events`,
       [],
     ),
+    sql.query(
+      `with submitted as (
+         select coalesce(design_id::text, session_key) as design_key, properties->'styles' as styles
+         from public.analytics_events
+         where event_name='style_choices_submitted'
+       ),
+       expanded as (
+         select design_key, jsonb_array_elements_text(styles) as style
+         from submitted
+         where jsonb_typeof(styles)='array'
+       )
+       select
+         (select count(distinct design_key)::int from submitted) as submissions,
+         coalesce((
+           select jsonb_agg(jsonb_build_object('style', style, 'designs', designs, 'selections', selections)
+                            order by designs desc, style)
+           from (
+             select style, count(distinct design_key)::int as designs, count(*)::int as selections
+             from expanded
+             group by style
+           ) counts
+         ), '[]'::jsonb) as by_style` ,
+      [],
+    ),
   ]);
 
   const fx=Number(process.env.AI_COST_USD_TO_GBP_RATE || "");
@@ -278,6 +303,7 @@ export async function GET(request:Request){
     privacy:privacyRows[0],
     unitEconomics:economicsRows[0],
     commerce,
+    styleChoices:styleChoiceRows[0],
     thresholds:{
       minSelectableProducts,
       requireAffiliate:process.env.BETA_REQUIRE_AFFILIATE!=="false",

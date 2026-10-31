@@ -92,6 +92,12 @@ const SLOT_DEFINITIONS: SlotDefinition[] = [
 ];
 
 const STYLE_ALIASES: Record<string, string> = {
+  "modern organic": "warm-minimal",
+  "modern country": "modern-british",
+  japandi: "scandi",
+  "mid-century modern": "mid-century",
+  "bold & colourful": "colourful",
+  "contemporary classic": "classic",
   "warm minimal": "warm-minimal",
   "modern british": "modern-british",
   "mid-century": "mid-century",
@@ -394,22 +400,29 @@ export function selectionTotals(products: ProposedProduct[], budgetMinor: number
 }
 
 export type SelectionChoice = { slot: string; variantId: string; quantity: number };
-export function applySelectionChoices(selection: ProductSelection, choices: SelectionChoice[]) {
+export function applySelectionChoices(
+  selection: ProductSelection,
+  choices: SelectionChoice[],
+  candidatePool: SelectionCandidate[] = [],
+) {
   if (choices.length > 15 || new Set(choices.map(item => item.slot)).size !== choices.length) throw new Error('Invalid product choices.');
   for (const choice of choices) {
     const product = selection.products.find(item => item.slot === choice.slot);
     if (!product || !Number.isInteger(choice.quantity) || choice.quantity < 1 || choice.quantity > 10) throw new Error('Your saved collection has changed. Please review a fresh recommendation.');
     if (choice.variantId !== product.selected.variantId) {
       const alternative = product.alternatives.find(item => item.candidate.variantId === choice.variantId);
-      if (!alternative) throw new Error('A selected variant is no longer available for this brief. Please refresh the collection.');
-      const previous = { kind: alternative.kind, candidate: product.selected, score: product.score, reasons: product.reasons };
-      product.selected = alternative.candidate;
-      product.score = alternative.score;
-      product.reasons = alternative.reasons;
+      const picked = alternative?.candidate || candidatePool.find(candidate => candidate.variantId === choice.variantId);
+      if (!picked || !eligibleForSlot(picked, product.slot)) throw new Error('That product is not currently cleared for this item. Please refresh the catalogue.');
+      const previous = { kind: alternative?.kind || 'similar', candidate: product.selected, score: product.score, reasons: product.reasons };
+      product.selected = picked;
+      product.score = alternative?.score ?? product.score;
+      product.reasons = alternative?.reasons ?? ['Customer-selected from the cleared inventory.'];
       product.alternatives = [previous, ...product.alternatives.filter(item => item.candidate.variantId !== choice.variantId)].slice(0, 3);
     }
     product.quantity = choice.quantity;
   }
+  const productIds = selection.products.map(item => item.selected.productId);
+  if (new Set(productIds).size !== productIds.length) throw new Error('Choose a different item in each furniture category.');
   return { ...selection, ...selectionTotals(selection.products, selection.budgetMinor) };
 }
 

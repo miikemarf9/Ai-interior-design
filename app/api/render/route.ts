@@ -11,7 +11,6 @@ import {
   refundFailedGeneration,
   spendCreditAndCreateGeneration,
 } from "@/lib/render/credits-server";
-import { currentClearances } from '@/lib/catalog/clearance';
 import { getLiveSelectionCandidates } from '@/lib/catalog/repository';
 import { applySelectionChoices, approvalSnapshot, buildProductSelection } from '@/lib/catalog/selection';
 import { MAX_CORRECTIONS, validPlacements, type Placement } from '@/lib/render/pilot';
@@ -160,7 +159,6 @@ export async function POST(request: Request) {
   let body: RenderRequest;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid render request.' }, { status: 400 }); }
   if (!body || typeof body !== 'object') return NextResponse.json({ error: 'Invalid render request.' }, { status: 400 });
-  if (!currentClearances().length) return NextResponse.json({ error: 'The living-room pilot needs a cleared furniture collection. No image was generated or credit used.', code: 'PILOT_CATALOGUE_NOT_READY' }, { status: 409 });
   if (body.intake?.roomType === 'bedroom') return NextResponse.json({ error: 'Bedroom image generation is not available yet. Your brief remains saved.' }, { status: 409 });
   const account = await getCurrentAccount();
   const ownerKey = account?.ownerKey || body.ownerKey || "";
@@ -178,8 +176,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "The approved room design is incomplete." }, { status: 400 });
   }
 
-  if (!Array.isArray(body.selection.products) || !body.selection.products.length) {
-    return NextResponse.json({ error: "Approve at least one real product before rendering." }, { status: 409 });
+  if (!Array.isArray(body.selection.products)) {
+    return NextResponse.json({ error: "The room design choices are incomplete." }, { status: 400 });
   }
 
   if (body.selection.products.length > 6) {
@@ -235,12 +233,6 @@ export async function POST(request: Request) {
       }
       previousResultUrl = `data:${prior.mime_type};base64,${prior.base64}`;
     }
-    if (!products.length) {
-      return NextResponse.json({
-        error: "The selected products are not currently render-ready.",
-      }, { status: 409 });
-    }
-
     const persisted = await persistApprovedState(
       designId,
       ownerKey,
@@ -318,7 +310,6 @@ export async function POST(request: Request) {
 
     const images = [
       { image_url: roomAsset.imageUrl },
-      ...products.map((product) => ({ image_url: product.imageUrl })),
       ...(previousResultUrl ? [{ image_url: previousResultUrl }] : []),
     ];
 
