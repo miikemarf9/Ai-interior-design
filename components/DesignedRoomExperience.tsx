@@ -12,6 +12,7 @@ import { VerifiedRoomPanel } from "@/components/VerifiedRoomPanel";
 import type { RoomVerification } from "@/lib/verification/types";
 import { trackRoomfound } from "@/components/PrivacyAnalytics";
 import { GrowthShareCards } from "@/components/GrowthShareCards";
+import { CommunityPublishPanel } from "@/components/CommunityPublishPanel";
 import { BetaFeedback } from "@/components/BetaFeedback";
 
 type ExperiencePayload = DesignedRoomPayload & {
@@ -512,6 +513,7 @@ export function DesignedRoomExperience({
       <VerifiedRoomPanel verification={verification} loading={verificationLoading} />
 
       {!shared ? <GrowthShareCards designId={data.designId} /> : null}
+      {!shared && verification ? <CommunityPublishPanel designId={data.designId} generationId={data.generationId} initialTitle={data.roomName || data.brief.title} /> : null}
 
       {!shared ? <BetaFeedback designId={data.designId} /> : null}
 
