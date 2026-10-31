@@ -309,7 +309,7 @@ export function AccountExperience() {
                     {process.env.NEXT_PUBLIC_BETA_CONTROLLED_ACCESS === "true" ? (
                       <label>
                         <span>Beta access code</span>
-                        <input name="inviteCode" autoComplete="off" required />
+                        <input name="inviteCode" autoComplete="off" />
                       </label>
                     ) : null}
                   </>
