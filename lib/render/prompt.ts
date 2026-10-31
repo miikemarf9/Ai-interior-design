@@ -3,7 +3,7 @@ import type { ProductSelection } from "@/lib/catalog/selection";
 
 import type { Placement } from "@/lib/render/pilot";
 
-export const RENDER_PROMPT_VERSION = "living-room-illustrative-v3";
+export const RENDER_PROMPT_VERSION = "room-illustrative-v1";
 
 export type RenderProductReference = {
   quantity?: number;
@@ -28,7 +28,9 @@ export function buildRoomRenderPrompt(
   placements: Placement[],
   correction?: string,
 ) {
-  if (intake.roomType && intake.roomType !== 'living_room') throw new Error('Only the living-room pilot is enabled.');
+  const roomLabel = intake.roomType === 'bedroom' ? 'bedroom' : 'living room';
+  const defaultUses = intake.roomType === 'bedroom' ? 'sleeping, dressing and quiet everyday use' : 'general living room use';
+  const roomGuidance = intake.roomType === 'bedroom' ? 'Keep the bed as the visual anchor, preserve clear access around it, and use calm layered textiles and practical bedside or storage furniture where selected.' : 'Keep seating and circulation believable, with a practical conversation or viewing arrangement.';
   const { budget: _budget, ...visualBrief } = brief;
   const productLines = products.map((product, index) => {
     const dimensions = [product.widthMm, product.depthMm, product.heightMm]
@@ -41,7 +43,7 @@ export function buildRoomRenderPrompt(
     ].join(" ");
   });
 
-  return `Edit reference image 1, which is the customer's real living room, into a photorealistic illustrative interior design concept.
+  return `Edit reference image 1, which is the customer's real living room, into a photorealistic illustrative ${roomLabel} design concept.
 
 NON-NEGOTIABLE ROOM RULES
 - Preserve the exact camera viewpoint, perspective, room geometry, ceiling height, windows, doors, openings, fireplace/chimney structure, radiators and fixed architectural features visible in reference image 1.
@@ -60,7 +62,7 @@ Keep / retained furniture: ${intake.keep.length ? intake.keep.join(", ") : "none
 Retained photo markers (normalised x/y, not measurements): ${JSON.stringify(intake.retainedFurniture || [])}. Preserve these items.
 Measurement source: ${intake.measurements.accuracy || "unknown"}; never treat estimates as verified fit.
 Allowed to change: ${intake.change.length ? intake.change.join(", ") : "open to the approved brief"}.
-Room uses: ${intake.uses.length ? intake.uses.join(", ") : "general living room use"}.
+Room uses: ${intake.uses.length ? intake.uses.join(", ") : defaultUses}.\nRoom-specific layout guidance: ${roomGuidance}
 Dislikes / exclusions: ${intake.dislikes || "none supplied"}.
 Room measurements: width ${intake.measurements.width || "unknown"} cm; length ${intake.measurements.length || "unknown"} cm; ceiling ${intake.measurements.height || "unknown"} cm.
 Additional room restrictions: ${intake.measurements.notes || "none supplied"}.
@@ -81,5 +83,5 @@ COMPOSITION
 
 ${correction ? `CONTROLLED CORRECTION
 Reference image 2 is the previous failed result, not an architectural reference. Reference image 1 remains the source of truth for the room. Correct only these identified issues: ${correction}
-Preserve successful areas. Do not inherit distorted architecture or altered products from the failed result.` : 'This is the initial living-room pilot attempt.'} Accuracy to the room and selected products is more important than novelty.`;
+Preserve successful areas. Do not inherit distorted architecture or altered products from the failed result.` : 'This is the initial ${roomLabel} design attempt.'} Accuracy to the room and selected products is more important than novelty.`;
 }
