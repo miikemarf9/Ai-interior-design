@@ -27,7 +27,7 @@ export default function CookiesPage(){
           <div className="legalTable">
             <div><strong>roomfound_analytics</strong><span>First-party pseudonymous analytics session. Created only after analytics consent. Up to 30 days.</span></div>
           </div>
-          <p>Analytics events are stored by Transform My Room rather than sent to an advertising network. Refusing analytics does not block the design service.</p>
+          <p>With your permission, analytics can record the room type, styles and furniture categories you choose, approved product IDs, and whether a generated design is saved. It does not include your room photograph or free-text notes. Events are stored by Transform My Room, not sent to an advertising network. Refusing analytics does not block the design service.</p>
         </section>
 
         <section>

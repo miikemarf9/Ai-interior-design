@@ -5,6 +5,7 @@ import type { DesignBrief, IntakeForBrief } from '@/lib/brief';
 import { approvalSnapshot, buildProductSelection, type ProductSelection } from '@/lib/catalog/selection';
 import { MAX_CORRECTIONS, reviewPassed, type Placement, type PilotReview, type Check } from '@/lib/render/pilot';
 import styles from './RenderPilot.module.css';
+import { trackRoomfound } from '@/components/PrivacyAnalytics';
 
 type Runtime = { ownerKey: string; designId: string; roomAssetId: string };
 type Attempt = { generation_id: string; status: string; resultUrl: string | null; cost_usd_micros: number | null; duration_ms: number | null; metadata: { correctionAttempt: number; parentGenerationId?: string; snapshot: { placements: Placement[]; selection: ProductSelection; intake: IntakeForBrief; brief: DesignBrief; roomAssetId: string }; humanReview?: PilotReview & { outcome: string } } };
@@ -84,7 +85,20 @@ export function RenderExperience() {
         throw new Error(data.error || 'Generation could not be confirmed. Reload the saved attempt before retrying.');
       }
       localStorage.removeItem(key); setCorrection('');
-      await readHistory(runtime); await loadCredits(runtime);
+      const history = await readHistory(runtime);
+      const savedAttempt = history.attempts?.[0] as Attempt | undefined;
+      if (savedAttempt?.status === 'succeeded' && savedAttempt.generation_id) {
+        const saveKey = `roomfound-saved-analytics:${runtime.designId}:${savedAttempt.generation_id}`;
+        if (!localStorage.getItem(saveKey)) {
+          trackRoomfound('room_saved', {
+            roomType: room.roomType || 'living_room',
+            styles: room.styles,
+            selectedProducts: selection.products.map(product => ({ productId: product.selected.productId, category: product.slot })),
+          });
+          localStorage.setItem(saveKey, '1');
+        }
+      }
+      await loadCredits(runtime);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Generation unavailable.');
       try { await readHistory(runtime); await loadCredits(runtime); } catch { /* Keep the original error and stable request ID. */ }

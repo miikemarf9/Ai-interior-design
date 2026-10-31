@@ -20,7 +20,7 @@ export default function PrivacyPage(){
         <section>
           <h2>What we collect</h2>
           <p>Account data can include your email address, display name, password hash, verification state and security-session records. Room-design data can include photographs you upload, measurements, design preferences, written briefs, selected products, generated room images and verification evidence.</p>
-          <p>We also keep operational records such as design-credit transactions, render status and cost information, retailer-link events and feedback. If you choose optional analytics, we record first-party page and funnel events using a pseudonymous analytics session. We do not intentionally store your raw IP address in the analytics table.</p>
+          <p>We also keep operational records such as design-credit transactions, render status and cost information, retailer-link events and feedback. If you allow optional analytics, we record first-party events about room type, styles and furniture categories chosen, approved product IDs, and when a generated room is saved. These events use a pseudonymous analytics session and may be associated with your signed-in account and room design. We do not send room photographs or free-text notes through these analytics events, and we do not intentionally store your raw IP address in the analytics table.</p>
         </section>
 
         <section>
