@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const ownerKey = account?.ownerKey || body.ownerKey || '';
     if (!uuid(body.generationId || '') || !uuid(body.designId || '') || !ownerKey) return NextResponse.json({ error: 'Invalid review target.' }, { status: 400 });
     const sql = getCatalogDb();
-    const rows = await sql.query(`select g.metadata from public.render_generations g join public.room_designs d on d.id=g.design_id where g.id=$1::uuid and d.id=$2::uuid and d.owner_key=$3 and g.status='succeeded' and g.prompt_version='living-room-pilot-v2'`, [body.generationId, body.designId, ownerKey]) as any[];
+    const rows = await sql.query(`select g.metadata from public.render_generations g join public.room_designs d on d.id=g.design_id where g.id=$1::uuid and d.id=$2::uuid and d.owner_key=$3 and g.status='succeeded' and g.prompt_version in ('living-room-pilot-v2','living-room-illustrative-v3','room-illustrative-v1')`, [body.generationId, body.designId, ownerKey]) as any[];
     const selection = rows[0]?.metadata?.snapshot?.selection;
     if (!selection) return NextResponse.json({ error: 'Completed pilot not found.' }, { status: 404 });
     if (!validReview(body.review, selection)) return NextResponse.json({ error: 'Complete every room and product review field.' }, { status: 400 });
