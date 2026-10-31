@@ -3,6 +3,7 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { IntakeForBrief } from '@/lib/brief';
 import { RetainedFurniture } from './RetainedFurniture';
+import { trackRoomfound } from '@/components/PrivacyAnalytics';
 import ui from './RoomBrief.module.css';
 
 type CreativeFreedom = 'Safe' | 'Balanced' | 'Surprise me';
@@ -27,39 +28,34 @@ const livingChangeItems = ['Sofa', 'Armchairs', 'Coffee table', 'Side tables', '
 
 const styles = [
   {
-    name: 'Contemporary',
-    image: 'https://images.unsplash.com/photo-1781249144361-0b0b085f9da1?auto=format&fit=crop&q=82&w=1000',
-    note: 'Clean lines, confident shapes, warm detail',
-  },
-  {
-    name: 'Warm minimal',
+    name: 'Modern Organic',
     image: 'https://images.unsplash.com/photo-1698047736474-3c1e5a0d3526?auto=format&fit=crop&q=82&w=1000',
-    note: 'Soft neutrals, texture, uncluttered forms',
+    note: 'First priority · soft curves, natural wood, linen and earthy colours',
   },
   {
-    name: 'Modern British',
+    name: 'Modern Country',
     image: 'https://images.unsplash.com/photo-1726090401458-7abb00f7450c?auto=format&fit=crop&q=82&w=1000',
-    note: 'Character, tailored comfort, old meets new',
+    note: 'Sage green, traditional wood, cosy fabrics and heritage details',
   },
   {
-    name: 'Mid-century',
-    image: 'https://images.unsplash.com/photo-1781249144372-e76e32526473?auto=format&fit=crop&q=82&w=1000',
-    note: 'Warm timber, low profiles, graphic accents',
-  },
-  {
-    name: 'Classic',
-    image: 'https://images.unsplash.com/photo-1753911372198-50b1b254ad4d?auto=format&fit=crop&q=82&w=1000',
-    note: 'Timeless proportions, layered and composed',
-  },
-  {
-    name: 'Scandi',
+    name: 'Japandi',
     image: 'https://images.unsplash.com/photo-1761330439741-3dcf41ee766b?auto=format&fit=crop&q=82&w=1000',
-    note: 'Light woods, calm colour, practical comfort',
+    note: 'Pale wood, warm whites, simple shapes and practical calm',
   },
   {
-    name: 'Colourful',
+    name: 'Mid-Century Modern',
+    image: 'https://images.unsplash.com/photo-1781249144372-e76e32526473?auto=format&fit=crop&q=82&w=1000',
+    note: 'Walnut tones, tapered legs, olive and vintage-inspired detail',
+  },
+  {
+    name: 'Bold & Colourful',
     image: 'https://images.unsplash.com/photo-1643148636639-c4f28543a5cc?auto=format&fit=crop&q=82&w=1000',
-    note: 'Expressive colour, playful but still considered',
+    note: 'Rich colour, expressive upholstery and confident focal pieces',
+  },
+  {
+    name: 'Contemporary Classic',
+    image: 'https://images.unsplash.com/photo-1753911372198-50b1b254ad4d?auto=format&fit=crop&q=82&w=1000',
+    note: 'Refined shapes, elegant details and timeless colour',
   },
 ];
 
@@ -146,7 +142,21 @@ export function DesignIntake() {
       if (stored) {
         const parsed = JSON.parse(stored) as { state?: IntakeState; step?: number };
         if (parsed.state) {
-          const restored = { ...initialState, ...parsed.state, measurements: { ...initialState.measurements, ...parsed.state.measurements } };
+          const legacyStyleNames: Record<string, string> = {
+            Contemporary: 'Contemporary Classic',
+            'Warm minimal': 'Modern Organic',
+            'Modern British': 'Modern Country',
+            'Mid-century': 'Mid-Century Modern',
+            Classic: 'Contemporary Classic',
+            Scandi: 'Japandi',
+            Colourful: 'Bold & Colourful',
+          };
+          const restored = {
+            ...initialState,
+            ...parsed.state,
+            styles: (parsed.state.styles || []).map((style: string) => legacyStyleNames[style] || style),
+            measurements: { ...initialState.measurements, ...parsed.state.measurements },
+          };
           savedAnswers.current = JSON.stringify(restored);
           setState(restored);
         }
@@ -328,6 +338,13 @@ export function DesignIntake() {
 
   function next() {
     if (!canContinue) return;
+    if (step === 3) {
+      trackRoomfound('style_choices_submitted', {
+        roomType: state.roomType || 'living_room',
+        styles: [...state.styles],
+        styleCount: state.styles.length,
+      });
+    }
     if (step === 9) {
       setComplete(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -493,7 +510,7 @@ export function DesignIntake() {
 
           {step === 3 ? (
             <>
-              <StepIntro eyebrow="4 · Style discovery" title="Which rooms feel most like you?" copy="Choose more than one. We care about the feeling and ingredients, not forcing you into a label." />
+              <StepIntro eyebrow="4 · Style discovery" title="Which style feels like home?" copy="Choose the look you want to start with. You can select more than one." />
               <div className="styleDiscoveryGrid">
                 {styles.map((style) => {
                   const active = state.styles.includes(style.name);
