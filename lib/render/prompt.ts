@@ -43,7 +43,7 @@ export function buildRoomRenderPrompt(
     ].join(" ");
   });
 
-  return `Edit reference image 1, which is the customer's real living room, into a photorealistic illustrative ${roomLabel} design concept.
+  return `Edit reference image 1, which is the customer's real ${roomLabel}, into a photorealistic illustrative ${roomLabel} design concept.
 
 NON-NEGOTIABLE ROOM RULES
 - Preserve the exact camera viewpoint, perspective, room geometry, ceiling height, windows, doors, openings, fireplace/chimney structure, radiators and fixed architectural features visible in reference image 1.
@@ -83,5 +83,5 @@ COMPOSITION
 
 ${correction ? `CONTROLLED CORRECTION
 Reference image 2 is the previous failed result, not an architectural reference. Reference image 1 remains the source of truth for the room. Correct only these identified issues: ${correction}
-Preserve successful areas. Do not inherit distorted architecture or altered products from the failed result.` : 'This is the initial ${roomLabel} design attempt.'} Accuracy to the room and selected products is more important than novelty.`;
+Preserve successful areas. Do not inherit distorted architecture or altered products from the failed result.` : `This is the initial ${roomLabel} design attempt.`} Accuracy to the room and selected products is more important than novelty.`;
 }
