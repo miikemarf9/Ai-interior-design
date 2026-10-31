@@ -75,7 +75,7 @@ export function CommunityPublishPanel({
       <div className={styles.intro}>
         <p className="eyebrow">Share with the community</p>
         <h2>Let people discover your room.</h2>
-        <p>The generated room image is shared, not your uploaded room photo. The public room page also shows the design summary and shoppable product list.</p>
+        <p>Sign in or create an account to publish. The generated room image is shared, not your uploaded room photo. The public room page also shows the design summary and shoppable product list.</p>
       </div>
       {published ? (
         <div className={styles.status}>
