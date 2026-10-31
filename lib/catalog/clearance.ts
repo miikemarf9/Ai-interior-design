@@ -20,7 +20,7 @@ export type CatalogueClearance = {
   deliveryDetails: string;
 };
 
-// Three Aosom living-room pilot products reviewed against their exact feed photos and listings on 31 October 2026.
+// Four Aosom living-room pilot products reviewed against their exact feed photos and listings on 31 October 2026.
 // The photos appear in the affiliate product picker; product photos are not sent to the image model.
 export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
   {
@@ -73,6 +73,23 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     expiresAt: '2026-11-07T16:00:00.000Z',
     deliveryBasis: 'unknown',
     deliveryDetails: 'Delivery charge, lead time and postcode availability are not confirmed here; check the Aosom listing and checkout.',
+  },
+  {
+    productId: 'd91ae382-79e4-47c5-a9cc-7e323c564fe5',
+    variantId: '6a5f7136-5b93-408f-90d7-173b23a921f3',
+    offerId: 'ef1edd81-ab5b-4fb0-ab7e-3bb746dfbcff',
+    imageUrl: 'https://img.aosomcdn.com/100/product/2026/04/17/dcj3b119d994e3bd4.jpg',
+    exactVariantName: 'Beige chenille modular two-piece L-shaped sofa',
+    packSize: 1,
+    unitLabel: 'sofa',
+    displayEvidence: 'Aosom UK Awin feed photo and exact listing reviewed 2026-10-31; display is limited to the affiliate product picker with the retailer destination.',
+    aiReferenceEvidence: 'Product photo is not sent to OpenAI. The written brief may use broad material and style cues only; exact product replication is not promised.',
+    customerOutputEvidence: 'The generated room is labelled illustrative. The real retailer product remains separately shown with its live offer link; no exact-match or fit guarantee is made.',
+    dataEvidence: 'Aosom UK feed candidate F-GOM-W2678S00017; price checked against Aosom UK at £575.99 on 2026-10-31; product page lists beige chenille, modular two-piece sectional, 250 × 158 × 60 cm, 4.6/5 from 21 ratings. Transform My Room demand is untested.',
+    reviewedAt: '2026-10-31T16:00:00.000Z',
+    expiresAt: '2026-11-07T16:00:00.000Z',
+    deliveryBasis: 'per_order',
+    deliveryDetails: 'Aosom states free UK mainland delivery; Northern Ireland courier fees apply. Guernsey and Jersey availability is restricted. Confirm current postcode delivery at checkout.',
   },
 ];
 
