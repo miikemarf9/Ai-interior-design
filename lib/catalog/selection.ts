@@ -16,6 +16,7 @@ export type SelectionCandidate = {
   styles: string[];
   materials: string[];
   colours: string[];
+  featureTags: string[];
   curationScore: number;
   qualityScore: number;
   offer: {
