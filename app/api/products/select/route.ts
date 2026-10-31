@@ -16,7 +16,6 @@ export async function POST(request: Request) {
       expectedSnapshot?: string;
     };
 
-    if (body.intake?.roomType === 'bedroom') return NextResponse.json({ error: 'Bedroom briefs can be saved, but bedroom product selection is not available yet.' }, { status: 409 });
     if (!body.intake || !body.brief) {
       return NextResponse.json({ error: "Approved intake and brief are required." }, { status: 400 });
     }
@@ -24,7 +23,7 @@ export async function POST(request: Request) {
     if (!Array.isArray(body.intake.keep) || !Array.isArray(body.intake.change) || !Array.isArray(body.intake.styles) || !Array.isArray(body.intake.uses) || !Array.isArray(body.intake.colours) || !Array.isArray(body.intake.materials) || !body.intake.measurements || typeof body.intake.dislikes !== 'string' || !Number.isFinite(body.intake.budget) || body.intake.budget <= 0 || typeof body.brief.keep !== 'string') {
       return NextResponse.json({ error: 'Please review your room answers before selecting furniture.' }, { status: 400 });
     }
-    const candidates = await getLiveSelectionCandidates();
+    const candidates = await getLiveSelectionCandidates(body.intake.roomType);
     let selection = buildProductSelection(body.intake, body.brief, candidates);
     try {
       if (body.choices) selection = applySelectionChoices(selection, body.choices, candidates);
