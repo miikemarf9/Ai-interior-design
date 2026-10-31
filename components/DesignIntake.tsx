@@ -8,6 +8,7 @@ import ui from './RoomBrief.module.css';
 
 type CreativeFreedom = 'Safe' | 'Balanced' | 'Surprise me';
 type IntakeState = IntakeForBrief;
+type CatalogueItemChoice = { label: string; recommended: boolean; available: boolean; count: number };
 
 const initialState: IntakeState = {
   roomType: 'living_room', projectGoal: 'refresh', retainedFurniture: [],
@@ -24,7 +25,6 @@ const initialState: IntakeState = {
 };
 
 const livingKeepItems = ['Sofa', 'Armchairs', 'TV', 'TV unit', 'Flooring', 'Fireplace', 'Artwork', 'Curtains', 'Lighting'];
-const livingChangeItems = ['Sofa', 'Armchairs', 'Coffee table', 'Side tables', 'TV unit', 'Storage', 'Rug', 'Lighting', 'Curtains', 'Artwork', 'Accessories'];
 
 const styles = [
   {
@@ -118,12 +118,18 @@ export function DesignIntake() {
   const [ownerKey, setOwnerKey] = useState('');
   const [designId, setDesignId] = useState('');
   const [roomAssetId, setRoomAssetId] = useState('');
+  const [catalogueItems, setCatalogueItems] = useState<CatalogueItemChoice[]>([]);
+  const [catalogueLoading, setCatalogueLoading] = useState(false);
+  const [catalogueError, setCatalogueError] = useState('');
+  const [catalogueRetry, setCatalogueRetry] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const savedAnswers = useRef('');
   const roomName = state.roomType === 'bedroom' ? 'bedroom' : 'living room';
   const keepItems = state.roomType === 'bedroom' ? ['Bed', 'Bedside tables', 'Wardrobe', 'Chest of drawers', 'Flooring', 'Curtains', 'Lighting', 'Artwork'] : livingKeepItems;
-  const changeItems = state.roomType === 'bedroom' ? ['Bed', 'Bedside tables', 'Wardrobe', 'Chest of drawers', 'Rug', 'Lighting', 'Curtains', 'Artwork', 'Accessories'] : livingChangeItems;
-  const recommendedItems = state.roomType === 'bedroom' ? ['Bed', 'Bedside tables', 'Wardrobe', 'Lighting', 'Rug'] : ['Sofa', 'Armchairs', 'Coffee table', 'TV unit', 'Rug', 'Lighting'];
+  const availableItemChoices = catalogueItems.filter(item => item.available);
+  const recommendedItems = catalogueItems.filter(item => item.recommended).map(item => item.label);
+  const availableRecommendedItems = catalogueItems.filter(item => item.recommended && item.available).map(item => item.label);
+  const comingSoonItems = catalogueItems.filter(item => item.recommended && !item.available).map(item => item.label);
   const uses = state.roomType === 'bedroom' ? [
     { name: 'Sleeping', detail: 'A calm, comfortable place to rest' },
     { name: 'Storage', detail: 'Clothes, bedding and everyday belongings' },
@@ -193,6 +199,37 @@ export function DesignIntake() {
 
   useEffect(() => {
     if (!hydrated) return;
+    const controller = new AbortController();
+    setCatalogueLoading(true);
+    setCatalogueError('');
+
+    fetch(`/api/products/categories?roomType=${encodeURIComponent(state.roomType)}`, { cache: 'no-store', signal: controller.signal })
+      .then(async response => {
+        const payload = await response.json() as { items?: CatalogueItemChoice[]; error?: string };
+        if (!response.ok || !Array.isArray(payload.items)) throw new Error(payload.error || 'The product list could not be checked.');
+        if (controller.signal.aborted) return;
+        const items = payload.items;
+        setCatalogueItems(items);
+        const availableLabels = new Set(items.filter(item => item.available).map(item => item.label));
+        const suggested = items.filter(item => item.recommended && item.available).map(item => item.label);
+        setState(current => {
+          const saved = current.change.filter(item => availableLabels.has(item));
+          return { ...current, change: saved.length ? saved : suggested };
+        });
+      })
+      .catch(error => {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        if (!controller.signal.aborted) setCatalogueError(error instanceof Error ? error.message : 'The product list could not be checked.');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCatalogueLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [hydrated, state.roomType, catalogueRetry]);
+
+  useEffect(() => {
+    if (!hydrated) return;
     const snapshot = JSON.stringify(state);
     if (savedAnswers.current && savedAnswers.current !== snapshot) {
       window.localStorage.removeItem('roomfound-brief-v1');
@@ -214,11 +251,12 @@ export function DesignIntake() {
   }, [step]);
 
   const canContinue = useMemo(() => {
+    if (step === 1) return !catalogueLoading && !catalogueError;
     if (step === 2) return Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto);
     if (step === 9) return validMeasurements;
     if (step === 4) return state.styles.length > 0;
     return true;
-  }, [step, photoUrl, designId, roomAssetId, uploadingPhoto, state.styles.length, validMeasurements]);
+  }, [step, photoUrl, designId, roomAssetId, uploadingPhoto, state.styles.length, validMeasurements, catalogueLoading, catalogueError]);
 
   function saveRuntime(next: { ownerKey: string; designId: string; roomAssetId: string; photoName: string }) {
     window.localStorage.setItem('roomfound-design-runtime-v1', JSON.stringify(next));
@@ -243,7 +281,7 @@ export function DesignIntake() {
         });
         if (!response.ok) throw new Error('Room type could not be saved. Please try again.');
       }
-      setState(current => ({ ...current, roomType, keep: [], change: roomType === 'bedroom' ? ['Bed', 'Bedside tables', 'Wardrobe', 'Lighting', 'Rug'] : ['Sofa', 'Armchairs', 'Coffee table', 'TV unit', 'Rug', 'Lighting'], uses: [], retainedFurniture: [] }));
+      setState(current => ({ ...current, roomType, keep: [], change: [], uses: [], retainedFurniture: [] }));
     } catch (error) {
       setPhotoError(error instanceof Error ? error.message : 'Room type could not be saved.');
     } finally { setUploadingPhoto(false); }
@@ -470,17 +508,29 @@ export function DesignIntake() {
               <StepIntro eyebrow="2 · Choose items" title="What would you like us to include?" copy={state.roomType === 'bedroom' ? "Choose the furniture types to plan around. Bedroom product recommendations are being prepared; you can still save your room plan." : "Tick the things you would like us to consider. We have suggested a starting list for a living room; you can change any of it."} />
               <div className="choiceHint">
                 <span className="microLabel">Suggested for a {roomName}</span>
-                <p>{recommendedItems.join(' · ')}</p>
+                <p>{recommendedItems.length ? recommendedItems.join(' · ') : 'Checking suggestions…'}</p>
               </div>
-              <ChoiceGrid
-                items={changeItems.filter(item => !state.keep.includes(item))}
-                selected={state.change}
-                onChange={(value) => setState((current) => ({ ...current, change: toggle(current.change, value) }))}
-              />
-              <button className="selectAllButton" type="button" onClick={() => setState((current) => ({ ...current, change: recommendedItems.filter(item => !current.keep.includes(item)) }))}>
-                Use suggested items
-              </button>
-              {state.roomType === 'bedroom' ? <p className={ui.note}>Bedroom designs can be saved, but bedroom product selection and AI image generation are not available yet.</p> : <p className="choiceHint">We will recommend products only where the live, reviewed catalogue has a suitable match.</p>}
+              {catalogueLoading ? <p aria-live="polite">Checking the reviewed product list…</p> : null}
+              {catalogueError ? (
+                <p className={ui.error} role="alert">{catalogueError} <button className="textButton" type="button" onClick={() => setCatalogueRetry(value => value + 1)}>Try again</button></p>
+              ) : null}
+              {availableItemChoices.length ? (
+                <ChoiceGrid
+                  items={availableItemChoices.filter(item => !state.keep.includes(item.label)).map(item => item.label)}
+                  selected={state.change}
+                  onChange={(value) => setState((current) => ({ ...current, change: toggle(current.change, value) }))}
+                />
+              ) : !catalogueLoading && !catalogueError ? (
+                <p className="choiceHint">There are no reviewed {roomName} products to tick yet. You can still save your room plan.</p>
+              ) : null}
+              {!catalogueLoading && !catalogueError && comingSoonItems.length ? <p className="choiceHint">Coming to the reviewed catalogue: {comingSoonItems.join(' · ')}.</p> : null}
+              {state.roomType === 'bedroom' ? <p className={ui.note}>Bedroom products and image generation are not available yet; this list is for planning only.</p> : null}
+              {availableRecommendedItems.length ? (
+                <button className="selectAllButton" type="button" onClick={() => setState((current) => ({ ...current, change: availableRecommendedItems.filter(item => !current.keep.includes(item)) }))}>
+                  Use suggested items
+                </button>
+              ) : null}
+              <p className="choiceHint">Only checked item types with reviewed products will enter the product shortlist.</p>
             </>
           ) : null}
 
