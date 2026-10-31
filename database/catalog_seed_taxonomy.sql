@@ -1,3 +1,10 @@
+insert into public.categories (name, slug, room_type, sort_order) values
+  ('Beds', 'beds', 'bedroom', 10),
+  ('Bedside tables', 'bedside-tables', 'bedroom', 20),
+  ('Wardrobes', 'wardrobes', 'bedroom', 30),
+  ('Chest of drawers', 'chest-of-drawers', 'bedroom', 40)
+on conflict (slug) do update set name=excluded.name, room_type=excluded.room_type, sort_order=excluded.sort_order, is_active=true;
+
 -- Stage 5 seed taxonomy for the living-room MVP.
 -- Idempotent: safe to re-run after the schema exists.
 
