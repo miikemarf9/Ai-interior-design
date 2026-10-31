@@ -18,6 +18,14 @@ function dimensions(item: SelectionCandidate) {
 function checked(value: string) { const date = new Date(value); return Number.isFinite(date.getTime()) ? date.toLocaleDateString('en-GB') : 'Unknown'; }
 const choices = (selection: ProductSelection) => selection.products.map(product => ({ slot: product.slot, variantId: product.selected.variantId, quantity: product.quantity }));
 
+function getCommerceSession() {
+  const existing = window.localStorage.getItem('roomfound-commerce-session-v1');
+  if (existing && /^[a-zA-Z0-9_-]{16,100}$/.test(existing)) return existing;
+  const created = crypto.randomUUID();
+  window.localStorage.setItem('roomfound-commerce-session-v1', created);
+  return created;
+}
+
 export function ProductSelectionExperience() {
   const [intake, setIntake] = useState<IntakeForBrief | null>(null);
   const [brief, setBrief] = useState<DesignBrief | null>(null);
@@ -31,6 +39,15 @@ export function ProductSelectionExperience() {
   const [browseProduct, setBrowseProduct] = useState<ProposedProduct | null>(null);
   const started = useRef(false);
   const fingerprint = useRef('');
+
+  function retailerHref(offerId: string) {
+    const params = new URLSearchParams({ session: getCommerceSession(), surface: 'product_selection' });
+    try {
+      const runtime = JSON.parse(localStorage.getItem('roomfound-design-runtime-v1') || '{}');
+      if (runtime.designId) params.set('designId', runtime.designId);
+    } catch { /* The affiliate click still works without a room identifier. */ }
+    return `/go/${offerId}?${params.toString()}`;
+  }
 
   useEffect(() => {
     if (started.current) return;
@@ -148,7 +165,7 @@ function ProductCard({ product, index, disabled, onChange, onBrowse }: { product
       <p>Delivery: {item.offer.deliveryPriceMinor === null || item.commercial!.deliveryBasis === 'unknown' ? 'Price to confirm' : `${money(item.offer.deliveryPriceMinor)} ${item.commercial!.deliveryBasis === 'per_order' ? 'per retailer order' : 'per pack'}`}. {item.commercial!.deliveryDetails || 'Timing, postcode eligibility and assembly to confirm.'}</p>
       <p className="selectedProductWhy">{product.reasons.filter(reason => !reason.includes('stock') && !reason.includes('orderable')).slice(0, 2).join(' ')}</p>
       <label className={styles.quantity}>Quantity of {item.commercial!.unitLabel}<select aria-label={`Quantity for ${product.slotLabel}`} disabled={disabled} value={product.quantity} onChange={event => onChange(item.variantId, Number(event.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>
-      <div className={`selectedProductActions ${styles.actions}`}><button type="button" className="textButton" disabled={disabled} aria-expanded={open} aria-controls={`alternatives-${product.slot}`} onClick={() => setOpen(!open)}>{open ? 'Hide alternatives' : 'Swap this item'}</button><button type="button" className="textButton" disabled={disabled} onClick={onBrowse}>Browse cleared inventory</button><a className="textButton" href={item.offer.productUrl} target="_blank" rel="noopener noreferrer">View exact variant at retailer ↗</a></div>
+      <div className={`selectedProductActions ${styles.actions}`}><button type="button" className="textButton" disabled={disabled} aria-expanded={open} aria-controls={`alternatives-${product.slot}`} onClick={() => setOpen(!open)}>{open ? 'Hide alternatives' : 'Swap this item'}</button><button type="button" className="textButton" disabled={disabled} onClick={onBrowse}>Browse cleared inventory</button><a className="textButton" href={retailerHref(item.offer.id)} target="_blank" rel="noopener noreferrer">View exact variant at retailer ↗</a></div>
       {open && <div id={`alternatives-${product.slot}`} className={styles.alternatives}>
         {!product.alternatives.length && <p>No other cleared variants match this brief yet.</p>}
         {product.alternatives.map((alternative: ProductAlternative) => <div className={styles.alternative} key={alternative.candidate.variantId}>
