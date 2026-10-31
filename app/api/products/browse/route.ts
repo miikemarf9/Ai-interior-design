@@ -33,12 +33,30 @@ export async function GET(request:Request){
   const styleSlug=styleSlugs[style] || "";
   const priceRaw=Number(params.get("maxPriceMinor") || "");
   const maxPriceMinor=Number.isSafeInteger(priceRaw) && priceRaw>0 ? priceRaw : null;
+  const maxWidthCm=positiveLimit(params.get("maxWidthCm"));
+  const maxDepthCm=positiveLimit(params.get("maxDepthCm"));
+  const maxHeightCm=positiveLimit(params.get("maxHeightCm"));
+  const material=(params.get("material") || "").trim().toLowerCase();
+  const colour=(params.get("colour") || "").trim().toLowerCase();
+  const requiredFeatures=(params.get("features") || "").split(",").map(value=>value.trim().toLowerCase()).filter(Boolean);
   const candidates=await getLiveSelectionCandidates();
+  const categoryItems=candidates.filter(item=>item.category===category && item.clearedForSelection===true && Boolean(item.image) && (!styleSlug || item.styles.includes(styleSlug)));
+  const facets={
+    materials:unique(categoryItems.flatMap(item=>item.materials)),
+    colours:unique(categoryItems.flatMap(item=>item.colours)),
+    features:unique(categoryItems.flatMap(item=>item.featureTags)),
+  };
 
   const matches=candidates.filter(item=>{
     if(item.category!==category || item.clearedForSelection!==true || !item.image) return false;
     if(styleSlug && !item.styles.includes(styleSlug)) return false;
     if(maxPriceMinor!==null && item.offer.priceMinor>maxPriceMinor) return false;
+    if(maxWidthCm!==null && (!item.dimensions.widthMm || item.dimensions.widthMm>maxWidthCm*10)) return false;
+    if(maxDepthCm!==null && (!item.dimensions.depthMm || item.dimensions.depthMm>maxDepthCm*10)) return false;
+    if(maxHeightCm!==null && (!item.dimensions.heightMm || item.dimensions.heightMm>maxHeightCm*10)) return false;
+    if(material && !item.materials.some(value=>value.toLowerCase()===material)) return false;
+    if(colour && !item.colours.some(value=>value.toLowerCase()===colour)) return false;
+    if(requiredFeatures.some(feature=>!item.featureTags.some(tag=>tag.toLowerCase()===feature))) return false;
     if(query){
       const haystack=[
         item.productName,
@@ -50,6 +68,7 @@ export async function GET(request:Request){
         ...item.styles,
         ...item.materials,
         ...item.colours,
+        ...item.featureTags,
       ].filter(Boolean).join(" ").toLowerCase();
       if(!haystack.includes(query)) return false;
     }
@@ -72,12 +91,25 @@ export async function GET(request:Request){
     widthMm:item.dimensions.widthMm,
     depthMm:item.dimensions.depthMm,
     heightMm:item.dimensions.heightMm,
+    seatWidthMm:item.dimensions.seatWidthMm,
+    seatDepthMm:item.dimensions.seatDepthMm,
+    seatHeightMm:item.dimensions.seatHeightMm,
     packSize:item.commercial?.packSize || 1,
     unitLabel:item.commercial?.unitLabel || "item",
     styles:item.styles,
     materials:item.materials,
     colours:item.colours,
+    featureTags:item.featureTags,
   }));
 
-  return NextResponse.json({products,total:matches.length,showing:products.length});
+  return NextResponse.json({products,total:matches.length,showing:products.length,facets});
+}
+
+function positiveLimit(value:string|null){
+  const n=Number(value);
+  return value && Number.isFinite(n) && n>0 && n<10000 ? n : null;
+}
+
+function unique(values:string[]){
+  return Array.from(new Set(values)).sort((a,b)=>a.localeCompare(b));
 }
