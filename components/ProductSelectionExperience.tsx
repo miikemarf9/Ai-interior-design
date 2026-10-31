@@ -77,11 +77,12 @@ export function ProductSelectionExperience() {
   if (error) return <section className="selectionMissing shell"><h1>We couldn’t check your collection.</h1><p role="alert">{error}</p><button className="button buttonPrimary" disabled={busy} onClick={() => loadSelection(intake, brief, selection || undefined)}>Try again</button><p><Link href="/brief">Back to my brief</Link></p></section>;
   if (!selection?.products.length) return <section className="selectionEmpty shell">
     <p className="eyebrow">Your furniture collection</p><h1>Your brief is ready. The furniture collection is coming next.</h1>
-    <p>We don’t yet have cleared products that match this brief. We’re checking product details and photograph permissions before we recommend furniture here.</p>
+    <p>The first curated furniture collection is still being prepared. You can create an illustrative room design from your photo and brief without waiting for exact product matches.</p>
     <p>Your brief is saved. No products have been approved and no image-generation credit has been used.</p>
     {selection?.missingItems.length ? <p>Still to source: {selection.missingItems.join(', ')}.</p> : null}
     {selection?.notes.filter(note => note.includes('missing or invalid prices')).map(note => <p key={note}>{note}</p>)}
-    <Link className="button buttonPrimary" href="/brief">Review my brief</Link>
+    <Link className="button buttonPrimary" href="/render">Create illustrative room design · 1 credit</Link>
+    <Link className="textButton" href="/brief">Review my brief</Link>
     <button className="textButton" disabled={busy} onClick={() => loadSelection(intake, brief)}>Check collection again</button>
   </section>;
   const over = selection.remainingMinor < 0;
