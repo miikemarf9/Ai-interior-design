@@ -29,32 +29,32 @@ const livingChangeItems = ['Sofa', 'Armchairs', 'Coffee table', 'Side tables', '
 const styles = [
   {
     name: 'Modern Organic',
-    image: 'https://images.unsplash.com/photo-1698047736474-3c1e5a0d3526?auto=format&fit=crop&q=82&w=1000',
+    image: '/style-previews/modern-organic.webp',
     note: 'First priority · soft curves, natural wood, linen and earthy colours',
   },
   {
     name: 'Modern Country',
-    image: 'https://images.unsplash.com/photo-1726090401458-7abb00f7450c?auto=format&fit=crop&q=82&w=1000',
+    image: '/style-previews/modern-country.webp',
     note: 'Sage green, traditional wood, cosy fabrics and heritage details',
   },
   {
     name: 'Japandi',
-    image: 'https://images.unsplash.com/photo-1761330439741-3dcf41ee766b?auto=format&fit=crop&q=82&w=1000',
+    image: '/style-previews/japandi.webp',
     note: 'Pale wood, warm whites, simple shapes and practical calm',
   },
   {
     name: 'Mid-Century Modern',
-    image: 'https://images.unsplash.com/photo-1781249144372-e76e32526473?auto=format&fit=crop&q=82&w=1000',
+    image: '/style-previews/mid-century-modern.webp',
     note: 'Walnut tones, tapered legs, olive and vintage-inspired detail',
   },
   {
     name: 'Bold & Colourful',
-    image: 'https://images.unsplash.com/photo-1643148636639-c4f28543a5cc?auto=format&fit=crop&q=82&w=1000',
+    image: '/style-previews/bold-colourful.webp',
     note: 'Rich colour, expressive upholstery and confident focal pieces',
   },
   {
     name: 'Contemporary Classic',
-    image: 'https://images.unsplash.com/photo-1753911372198-50b1b254ad4d?auto=format&fit=crop&q=82&w=1000',
+    image: '/style-previews/contemporary-classic.webp',
     note: 'Refined shapes, elegant details and timeless colour',
   },
 ];
