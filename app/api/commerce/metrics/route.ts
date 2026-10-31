@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   const requestedDays = Number(url.searchParams.get("days") || 90);
   const days = Number.isInteger(requestedDays) ? Math.max(7, Math.min(365, requestedDays)) : 90;
   const sql = getCatalogDb();
-  const [rows, stylesChosen, itemTypesChosen, productsChosen, roomsSaved, clicksByCategory, topClickedProducts] = await Promise.all([
+  const [rows, stylesChosen, itemTypesChosen, productsChosen, roomsSaved, stylesSaved, categoriesSaved, clicksByCategory, clicksByStyle, topClickedProducts] = await Promise.all([
     sql.query(
     `select
       (select count(*) from public.commerce_events where event_type='product_viewed')::int as product_views,
@@ -64,7 +64,7 @@ export async function GET(request: Request) {
        join public.products p on p.id=(selected.item->>'productId')::uuid
        left join public.product_categories pc on pc.product_id=p.id and pc.is_primary
        left join public.categories cat on cat.id=pc.category_id
-       where e.event_name in ('products_approved','room_saved')
+       where e.event_name='products_approved'
          and e.created_at >= now() - ($1::int * interval '1 day')
        group by cat.slug,p.id,p.name
        order by sessions desc,selections desc,p.name limit 20`,
@@ -81,6 +81,30 @@ export async function GET(request: Request) {
       [days],
     ),
     sql.query(
+      `select style.value as style,count(*)::int as saves,
+        count(distinct e.session_key)::int as sessions
+       from public.analytics_events e
+       cross join lateral jsonb_array_elements_text(
+         case when jsonb_typeof(e.properties->'styles')='array' then e.properties->'styles' else '[]'::jsonb end
+       ) style(value)
+       where e.event_name='room_saved'
+         and e.created_at >= now() - ($1::int * interval '1 day')
+       group by style.value order by sessions desc,saves desc,style.value`,
+      [days],
+    ),
+    sql.query(
+      `select category.value as category,count(*)::int as saves,
+        count(distinct e.session_key)::int as sessions
+       from public.analytics_events e
+       cross join lateral jsonb_array_elements_text(
+         case when jsonb_typeof(e.properties->'categories')='array' then e.properties->'categories' else '[]'::jsonb end
+       ) category(value)
+       where e.event_name='room_saved'
+         and e.created_at >= now() - ($1::int * interval '1 day')
+       group by category.value order by sessions desc,saves desc,category.value`,
+      [days],
+    ),
+    sql.query(
       `select cat.slug as category,count(*)::int as clicks,
         count(distinct ac.session_key)::int as sessions
        from public.affiliate_clicks ac
@@ -89,6 +113,18 @@ export async function GET(request: Request) {
        left join public.categories cat on cat.id=pc.category_id
        where ac.clicked_at >= now() - ($1::int * interval '1 day')
        group by cat.slug order by clicks desc,cat.slug`,
+      [days],
+    ),
+    sql.query(
+      `select style.value as style,count(*)::int as clicks,
+        count(distinct ac.session_key)::int as sessions
+       from public.affiliate_clicks ac
+       join public.room_designs d on d.id=ac.design_id
+       cross join lateral jsonb_array_elements_text(
+         case when jsonb_typeof(d.intake->'styles')='array' then d.intake->'styles' else '[]'::jsonb end
+       ) style(value)
+       where ac.clicked_at >= now() - ($1::int * interval '1 day')
+       group by style.value order by sessions desc,clicks desc,style.value`,
       [days],
     ),
     sql.query(
@@ -111,7 +147,10 @@ export async function GET(request: Request) {
       itemTypesChosen: itemTypesChosen,
       productsChosen: productsChosen,
       roomsSaved: roomsSaved,
+      stylesSaved: stylesSaved,
+      categoriesSaved: categoriesSaved,
       retailerClicksByCategory: clicksByCategory,
+      retailerClicksByStyle: clicksByStyle,
       topClickedProducts,
     },
   });
