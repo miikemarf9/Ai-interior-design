@@ -20,7 +20,7 @@ export type CatalogueClearance = {
   deliveryDetails: string;
 };
 
-// Three Aosom living-room pilot products reviewed against their exact feed photos and listings on 31 October 2026.
+// Four Aosom living-room pilot products reviewed against their exact feed photos and listings on 31 October 2026.
 // The photos appear in the affiliate product picker; product photos are not sent to the image model.
 export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
   {
