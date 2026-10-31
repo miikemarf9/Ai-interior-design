@@ -17,11 +17,54 @@ const allowedEvents=new Set([
   "room_shared",
   "retailer_clicked",
   "style_choices_submitted",
+  "item_choices_submitted",
+  "room_saved",
   "web_vital",
 ]);
 
 function cleanText(value:unknown,max:number){
   return typeof value==="string" ? value.slice(0,max) : null;
+}
+
+const roomTypes=new Set(["living_room","bedroom"]);
+const styleSlugs=new Set(["modern-organic","modern-country","japandi","mid-century-modern","bold-colourful","contemporary-classic"]);
+const categorySlugs=new Set(["sofas","armchairs","coffee-tables","tv-units","side-tables","rugs","floor-lamps","table-lamps","storage-cabinets","beds","bedside-tables","wardrobes","chest-of-drawers","lighting","footstools-pouffes","ceiling-lighting"]);
+
+function cleanList(value:unknown,allowed:Set<string>,limit=12){
+  if(!Array.isArray(value)) return [];
+  return [...new Set(value.filter((item):item is string=>typeof item==="string"&&allowed.has(item)))].slice(0,limit);
+}
+function cleanProducts(value:unknown){
+  if(!Array.isArray(value)) return [];
+  return value.flatMap(item=>{
+    if(!item||typeof item!=="object") return [];
+    const row=item as Record<string,unknown>;
+    return validUuid(row.productId)&&typeof row.category==="string"&&categorySlugs.has(row.category)
+      ? [{productId:row.productId,category:row.category}]
+      : [];
+  }).slice(0,12);
+}
+function cleanProperties(eventName:string,raw:Record<string,unknown>){
+  const roomType=typeof raw.roomType==="string"&&roomTypes.has(raw.roomType)?raw.roomType:null;
+  if(eventName==="style_choices_submitted"){
+    const styles=cleanList(raw.styles,styleSlugs,6);
+    return {roomType,styles,styleCount:styles.length};
+  }
+  if(eventName==="item_choices_submitted"){
+    return {roomType,categories:cleanList(raw.categories,categorySlugs),keptCategories:cleanList(raw.keptCategories,categorySlugs)};
+  }
+  if(eventName==="products_approved"||eventName==="room_saved"){
+    const selectedProducts=cleanProducts(raw.selectedProducts);
+    return {
+      roomType,
+      styles:cleanList(raw.styles,styleSlugs,6),
+      categories:[...new Set(selectedProducts.map(item=>item.category))],
+      selectedProducts,
+      productCount:selectedProducts.length,
+      ...(Number.isSafeInteger(raw.totalMinor)&&Number(raw.totalMinor)>=0?{totalMinor:Number(raw.totalMinor)}:{}),
+    };
+  }
+  return Object.fromEntries(Object.entries(raw).slice(0,20));
 }
 
 function validUuid(value:unknown){
@@ -55,9 +98,7 @@ export async function POST(request:Request){
     : `a_${randomUUID().replaceAll("-","")}`;
 
   const account=await getCurrentAccount();
-  const properties=body.properties && typeof body.properties==="object"
-    ? Object.fromEntries(Object.entries(body.properties).slice(0,20))
-    : {};
+  const properties=cleanProperties(eventName,body.properties && typeof body.properties==="object" ? body.properties : {});
 
   const sql=getCatalogDb();
   await sql.query(
