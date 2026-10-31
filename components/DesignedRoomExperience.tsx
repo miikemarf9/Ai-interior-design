@@ -513,7 +513,7 @@ export function DesignedRoomExperience({
       <VerifiedRoomPanel verification={verification} loading={verificationLoading} />
 
       {!shared ? <GrowthShareCards designId={data.designId} /> : null}
-      {!shared && verification ? <CommunityPublishPanel designId={data.designId} generationId={data.generationId} initialTitle={data.roomName || data.brief.title} /> : null}
+      {!shared && verification && verification.overallStatus !== "failed" ? <CommunityPublishPanel designId={data.designId} generationId={data.generationId} initialTitle={data.roomName || data.brief.title} /> : null}
 
       {!shared ? <BetaFeedback designId={data.designId} /> : null}
 
