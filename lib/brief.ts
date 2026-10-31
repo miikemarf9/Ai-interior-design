@@ -77,7 +77,7 @@ export function buildFallbackBrief(intake: IntakeForBrief): DesignBrief {
         : intake.freedom === 'Surprise me'
           ? 'Respect the practical constraints, but introduce confident ideas the customer may not have considered.'
           : 'Use a balanced designer approach: respect the brief, but make confident choices where they improve the room.',
-    budget: `Furniture and accessories allowance: £${intake.budget.toLocaleString('en-GB')}. Delivery is to be confirmed separately. Any Roomfound image-generation charge is separate.`,
+    budget: `Furniture and accessories allowance: £${intake.budget.toLocaleString('en-GB')}. Delivery is to be confirmed separately. Any Transform My Room image-generation charge is separate.`,
     designerNote: 'The first render should prioritise accuracy to this agreed direction over novelty. Product selection should favour real UK availability, coherent proportions and long-term usability.',
   };
 }
