@@ -34,6 +34,19 @@ function cleanList(value:unknown,allowed:Set<string>,limit=12){
   if(!Array.isArray(value)) return [];
   return [...new Set(value.filter((item):item is string=>typeof item==="string"&&allowed.has(item)))].slice(0,limit);
 }
+function cleanStyles(value:unknown){
+  if(!Array.isArray(value)) return [];
+  const aliases:Record<string,string>={
+    "Modern Organic":"modern-organic","Modern Country":"modern-country","Japandi":"japandi",
+    "Mid-Century Modern":"mid-century-modern","Bold & Colourful":"bold-colourful",
+    "Contemporary Classic":"contemporary-classic",
+  };
+  return [...new Set(value.flatMap(item=>{
+    if(typeof item!=="string") return [];
+    const normalized=aliases[item]||item;
+    return styleSlugs.has(normalized)?[normalized]:[];
+  }))].slice(0,6);
+}
 function cleanProducts(value:unknown){
   if(!Array.isArray(value)) return [];
   return value.flatMap(item=>{
@@ -47,7 +60,7 @@ function cleanProducts(value:unknown){
 function cleanProperties(eventName:string,raw:Record<string,unknown>){
   const roomType=typeof raw.roomType==="string"&&roomTypes.has(raw.roomType)?raw.roomType:null;
   if(eventName==="style_choices_submitted"){
-    const styles=cleanList(raw.styles,styleSlugs,6);
+    const styles=cleanStyles(raw.styles);
     return {roomType,styles,styleCount:styles.length};
   }
   if(eventName==="item_choices_submitted"){
@@ -57,7 +70,7 @@ function cleanProperties(eventName:string,raw:Record<string,unknown>){
     const selectedProducts=cleanProducts(raw.selectedProducts);
     return {
       roomType,
-      styles:cleanList(raw.styles,styleSlugs,6),
+      styles:cleanStyles(raw.styles),
       categories:[...new Set(selectedProducts.map(item=>item.category))],
       selectedProducts,
       productCount:selectedProducts.length,
