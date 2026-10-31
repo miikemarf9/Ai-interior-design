@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Brand } from "@/components/Brand";
 import { FormEvent, useEffect, useState } from "react";
-import { AccountPrivacyControls } from "@/components/AccountPrivacyControls";
 import ui from "./RoomBrief.module.css";
 
 type AccountPayload = {
@@ -360,6 +359,7 @@ export function AccountExperience() {
         <div>
           {payload.credits.siteCreditExempt ? <Link href="/admin">Admin area</Link> : null}
           <Link href="/design">New room</Link>
+          <Link href="/account/settings">Profile &amp; settings</Link>
           <button type="button" onClick={signOut}>Sign out</button>
         </div>
       </header>
@@ -391,10 +391,6 @@ export function AccountExperience() {
 
       {notice ? <p className="accountDashboardNotice shellWide">{notice}</p> : null}
       {error ? <p className="accountDashboardError shellWide">{error}</p> : null}
-
-      <section className="shellWide">
-        <AccountPrivacyControls initialMarketingEmails={payload.preferences.marketingEmails} />
-      </section>
 
       <section className="savedRooms shellWide">
         <div className="savedRoomsHeading">
