@@ -92,6 +92,12 @@ const SLOT_DEFINITIONS: SlotDefinition[] = [
 ];
 
 const STYLE_ALIASES: Record<string, string> = {
+  "modern organic": "warm-minimal",
+  "modern country": "modern-british",
+  japandi: "scandi",
+  "mid-century modern": "mid-century",
+  "bold & colourful": "colourful",
+  "contemporary classic": "classic",
   "warm minimal": "warm-minimal",
   "modern british": "modern-british",
   "mid-century": "mid-century",
