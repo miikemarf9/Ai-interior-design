@@ -1,42 +1,41 @@
-# Transform My Room — Cloudflare Workers migration
+# Transform My Room — Cloudflare Workers release
 
-This configuration lives on the `cloudflare-workers-migration` branch, separate from `main`. Do not change public DNS or the production domain until the Worker builds, routes and critical user journeys are tested.
+## Current production state
 
-## Source
+- GitHub repository: `miikemarf9/Ai-interior-design`
+- Existing Cloudflare Worker name: `ai-interior-design`
+- Customer domain: `https://transformmyroom.com`
+- Framework: Cloudflare Workers + OpenNext (full-stack Next.js, not static Pages).
+- The live Worker is manually deployed and has no Cloudflare Workers Builds configuration or repository trigger at present.
+- Do not create a second Worker or change DNS while reconnecting builds. Keep the existing production Worker and its domain.
 
-- GitHub: `miikemarf9/Ai-interior-design`
-- Worker name: `transformmyroom`
-- Production domain (when ready): `https://transformmyroom.com`
-- Alternative hostname: `https://www.transformmyroom.com`
-- Platform: Cloudflare Workers + OpenNext (full-stack Next.js; **not** static Pages hosting).
+## Build source
 
-## Cloudflare setup
+The Cloudflare deployment files live on `cloudflare-workers-migration`. PR #20 merges current `main` into that branch. The merged source includes the live product-category API, current approved catalogue flow, six style previews, consent-based interest tracking, affiliate click attribution and current AI routes.
 
-1. In Cloudflare, open Workers & Pages → Create → Import a repository.
-2. Authorise the **Cloudflare GitHub App** for the `miikemarf9/Ai-interior-design` repository. The separate ChatGPT GitHub connection is not sufficient.
-3. Choose `cloudflare-workers-migration` branch for first builds, to avoid changing the current Vercel deployment.
-4. Use Node.js 22 and install via `npm install`; build command `npm run cf:build`; deploy command `npm run cf:upload`.
-5. This repository has `wrangler.jsonc` and `open-next.config.ts`; do not select the static Cloudflare Pages preset.
+The source was built locally with Node.js 22 and `npm run cf:build`. The build completed and included `/api/products/categories` and the render API routes. GitHub Actions passed dependency audit, typecheck and production build for the merged source.
 
-## Environment and credentials
+## Cloudflare connection needed
 
-Copy the **required production** values from the current host to **Cloudflare Workers Build variables and secrets and, separately, runtime Worker secrets**. See `.env.example`. In particular: `DATABASE_URL`, `OPENAI_API_KEY`, `RESEND_API_KEY`, `AUTH_FROM_EMAIL`, `APP_URL`, `NEXT_PUBLIC_SITE_URL`, and the auth/rate-limit/beta secrets.
+Cloudflare currently reports no build configuration or build triggers for `ai-interior-design`. The account owner must authorize the Cloudflare GitHub App for `miikemarf9/Ai-interior-design` before Cloudflare can build from the repository.
 
-- Set `APP_URL=https://transformmyroom.com`.
-- Set `NEXT_PUBLIC_SITE_URL=https://transformmyroom.com`.
-- Never commit private keys, Postgres URLs or Awin feed URLs to Git.
-- Review production-only settings, image uploads/storage, response limits and email verification before allowing beta traffic.
-- Verify database connectivity, auth/session cookies, account creation/verification, passwords, brief, catalogue, image generation, credit debit/refunds, share URLs and emails on the Worker preview URL.
+When connecting it:
 
-## Go-live
+1. In Cloudflare, choose Workers & Pages and import/connect the existing repository.
+2. Approve Cloudflare's GitHub App for this repository.
+3. Select the `cloudflare-workers-migration` branch.
+4. Reuse the existing Worker name `ai-interior-design`.
+5. Use Node.js 22, install with `npm install`, build with `npm run cf:build`, and deploy with `npm run cf:upload`.
+6. Keep the existing production domain and DNS attached to the existing Worker.
 
-1. Check that the Cloudflare Worker builds and is functional (including API routes), and that the beta launch gates are satisfied.
-2. Attach `transformmyroom.com` as a Cloudflare Worker custom domain. Configure `www.transformmyroom.com` as a second custom domain or managed redirect to the apex.
-3. Confirm Cloudflare DNS, HTTPS certificates, permanent redirects and canonical URL.
-4. Only after a full end-to-end test should you shift public traffic and stop the previous host.
+Do not choose the static Pages preset.
 
-## Status
+## Runtime variables and secrets
 
-- Domain registration and Cloudflare zone: confirmed active on 28 October 2026.
-- Cloudflare's GitHub build connection currently fails with an OAuth/app authorisation error; user must approve Cloudflare's GitHub App.
-- This branch prepares configuration but has not passed a Cloudflare build. It is **not deployed**.
+Keep runtime values in Worker environment variables/secrets, never in Git. The existing Worker already has the app URL, database and Awin catalog settings. Before allowing customer image generation, confirm `DATABASE_URL`, `OPENAI_API_KEY`, `APP_URL`, and `NEXT_PUBLIC_SITE_URL` are present on the existing Worker. Store `OPENAI_API_KEY` as a Worker secret, not a plain text variable. Authentication email delivery also needs `RESEND_API_KEY` and `AUTH_FROM_EMAIL`.
+
+The image flow sends the original room image to OpenAI and sends style/product descriptions as text; it does not send retailer product photographs. Each successful room render consumes one verified-account design credit. A failed provider request is logged and refunded.
+
+## Release checks
+
+After Cloudflare authorization, confirm the build succeeds on the preview, then verify the current API routes and product selection, account verification, brief creation, image generation, credit debit/refund and saved-room privacy before assigning production traffic. Keep bedroom selection disabled until cleared bedroom products and its generation flow are ready.
