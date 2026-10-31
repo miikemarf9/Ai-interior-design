@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import styles from "./CommunityPublishPanel.module.css";
 
 type PublishedRoom={id:string;slug:string;title:string};
 
@@ -70,34 +71,34 @@ export function CommunityPublishPanel({
   }
 
   return (
-    <section className="communityPublishPanel">
-      <div>
+    <section className={styles.panel}>
+      <div className={styles.intro}>
         <p className="eyebrow">Share with the community</p>
         <h2>Let people discover your room.</h2>
-        <p>Publish the finished room so others can view it and give it a thumbs-up. The generated room image is shared, not your uploaded room photo. The public room page also shows the design summary and shoppable product list.</p>
+        <p>The generated room image is shared, not your uploaded room photo. The public room page also shows the design summary and shoppable product list.</p>
       </div>
       {published ? (
-        <div className="communityPublishStatus">
-          <p>Your room is in the community gallery.</p>
-          <div className="communityPublishActions">
+        <div className={styles.status}>
+          <p>Your room is in the community gallery. Removing it here hides it from browsing; any room link you already shared will keep working.</p>
+          <div className={styles.actions}>
             <Link className="button buttonPrimary buttonCompact" href="/community">View the gallery</Link>
-            <button className="button buttonSecondary buttonCompact" type="button" onClick={remove} disabled={busy}>
+            <button className={styles.removeButton} type="button" onClick={remove} disabled={busy}>
               {busy ? "Removing…" : "Remove from gallery"}
             </button>
           </div>
         </div>
       ) : (
-        <div className="communityPublishForm">
-          <label htmlFor="community-room-title">Room name</label>
-          <input id="community-room-title" value={title} maxLength={80} onChange={event=>setTitle(event.target.value)} />
-          <label className="communityConsent">
+        <div className={styles.form}>
+          <label className={styles.label} htmlFor="community-room-title">Room name</label>
+          <input className={styles.titleInput} id="community-room-title" value={title} maxLength={80} onChange={event=>setTitle(event.target.value)} />
+          <label className={styles.consent}>
             <input type="checkbox" checked={consent} onChange={event=>setConsent(event.target.checked)} />
             <span>I understand the generated room, design summary, selected products and their current prices will be public on Transform My Room. Other visitors can view it and vote. I can remove it from the gallery later.</span>
           </label>
           <button className="button buttonPrimary" type="button" onClick={publish} disabled={!consent || !title.trim() || busy}>
             {busy ? "Publishing…" : "Publish this room"}
           </button>
-          {error ? <p className="communityFormError">{error}{error.toLowerCase().includes("sign in") ? <> <Link href="/account">Sign in or create an account.</Link></> : null}</p> : null}
+          {error ? <p className={styles.error}>{error}{error.toLowerCase().includes("sign in") ? <> <Link href="/account">Sign in or create an account.</Link></> : null}</p> : null}
         </div>
       )}
     </section>
