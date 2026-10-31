@@ -80,7 +80,7 @@ type SlotDefinition = {
   minBudget?: number;
 };
 
-const SLOT_DEFINITIONS: SlotDefinition[] = [
+const LIVING_ROOM_SLOTS: SlotDefinition[] = [
   { category: "sofas", label: "Sofa", weight: 0.38, keywords: ["sofa", "settee", "couch"] },
   { category: "armchairs", label: "Armchair", weight: 0.16, keywords: ["armchair", "chair"], minBudget: 1200 },
   { category: "coffee-tables", label: "Coffee table", weight: 0.09, keywords: ["coffee table"] },
@@ -91,6 +91,18 @@ const SLOT_DEFINITIONS: SlotDefinition[] = [
   { category: "table-lamps", label: "Table lamp", weight: 0.035, keywords: ["table lamp"], minBudget: 1800 },
   { category: "storage-cabinets", label: "Storage", weight: 0.115, keywords: ["storage", "cabinet", "sideboard"], minBudget: 2300 },
 ];
+
+const BEDROOM_SLOTS: SlotDefinition[] = [
+  { category: "beds", label: "Bed", weight: 0.42, keywords: ["bed", "bed frame", "bedframe"] },
+  { category: "bedside-tables", label: "Bedside table", weight: 0.14, keywords: ["bedside", "nightstand"] },
+  { category: "wardrobes", label: "Wardrobe", weight: 0.18, keywords: ["wardrobe"] },
+  { category: "chest-of-drawers", label: "Chest of drawers", weight: 0.12, keywords: ["chest of drawers", "dresser"] },
+  { category: "rugs", label: "Rug", weight: 0.09, keywords: ["rug"] },
+  { category: "floor-lamps", label: "Floor lamp", weight: 0.025, keywords: ["floor lamp", "lamp"], minBudget: 900 },
+  { category: "table-lamps", label: "Bedside lamp", weight: 0.025, keywords: ["table lamp", "bedside lamp"], minBudget: 1800 },
+];
+
+const slotsForRoom = (intake: IntakeForBrief) => intake.roomType === "bedroom" ? BEDROOM_SLOTS : LIVING_ROOM_SLOTS;
 
 const STYLE_ALIASES: Record<string, string> = {
   "modern organic": "warm-minimal",
@@ -171,7 +183,7 @@ function buildSlots(intake: IntakeForBrief, brief: DesignBrief) {
   const retained = retainedText(intake, brief);
   const needs = new Set(intake.uses.map(normalize));
 
-  const eligible = SLOT_DEFINITIONS.filter((slot) => {
+  const eligible = slotsForRoom(intake).filter((slot) => {
     if (shouldSkipForRetention(slot, retained) || (intake.keep.some(item => normalize(item) === 'lighting') && slot.category.includes('lamps'))) return false;
     if (intake.change.length && !intake.change.some(item => slot.keywords.some(keyword => normalize(item).includes(keyword)) || (normalize(item) === 'lighting' && slot.category.includes('lamps')))) return false;
 
@@ -363,7 +375,7 @@ export function buildProductSelection(
   brief: DesignBrief,
   candidates: SelectionCandidate[],
 ): ProductSelection {
-  const eligibleSlots = intake.roomType === 'bedroom' ? [] : buildSlots(intake, brief);
+  const eligibleSlots = buildSlots(intake, brief);
   const slots = allocateSlotBudgets(eligibleSlots, candidates, intake.budget * 100);
   const usedProducts = new Set<string>();
   const products: ProposedProduct[] = [];
@@ -404,7 +416,7 @@ export function buildProductSelection(
 
   return {
     version: 2,
-    missingItems: [...slots.filter(slot => !products.some(product => product.slot === slot.category)).map(slot => slot.label), ...intake.change.filter(item => !SLOT_DEFINITIONS.some(slot => slot.keywords.some(keyword => normalize(item).includes(keyword)) || (normalize(item) === 'lighting' && slot.category.includes('lamps'))))],
+    missingItems: [...slots.filter(slot => !products.some(product => product.slot === slot.category)).map(slot => slot.label), ...intake.change.filter(item => !slotsForRoom(intake).some(slot => slot.keywords.some(keyword => normalize(item).includes(keyword)) || (normalize(item) === 'lighting' && slot.category.includes('lamps'))))],
     ...selectionTotals(products, budgetMinor),
     createdAt: new Date().toISOString(),
     budgetMinor,
