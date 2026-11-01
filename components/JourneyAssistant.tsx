@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useId, useState } from 'react';
 
-type JourneyIntake = { roomType?: string; projectGoal?: string; styles?: string[]; budget?: number; colours?: string[]; materials?: string[]; dislikes?: string; uses?: string[]; keep?: string[]; change?: string[]; retainedFurniture?: Array<{ label?: string }> };\n\ntype CreditStatus = {
+type JourneyIntake = { roomType?: string; projectGoal?: string; styles?: string[]; budget?: number; colours?: string[]; materials?: string[]; dislikes?: string; uses?: string[]; keep?: string[]; change?: string[]; retainedFurniture?: Array<{ label?: string }> };
+
+type CreditStatus = {
   balance: number;
   verificationStatus: string;
   verifiedRequired: boolean;
