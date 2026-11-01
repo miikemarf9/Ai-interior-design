@@ -692,9 +692,9 @@ export function DesignIntake() {
 
           {step === 8 ? (
             <>
-              <StepIntro eyebrow="9 · Total room budget" title="What is your furniture budget?" copy="Your allowance for new furniture and accessories. Transform My Room image-generation charges are separate; delivery costs will be confirmed with the products." />
+              <StepIntro eyebrow="9 · Total room budget" title="What is the most you want to spend?" copy="Set the maximum for new furniture and accessories. We’ll keep the initial product collection within this limit where suitable items are available. Image-generation charges are separate; delivery costs are confirmed with the products." />
               <div className="intakeBudget">
-                <strong>{formatBudget(state.budget)}</strong>
+                <strong>{formatBudget(state.budget)} <small>maximum</small></strong>
                 <input
                   type="range"
                   min="750"
@@ -702,7 +702,7 @@ export function DesignIntake() {
                   step="250"
                   value={state.budget}
                   onChange={(event) => setState((current) => ({ ...current, budget: Number(event.target.value) }))}
-                  aria-label="Total room budget"
+                  aria-label="Maximum total room furniture budget"
                 />
                 <div className="budgetRangeLabels"><span>£750</span><span>£10,000</span></div>
                 <div className="budgetPresets">
@@ -710,7 +710,7 @@ export function DesignIntake() {
                     <button className={state.budget === budget ? 'isSelected' : ''} key={budget} type="button" onClick={() => setState((current) => ({ ...current, budget }))}>{formatBudget(budget)}</button>
                   ))}
                 </div>
-                <p><strong>Budget principle:</strong> leave room for the entire scheme. Furniture you keep does not count as a new purchase. You will see any image-generation credit requirement before proceeding.</p>
+                <p><strong>Budget principle:</strong> this is the maximum for the new furniture collection. Furniture you keep does not count. If you later swap an item for a more expensive one, we’ll show whether the collection goes over this limit.</p>
               </div>
             </>
           ) : null}
