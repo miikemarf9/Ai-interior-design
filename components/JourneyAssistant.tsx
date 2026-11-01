@@ -168,6 +168,7 @@ export function JourneyAssistant({
 
   if (!visible) return null;
 
+  const isChoosingProducts = currentStep === 3 && Boolean(nextDisclaimer);
   const stageSummaries = [
     intakeSummary
       ? [intakeSummary.roomType === 'living_room' ? 'Living room' : intakeSummary.roomType, photoName ? 'Photo added' : ''].filter(Boolean).join(' · ')
@@ -184,7 +185,7 @@ export function JourneyAssistant({
       {open ? (
         <aside
           id={panelId}
-          className="journeyAssistantPanel"
+          className={'journeyAssistantPanel' + (isChoosingProducts ? ' isProductChoosing' : '')}
           aria-label="Your progress and next step"
         >
             <div className="journeyAssistantHeader">
@@ -192,7 +193,7 @@ export function JourneyAssistant({
                 <p className="eyebrow">Your progress</p>
                 <span>{String(Math.min(4, Math.max(1, currentStep))).padStart(2, '0')} / 04</span>
               </div>
-              <button type="button" className="journeyAssistantClose" aria-label="Close progress panel" onClick={closePanel}>×</button>
+              {currentStep !== 3 ? <button type="button" className="journeyAssistantClose" aria-label="Close progress panel" onClick={closePanel}>×</button> : null}
             </div>
 
             <ol className="journeyAssistantSteps">
@@ -201,10 +202,16 @@ export function JourneyAssistant({
                 const complete = number < currentStep;
                 const current = number === currentStep;
                 const className = 'journeyAssistantStep' + (complete ? ' isComplete' : '') + (current ? ' isCurrent' : '');
+                const availableNext = number === currentStep + 1 && currentStep === 3 && !nextDisclaimer && Boolean(nextHref);
 
                 return (
                   <li key={stage.label}>
-                    {complete && onStageClick && number <= 3 ? (
+                    {availableNext ? (
+                      <Link className={className + ' isAvailableNext'} href={nextHref!}>
+                        <span className="journeyAssistantStepNumber">{number}</span>
+                        <span><strong>{stage.label}</strong><small>{stageSummaries[index] || stage.detail}</small></span>
+                      </Link>
+                    ) : complete && onStageClick && number <= 3 ? (
                       <button type="button" className={className} onClick={() => onStageClick(number)}>
                         <span className="journeyAssistantStepNumber">✓</span>
                         <span><strong>{stage.label}</strong><small>{stageSummaries[index] || stage.detail}</small></span>
