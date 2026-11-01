@@ -5,6 +5,17 @@ export const runtime = "nodejs";
 
 type ItemDefinition = { label: string; categories: string[]; recommended: boolean };
 
+type StyleDefinition = { name: string; slug: string };
+
+const livingRoomStyles: StyleDefinition[] = [
+  { name: "Modern Organic", slug: "warm-minimal" },
+  { name: "Modern Country", slug: "modern-british" },
+  { name: "Japandi", slug: "scandi" },
+  { name: "Mid-Century Modern", slug: "mid-century" },
+  { name: "Bold & Colourful", slug: "colourful" },
+  { name: "Contemporary Classic", slug: "classic" },
+];
+
 const livingRoomItems: ItemDefinition[] = [
   { label: "Sofa", categories: ["sofas"], recommended: true },
   { label: "Armchairs", categories: ["armchairs"], recommended: true },
@@ -60,8 +71,7 @@ export async function GET(request: Request) {
     const roomLength = positiveCm(params.get("roomLengthCm"));
     const ceiling = positiveCm(params.get("ceilingCm"));
     const dislikes = (params.get("dislikes") || "").trim().toLowerCase();
-    const filtered = current.filter(item => {
-      if (wantedStyles.length && !item.styles.some(style => wantedStyles.includes(style))) return false;
+    const hardFiltered = current.filter(item => {
       if (maxPriceMinor !== null && item.offer.priceMinor > maxPriceMinor) return false;
       if (roomWidth !== null && roomLength !== null) {
         const shortest = Math.min(roomWidth, roomLength) * 10;
@@ -76,6 +86,9 @@ export async function GET(request: Request) {
       }
       return true;
     });
+    const filtered = hardFiltered.filter(item =>
+      !wantedStyles.length || item.styles.some(style => wantedStyles.includes(style))
+    );
 
     const definitions = roomType === "living_room" ? livingRoomItems : bedroomItems;
     const items = definitions.map(definition => {
@@ -83,7 +96,11 @@ export async function GET(request: Request) {
       const count = filtered.filter(candidate => definition.categories.includes(candidate.category)).length;
       return { label: definition.label, recommended: definition.recommended, available: count > 0, count, catalogueCount };
     });
-    return NextResponse.json({ roomType, items });
+    const styles = (roomType === "living_room" ? livingRoomStyles : []).map(style => ({
+      name: style.name,
+      available: hardFiltered.some(candidate => candidate.styles.includes(style.slug)),
+    }));
+    return NextResponse.json({ roomType, items, styles });
   } catch (error) {
     console.error("Room product categories failed", error);
     return NextResponse.json({ error: "We could not check the reviewed product list." }, { status: 500 });
