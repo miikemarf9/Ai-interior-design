@@ -1,6 +1,7 @@
 export async function* readCsvObjects(
   body: ReadableStream<Uint8Array>,
   delimiter = ",",
+  skipRows = 0,
 ): AsyncGenerator<Record<string, string>> {
   const reader = body.getReader();
   const decoder = new TextDecoder("utf-8");
@@ -9,21 +10,35 @@ export async function* readCsvObjects(
   let field = "";
   let quoted = false;
   let pendingQuote = false;
+  let skippedRows = 0;
+  let skipCurrentRow = false;
 
   const emit = () => {
-    row.push(field);
-    field = "";
     if (!headers) {
+      row.push(field);
       headers = row.map((value) => value.replace(/^\uFEFF/, "").trim());
       row = [];
+      skipCurrentRow = skipRows > 0;
+      field = "";
       return null;
     }
 
+    if (skipCurrentRow) {
+      skippedRows += 1;
+      row = [];
+      field = "";
+      skipCurrentRow = skippedRows < skipRows;
+      return null;
+    }
+
+    row.push(field);
+    field = "";
     const object: Record<string, string> = {};
     headers.forEach((header, index) => {
       object[header] = row[index] ?? "";
     });
     row = [];
+    skipCurrentRow = skippedRows < skipRows;
     return object;
   };
 
@@ -37,7 +52,7 @@ export async function* readCsvObjects(
       if (pendingQuote) {
         pendingQuote = false;
         if (char === '"') {
-          field += '"';
+          if (!skipCurrentRow) field += '"';
           continue;
         }
         quoted = false;
@@ -55,12 +70,12 @@ export async function* readCsvObjects(
       if (char === '"') {
         quoted = true;
       } else if (char === delimiter) {
-        row.push(field);
+        if (!skipCurrentRow) row.push(field);
         field = "";
       } else if (char === "\n") {
         const object = emit();
         if (object) yield object;
-      } else if (char !== "\r") {
+      } else if (char !== "\r" && !skipCurrentRow) {
         field += char;
       }
     }

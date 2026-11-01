@@ -1,19 +1,60 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isUsefulLivingRoomCandidate, normalizeLegacyAwinRow, type FeedCandidate } from "@/lib/catalog/ingest/awin";
 import { readCsvObjects } from "@/lib/catalog/ingest/csv";
-import { getFeedSource, stageFeedCandidates } from "@/lib/catalog/ingest/stage";
+import { getFeedSource, rejectFeedCandidates, stageFeedCandidates } from "@/lib/catalog/ingest/stage";
 import { getCatalogDb } from "@/lib/catalog/neon";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const PER_CATEGORY_LIMIT = 80;
-const SCAN_LIMIT = 20_000;
+const SCAN_LIMIT = 1_000;
+const MAX_STAGED_PER_BATCH = 20;
+const MAX_PER_CATEGORY_PER_BATCH = 5;
+const MINIMUM_QUALITY_SCORE = 65;
+
+async function decompressGzipIfNeeded(body: ReadableStream<Uint8Array>) {
+  const reader = body.getReader();
+  const first = await reader.read();
+  if (first.done) {
+    return new ReadableStream<Uint8Array>({ start(controller) { controller.close(); } });
+  }
+
+  const prefix = first.value;
+  const replay = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(prefix);
+    },
+    async pull(controller) {
+      const next = await reader.read();
+      if (next.done) controller.close();
+      else controller.enqueue(next.value);
+    },
+    cancel(reason) {
+      return reader.cancel(reason);
+    },
+  });
+
+  if (prefix.length >= 2 && prefix[0] === 0x1f && prefix[1] === 0x8b) {
+    return replay.pipeThrough(new DecompressionStream("gzip") as unknown as ReadableWritablePair<Uint8Array, Uint8Array>);
+  }
+
+  return replay;
+}
+
+function matchesSecret(expected: string | undefined, supplied: string | null) {
+  if (!expected || !supplied) return false;
+  const expectedBytes = Buffer.from(expected);
+  const suppliedBytes = Buffer.from(supplied);
+  return expectedBytes.length === suppliedBytes.length && timingSafeEqual(expectedBytes, suppliedBytes);
+}
 
 function authorized(request: Request) {
-  const secret = process.env.CATALOG_IMPORT_SECRET;
-  if (!secret) return false;
-  return request.headers.get("authorization") === `Bearer ${secret}`;
+  const importSecret = process.env.CATALOG_IMPORT_SECRET;
+  const reviewSecret = process.env.CATALOG_REVIEW_SECRET;
+  return matchesSecret(importSecret, request.headers.get("authorization")?.replace(/^Bearer /, "") ?? null)
+    || matchesSecret(reviewSecret, request.headers.get("x-catalog-review-key"));
 }
 
 export async function POST(request: Request) {
@@ -21,7 +62,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const body = await request.json() as { retailerSlug?: string };
+  const body = await request.json() as { retailerSlug?: string; scanOffset?: number; minimumPriceMinor?: number };
+  const scanOffset = Number.isSafeInteger(body.scanOffset) ? Math.max(0, body.scanOffset as number) : 0;
+  const minimumPriceMinor = Number.isSafeInteger(body.minimumPriceMinor) ? Math.max(0, body.minimumPriceMinor as number) : 0;
   const retailerSlug = body.retailerSlug?.trim();
   if (!retailerSlug) {
     return NextResponse.json({ error: "retailerSlug is required." }, { status: 400 });
@@ -54,7 +97,17 @@ export async function POST(request: Request) {
 
   let scanned = 0;
   let accepted = 0;
+  let reachedEnd = true;
+  let mappedRows = 0;
+  let withCategory = 0;
+  let withPrice = 0;
+  let withImage = 0;
+  let withGbp = 0;
+  let available = 0;
+  let qualityAtLeast55 = 0;
+  let sampleColumns: string[] = [];
   const byCategory = new Map<string, FeedCandidate[]>();
+  const ineligibleExternalIds: string[] = [];
 
   try {
     const response = await fetch(feedUrl, {
@@ -65,12 +118,33 @@ export async function POST(request: Request) {
       throw new Error(`Awin feed returned HTTP ${response.status}`);
     }
 
-    for await (const row of readCsvObjects(response.body)) {
+    const csvBody = await decompressGzipIfNeeded(response.body);
+    for await (const row of readCsvObjects(csvBody, ",", scanOffset)) {
+      if (scanned >= SCAN_LIMIT) {
+        reachedEnd = false;
+        break;
+      }
       scanned += 1;
-      if (scanned > SCAN_LIMIT) break;
+      if (sampleColumns.length === 0) sampleColumns = Object.keys(row);
 
       const candidate = normalizeLegacyAwinRow(row);
-      if (!candidate || !isUsefulLivingRoomCandidate(candidate) || !candidate.normalizedCategorySlug) continue;
+      if (!candidate) continue;
+      mappedRows += 1;
+      if (candidate.normalizedCategorySlug) withCategory += 1;
+      if (candidate.priceMinor !== null) withPrice += 1;
+      if (candidate.imageUrl) withImage += 1;
+      if (candidate.currency === "GBP") withGbp += 1;
+      if (["in_stock", "low_stock", "preorder"].includes(candidate.availability)) available += 1;
+      if (candidate.qualityScore >= 55) qualityAtLeast55 += 1;
+
+      if (minimumPriceMinor > 0 && (candidate.priceMinor === null || candidate.priceMinor < minimumPriceMinor)) continue;
+
+      if (candidate.qualityScore < MINIMUM_QUALITY_SCORE) continue;
+
+      if (!isUsefulLivingRoomCandidate(candidate) || !candidate.normalizedCategorySlug) {
+        ineligibleExternalIds.push(candidate.externalProductId);
+        continue;
+      }
 
       const bucket = byCategory.get(candidate.normalizedCategorySlug) ?? [];
       if (bucket.length >= PER_CATEGORY_LIMIT) continue;
@@ -79,8 +153,20 @@ export async function POST(request: Request) {
       accepted += 1;
     }
 
-    const candidates = [...byCategory.values()].flat();
+    const candidates = [...byCategory.entries()]
+      .map(([, values]) => values
+        .sort((a, b) => (b.priceMinor ?? 0) - (a.priceMinor ?? 0) || b.qualityScore - a.qualityScore)
+        .slice(0, MAX_PER_CATEGORY_PER_BATCH))
+      .flatMap((values) => values)
+      .sort((a, b) => (b.priceMinor ?? 0) - (a.priceMinor ?? 0) || b.qualityScore - a.qualityScore)
+      .slice(0, MAX_STAGED_PER_BATCH);
+    const selectedCategoryCounts = candidates.reduce<Record<string, number>>((counts, candidate) => {
+      const category = candidate.normalizedCategorySlug ?? "uncategorized";
+      counts[category] = (counts[category] ?? 0) + 1;
+      return counts;
+    }, {});
     const staged = await stageFeedCandidates(source, candidates);
+    const rejected = await rejectFeedCandidates(source, ineligibleExternalIds);
 
     await sql.query(
       `update public.catalog_sync_runs
@@ -88,9 +174,9 @@ export async function POST(request: Request) {
            finished_at=now(),
            records_seen=$2,
            records_inserted=$3,
-           metadata=jsonb_build_object('retailer_slug',$4,'category_counts',$5::jsonb)
+           metadata=jsonb_build_object('retailer_slug',$4::text,'category_counts',$5::jsonb,'scan_offset',$6::integer,'minimum_price_minor',$7::integer,'reached_end',$8::boolean)
        where id=$1::uuid`,
-      [runId, scanned, staged, retailerSlug, JSON.stringify(Object.fromEntries([...byCategory].map(([key, value]) => [key, value.length])))],
+      [runId, scanned, staged, retailerSlug, JSON.stringify(selectedCategoryCounts), scanOffset, minimumPriceMinor, reachedEnd],
     );
 
     await sql.query(
@@ -107,7 +193,21 @@ export async function POST(request: Request) {
       scanned,
       accepted,
       staged,
-      categories: Object.fromEntries([...byCategory].map(([key, value]) => [key, value.length])),
+      rejected,
+      categories: selectedCategoryCounts,
+      scanOffset,
+      minimumPriceMinor,
+      reachedEnd,
+      diagnostics: {
+        feedColumns: sampleColumns,
+        mappedRows,
+        withCategory,
+        withPrice,
+        withImage,
+        gbp: withGbp,
+        available,
+        qualityAtLeast55,
+      },
       promoted: 0,
       message: "Candidates staged for curation. Nothing was made customer-visible automatically.",
     });

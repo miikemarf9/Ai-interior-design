@@ -22,6 +22,7 @@ type CandidateRow = {
   styles: string[];
   materials: string[];
   colours: string[];
+  feature_tags: string[];
   offer_id: string;
   retailer_name: string;
   retailer_slug: string;
@@ -52,6 +53,7 @@ export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]
       c.slug as category_slug,
       c.name as category_name,
       p.design_summary,
+      coalesce(v.selection_metadata->'featureTags', p.selection_metadata->'featureTags', '[]'::jsonb) as feature_tags,
       v.width_mm,
       v.height_mm,
       v.depth_mm,
@@ -121,6 +123,7 @@ export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]
       where ro.variant_id = v.id
         and ro.id = any($2::uuid[])
         and ro.is_active
+        and ro.last_price_checked_at > now() - interval '36 hours'
         and r.status = 'active'
         and r.ships_to_uk
         and ro.currency = 'GBP'
@@ -174,6 +177,7 @@ export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]
     styles: Array.isArray(row.styles) ? row.styles : [],
     materials: Array.isArray(row.materials) ? row.materials : [],
     colours: Array.isArray(row.colours) ? row.colours : [],
+    featureTags: Array.isArray(row.feature_tags) ? row.feature_tags : [],
     curationScore: row.curation_score,
     qualityScore: row.quality_score,
     offer: {

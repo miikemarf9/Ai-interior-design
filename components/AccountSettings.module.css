@@ -1,0 +1,24 @@
+.settingsPage { min-height: 100vh; padding-bottom: 24px; }
+.settingsIntro { padding-top: 70px; padding-bottom: 34px; }
+.settingsIntro .eyebrow { margin-bottom: 13px; }
+.settingsIntro h1 { margin: 0 0 14px; font-size: clamp(48px, 6vw, 76px); line-height: 1; letter-spacing: -.035em; }
+.settingsIntro > p:last-child { color: var(--muted); font-size: 14px; }
+.profileCard { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 30px; margin-bottom: 22px; padding: 26px 30px; border: 1px solid var(--line); background: #fff; }
+.profileCard h2 { margin: 8px 0 0; font-family: var(--display); font-size: 32px; font-weight: 400; }
+.profileEmail { display: grid; gap: 7px; justify-items: start; }
+.profileEmail small { color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .08em; }
+.profileEmail strong { font-size: 13px; overflow-wrap: anywhere; }
+.verified, .unverified { padding: 5px 8px; border-radius: 999px; background: #e8efe7; color: #365b40; font-size: 9px; }
+.unverified { background: #f4ead6; color: #765b2a; }
+.settingsPrivacy :global(.accountPrivacy) { margin: 0 0 60px; }
+.settingsCallout { margin-top: 24px; padding: 30px; border: 1px solid var(--line); background: #fff; }
+.settingsCallout h2 { margin: 0 0 8px; font-family: var(--display); font-size: 34px; font-weight: 400; }
+.settingsCallout p, .settingsMessage { color: var(--muted); }
+.settingsCallout .button { display: inline-flex; margin-top: 8px; }
+.settingsError { padding: 14px 16px; border: 1px solid #d6b5a4; background: #fff8f3; }
+
+@media (max-width: 680px) {
+  .settingsIntro { padding-top: 48px; }
+  .profileCard { grid-template-columns: 1fr; gap: 22px; padding: 22px; }
+  .settingsCallout { padding: 22px; }
+}

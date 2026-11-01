@@ -63,13 +63,13 @@ See `database/README.md`.
 
 ## Credit principle
 
-New verified accounts receive **3 free design credits**.
+New verified accounts receive **1 free image credit**. Customers can buy **10 more images for £2**. The verified owner account is exempt from the site's credit counter and remains subject to the connected image API's usage limit.
 
 - Written brief creation: free
 - Written brief revisions: free
-- Future room image generation: 1 design credit
-- Future room regeneration: 1 design credit
-- Confirmed qualifying purchase: planned +1 reward credit
+- Room image generation: 1 image credit
+- Room regeneration: 1 image credit
+- 10-image pack: £2 through Stripe Checkout
 
 See `CREDIT_POLICY.md`.
 
@@ -114,7 +114,7 @@ Production logging records provider, model, prompt version, product IDs, token u
 
 Original room photos and rendered outputs are private server assets. The current MVP uses Postgres bytea storage because Neon branchable object storage is not available in the London region. Move binary assets to dedicated object storage before meaningful scale.
 
-Development credits remain disabled by default. Stage 10 verified accounts now own production credit wallets and receive the one-time 3-credit signup grant after email verification.
+Development credits remain disabled by default. Verified accounts receive the one-time 1-credit signup grant after email verification. Checkout requires `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` on the production Worker, with a Stripe webhook for `checkout.session.completed` pointed at `/api/stripe/webhook`.
 
 
 ## Continuous integration
@@ -154,7 +154,7 @@ Roomfound now has native customer accounts backed by Neon:
 - HTTP-only 30-day session cookies
 - email verification
 - password reset
-- 3-credit grant once the email is verified
+- 1-credit grant once the email is verified
 - anonymous room claiming on signup/sign-in
 - account-owned room uploads and private assets
 - `My rooms` dashboard

@@ -15,7 +15,7 @@ export async function GET(
      from public.growth_publications gp
      join public.render_generations g on g.id=gp.generation_id and g.status='succeeded'
      join public.design_assets a on a.id=g.result_asset_id
-     where gp.slug=$1 and gp.status='published'
+     where gp.slug=$1 and gp.status='published' and gp.product_count>0
      limit 1`,
     [slug],
   ) as Array<{mime_type:string;external_url:string|null;base64:string|null}>;

@@ -36,7 +36,7 @@ export default function TermsPage(){
 
         <section>
           <h2>Design credits</h2>
-          <p>Editing the written brief and reviewing products does not use a render credit. Starting an image generation uses one design credit. If Transform My Room records the generation as failed, the beta credit system automatically returns that credit. Free or promotional design credits have no cash value unless a separate paid-credit product explicitly states otherwise.</p>
+          <p>Each verified customer account receives one free image generation. After that, a one-time £2 payment buys 10 image credits. There is no recurring subscription. Each image generation or correction uses one credit. If Transform My Room records a generation as failed, the credit is returned. Paid credits are added after payment confirmation and have no cash withdrawal value.</p>
         </section>
 
         <section>

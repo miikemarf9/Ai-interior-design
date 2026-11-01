@@ -74,7 +74,7 @@ export function CommunityGallery(){
           <select value={roomType} onChange={event=>setRoomType(event.target.value)}>
             <option value="">All rooms</option>
             <option value="living_room">Living rooms</option>
-            <option value="bedroom">Bedrooms</option>
+            <option value="bedroom" disabled>Bedrooms · coming soon</option>
           </select>
         </label>
         <label>Style
@@ -98,7 +98,7 @@ export function CommunityGallery(){
         <div className={styles.emptyState}>
           <p className={styles.eyebrow}>A new community starts here</p>
           <h2>No shared rooms yet</h2>
-          <p>Once someone publishes a finished room, it will appear here. You can browse the style examples now or create your own room.</p>
+          <p>Once someone publishes a room with reviewed products, it will appear here. Explore style inspiration or create your own product-backed room plan.</p>
           <div><Link href="/ideas">Explore room ideas</Link><Link className="button buttonPrimary" href="/design">Design my room</Link></div>
         </div>
       ) : null}

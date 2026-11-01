@@ -13,6 +13,10 @@ const securityHeaders=[
 
 const nextConfig:NextConfig={
   poweredByHeader:false,
+  // The homepage photographs are already optimised WebP/AVIF files.
+  // Serve them directly on Cloudflare rather than using the /_next/image
+  // transformation endpoint (requires a separate Images binding).
+  images: { unoptimized: true },
   async headers(){
     return [{source:"/:path*",headers:securityHeaders}];
   },

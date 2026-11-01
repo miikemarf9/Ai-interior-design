@@ -34,8 +34,8 @@ The dashboard returns `beta.launchReady=false` while any hard gate fails:
 - Room scope: living rooms only
 - New accounts: invite code
 - Existing verified accounts: normal sign-in
-- Render credits: verified-account credits only
-- Paid credit checkout: **not enabled in this beta**
+- Render credits: 1 free image per verified account, then £2 for 10 images
+- Paid credit checkout: requires production Stripe API and webhook secrets
 - Affiliate commerce: only current live UK offers can redirect
 - SEO collections: noindex until their existing Stage 12 real-room threshold is met
 

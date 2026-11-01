@@ -8,7 +8,8 @@ import ui from './RoomBrief.module.css';
 
 type CreativeFreedom = 'Safe' | 'Balanced' | 'Surprise me';
 type IntakeState = IntakeForBrief;
-type CatalogueItemChoice = { label: string; recommended: boolean; available: boolean; count: number };
+type CatalogueItemChoice = { label: string; recommended: boolean; available: boolean; count: number; catalogueCount: number };
+type CatalogueStyleChoice = { name: string; available: boolean };
 
 const initialState: IntakeState = {
   roomType: 'living_room', projectGoal: 'refresh', retainedFurniture: [],
@@ -119,17 +120,23 @@ export function DesignIntake() {
   const [designId, setDesignId] = useState('');
   const [roomAssetId, setRoomAssetId] = useState('');
   const [catalogueItems, setCatalogueItems] = useState<CatalogueItemChoice[]>([]);
+  const [catalogueStyles, setCatalogueStyles] = useState<CatalogueStyleChoice[]>([]);
   const [catalogueLoading, setCatalogueLoading] = useState(false);
   const [catalogueError, setCatalogueError] = useState('');
   const [catalogueRetry, setCatalogueRetry] = useState(0);
+  const [unavailableLabels, setUnavailableLabels] = useState<string[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
   const savedAnswers = useRef('');
+  const defaultedCatalogueRooms = useRef(new Set<string>());
+  const latestState = useRef(state);
+  latestState.current = state;
   const roomName = state.roomType === 'bedroom' ? 'bedroom' : 'living room';
   const keepItems = state.roomType === 'bedroom' ? ['Bed', 'Bedside tables', 'Wardrobe', 'Chest of drawers', 'Flooring', 'Curtains', 'Lighting', 'Artwork'] : livingKeepItems;
   const availableItemChoices = catalogueItems.filter(item => item.available);
-  const recommendedItems = catalogueItems.filter(item => item.recommended).map(item => item.label);
+  const recommendedItems = catalogueItems.filter(item => item.recommended && item.available).map(item => item.label);
   const availableRecommendedItems = catalogueItems.filter(item => item.recommended && item.available).map(item => item.label);
-  const comingSoonItems = catalogueItems.filter(item => !item.available).map(item => item.label);
+  const comingSoonItems = catalogueItems.filter(item => item.catalogueCount === 0).map(item => item.label);
+  const noMatchItems = catalogueItems.filter(item => item.catalogueCount > 0 && !item.available).map(item => item.label);
   const uses = state.roomType === 'bedroom' ? [
     { name: 'Sleeping', detail: 'A calm, comfortable place to rest' },
     { name: 'Storage', detail: 'Clothes, bedding and everyday belongings' },
@@ -203,18 +210,35 @@ export function DesignIntake() {
     setCatalogueLoading(true);
     setCatalogueError('');
 
-    fetch(`/api/products/categories?roomType=${encodeURIComponent(state.roomType || 'living_room')}`, { cache: 'no-store', signal: controller.signal })
+    const params = new URLSearchParams({ roomType: state.roomType || 'living_room', budget: String(state.budget) });
+    if (state.styles.length) params.set('styles', state.styles.join(','));
+    if (state.change.length) params.set('items', state.change.join(','));
+    if (state.measurements.width) params.set('roomWidthCm', state.measurements.width);
+    if (state.measurements.length) params.set('roomLengthCm', state.measurements.length);
+    if (state.measurements.height) params.set('ceilingCm', state.measurements.height);
+    if (state.dislikes.trim()) params.set('dislikes', state.dislikes.trim());
+
+    fetch(`/api/products/categories?${params.toString()}`, { cache: 'no-store', signal: controller.signal })
       .then(async response => {
-        const payload = await response.json() as { items?: CatalogueItemChoice[]; error?: string };
+        const payload = await response.json() as { items?: CatalogueItemChoice[]; styles?: CatalogueStyleChoice[]; error?: string };
         if (!response.ok || !Array.isArray(payload.items)) throw new Error(payload.error || 'The product list could not be checked.');
         if (controller.signal.aborted) return;
         const items = payload.items;
+        setCatalogueStyles(Array.isArray(payload.styles) ? payload.styles : []);
         setCatalogueItems(items);
         const availableLabels = new Set(items.filter(item => item.available).map(item => item.label));
         const suggested = items.filter(item => item.recommended && item.available).map(item => item.label);
+        const catalogueLabels = new Set(items.filter(item => item.catalogueCount > 0).map(item => item.label));
+        const removed = latestState.current.change.filter(label => catalogueLabels.has(label) && !availableLabels.has(label));
+        setUnavailableLabels(current => Array.from(new Set([...current, ...removed])).filter(label => {
+          const item = items.find(choice => choice.label === label);
+          return Boolean(item && item.catalogueCount > 0 && !item.available);
+        }));
+        const firstCheckForRoom = !defaultedCatalogueRooms.current.has(state.roomType || 'living_room');
+        defaultedCatalogueRooms.current.add(state.roomType || 'living_room');
         setState(current => {
           const saved = current.change.filter(item => availableLabels.has(item));
-          return { ...current, change: saved.length ? saved : suggested };
+          return { ...current, change: firstCheckForRoom && !saved.length ? suggested : saved };
         });
       })
       .catch(error => {
@@ -226,7 +250,7 @@ export function DesignIntake() {
       });
 
     return () => controller.abort();
-  }, [hydrated, state.roomType, catalogueRetry]);
+  }, [hydrated, state.roomType, state.styles, state.budget, state.measurements.width, state.measurements.length, state.measurements.height, state.dislikes, catalogueRetry]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -251,12 +275,13 @@ export function DesignIntake() {
   }, [step]);
 
   const canContinue = useMemo(() => {
-    if (step === 1) return !catalogueLoading && !catalogueError;
+    if (step === 0) return state.roomType === 'living_room';
+    if (step === 1) return !catalogueLoading && !catalogueError && state.change.some(label => catalogueItems.some(item => item.label === label && item.available));
     if (step === 2) return Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto);
     if (step === 9) return validMeasurements;
-    if (step === 4) return state.styles.length > 0;
+    if (step === 4) return !catalogueLoading && !catalogueError && state.styles.some(style => catalogueStyles.some(option => option.name === style && option.available));
     return true;
-  }, [step, photoUrl, designId, roomAssetId, uploadingPhoto, state.styles.length, validMeasurements, catalogueLoading, catalogueError]);
+  }, [step, state.roomType, photoUrl, designId, roomAssetId, uploadingPhoto, state.styles, state.change, validMeasurements, catalogueLoading, catalogueError, catalogueStyles, catalogueItems]);
 
   function saveRuntime(next: { ownerKey: string; designId: string; roomAssetId: string; photoName: string }) {
     window.localStorage.setItem('roomfound-design-runtime-v1', JSON.stringify(next));
@@ -334,47 +359,6 @@ export function DesignIntake() {
     }
   }
 
-  async function useExampleRoom() {
-    const exampleUrl = 'https://images.unsplash.com/photo-1753911372198-50b1b254ad4d?auto=format&fit=crop&q=84&w=1600';
-    setPhotoError('');
-    setUploadingPhoto(true);
-    setPhotoUrl(exampleUrl);
-    setPhotoName('Example living room');
-
-    try {
-      const key = ownerKey || crypto.randomUUID();
-      const response = await fetch('/api/designs/room-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ownerKey: key,
-          designId: designId || null,
-          exampleUrl,
-          roomType: 'living_room',
-        }),
-      });
-      const data = await response.json();
-
-      if (!response.ok || !data.assetId || !data.designId) {
-        throw new Error(data.error || 'Example room could not be stored.');
-      }
-
-      saveRuntime({
-        ownerKey: data.ownerKey || key,
-        designId: data.designId,
-        roomAssetId: data.assetId,
-        photoName: 'Example living room',
-      });
-    } catch (error) {
-      setPhotoError(error instanceof Error ? error.message : 'Example room could not be stored.');
-      setDesignId('');
-      setRoomAssetId('');
-      setPhotoUrl('');
-    } finally {
-      setUploadingPhoto(false);
-    }
-  }
-
   function next() {
     if (!canContinue) return;
     if (step === 1) {
@@ -441,7 +425,7 @@ export function DesignIntake() {
     <div className="designIntake">
       <div className="intakeProgress" aria-label="Design intake progress">
         <div className="intakeProgressMeta">
-          <span>{complete ? 'Review' : `Step ${step + 1} of 10`}</span>
+          <span>{complete ? 'Review' : `Step ${step + 1} of 11`}</span>
           <strong>{complete ? 'Ready for your brief' : stepLabel}</strong>
           <span>{Math.round(progress)}%</span>
         </div>
@@ -506,7 +490,7 @@ export function DesignIntake() {
               <div className={ui.setup}>
                 <label className={ui.field}>Room type
                   <select value={state.roomType} disabled={uploadingPhoto} onChange={event => changeRoomType(event.target.value as 'living_room' | 'bedroom')}>
-                    <option value="living_room">Living room</option><option value="bedroom">Bedroom</option>
+                    <option value="living_room">Living room</option><option value="bedroom" disabled>Bedroom · coming soon</option>
                   </select>
                 </label>
                 <label className={ui.field}>What would you like to do?
@@ -515,39 +499,50 @@ export function DesignIntake() {
                   </select>
                 </label>
               </div>
-              {state.roomType === 'bedroom' && <p className={ui.note}>You can prepare and edit a bedroom brief. Bedroom furniture selection and image generation are not available yet.</p>}
+              {state.roomType === 'bedroom' && <p className={ui.note}>Bedroom product collections are being prepared. Choose Living room to start a design with reviewed furniture and retailer links.</p>}
 
             </>
           ) : null}
 
+          {unavailableLabels.length ? <p className={ui.note} role="status">{unavailableLabels.join(', ')} {unavailableLabels.length === 1 ? 'is' : 'are'} no longer selectable because no reviewed item matches your current style, budget, room measurements or exclusions. <button className="textButton" type="button" onClick={() => setStep(1)}>Review item choices</button></p> : null}
+
           {step === 1 ? (
             <>
-              <StepIntro eyebrow="2 · Choose items" title="What would you like us to include?" copy={state.roomType === 'bedroom' ? "Choose the furniture types to plan around. Bedroom product recommendations are being prepared; you can still save your room plan." : "Tick the things you would like us to consider. Suggested choices without reviewed products are clearly marked as coming soon."} />
+              <StepIntro eyebrow="2 · Choose items" title="What would you like us to include?" copy={state.roomType === 'bedroom' ? "Choose the furniture types to plan around. Bedroom product recommendations are being prepared; you can still save your room plan." : "Choose from item types with reviewed products matching your current style, budget and room measurements. This list updates as you change those answers."} />
               <div className="choiceHint">
                 <span className="microLabel">Suggested for a {roomName}</span>
-                <p>{recommendedItems.length ? recommendedItems.join(' · ') : 'Checking suggestions…'}</p>
+                <p>{catalogueLoading ? 'Checking suggestions…' : recommendedItems.length ? recommendedItems.join(' · ') : 'No suggested item types match your current choices.'}</p>
               </div>
               {catalogueLoading ? <p aria-live="polite">Checking the reviewed product list…</p> : null}
               {catalogueError ? (
                 <p className={ui.error} role="alert">{catalogueError} <button className="textButton" type="button" onClick={() => setCatalogueRetry(value => value + 1)}>Try again</button></p>
               ) : null}
-              {availableItemChoices.length ? (
+              {!catalogueLoading && availableItemChoices.length ? (
                 <ChoiceGrid
                   items={availableItemChoices.filter(item => !state.keep.includes(item.label)).map(item => item.label)}
                   selected={state.change}
-                  onChange={(value) => setState((current) => ({ ...current, change: toggle(current.change, value) }))}
+                  onChange={(value) => { setUnavailableLabels([]); setState((current) => ({ ...current, change: toggle(current.change, value) })); }}
                 />
               ) : !catalogueLoading && !catalogueError ? (
-                <p className="choiceHint">There are no reviewed {roomName} products to tick yet. You can still save your room plan.</p>
+                <p className="choiceHint">There are no reviewed {roomName} products matching these choices yet. Adjust your budget or filters before continuing with a shoppable room.</p>
               ) : null}
-              {!catalogueLoading && !catalogueError && comingSoonItems.length ? <p className="choiceHint">Coming to the reviewed catalogue: {comingSoonItems.join(' · ')}.</p> : null}
+              {!catalogueLoading && !catalogueError && availableItemChoices.length > 0 && !state.change.some(label => availableItemChoices.some(item => item.label === label)) ? (
+                <p className="choiceHint" role="status">Choose at least one reviewed furniture type to continue. This keeps your room plan tied to products you can shop.</p>
+              ) : null}
+              {!catalogueLoading && !catalogueError && noMatchItems.length ? (
+                <p className="choiceHint" role="status">
+                  No reviewed item matches your current choices for: {noMatchItems.join(' · ')}. They cannot be selected unless the style, budget, room measurements or exclusions change.{' '}
+                  <button className="textButton" type="button" onClick={() => setState(current => ({ ...current, styles: [], budget: 10000, dislikes: '', measurements: { ...current.measurements, width: '', length: '', height: '' } }))}>Show all reviewed options</button>
+                </p>
+              ) : null}
+              {!catalogueLoading && !catalogueError && comingSoonItems.length ? <p className="choiceHint">Not in the reviewed catalogue yet: {comingSoonItems.join(' · ')}.</p> : null}
               {state.roomType === 'bedroom' ? <p className={ui.note}>Bedroom products and image generation are not available yet; this list is for planning only.</p> : null}
               {availableRecommendedItems.length ? (
                 <button className="selectAllButton" type="button" onClick={() => setState((current) => ({ ...current, change: availableRecommendedItems.filter(item => !current.keep.includes(item)) }))}>
                   Use suggested items
                 </button>
               ) : null}
-              <p className="choiceHint">Only checked item types with reviewed products will enter the product shortlist.</p>
+              <p className="choiceHint">Colour and material preferences guide the design. Item types are only selectable when a reviewed product also matches your current hard filters.</p>
             </>
           ) : null}
 
@@ -577,7 +572,6 @@ export function DesignIntake() {
                   <div><strong>01</strong><p>Stand far enough back to show as much of the room as possible.</p></div>
                   <div><strong>02</strong><p>Use daylight if you can. Avoid strong filters or portrait mode.</p></div>
                   <div><strong>03</strong><p>Leave the room as it really is. Existing furniture helps us understand it.</p></div>
-                  {state.roomType !== 'bedroom' && <button className="textArrowLink buttonAsText" type="button" disabled={uploadingPhoto} onClick={useExampleRoom}>Try with an example room <span>→</span></button>}
                 <div><strong>04</strong><p>Your photo is saved privately in your room gallery. Sharing a finished design publicly is a separate choice.</p></div>
                 </aside>
               </div>
@@ -595,26 +589,36 @@ export function DesignIntake() {
 
           {step === 4 ? (
             <>
-              <StepIntro eyebrow="5 · Style discovery" title="Which style feels like home?" copy="Choose the look you want to start with. You can select more than one." />
+              <StepIntro eyebrow="5 · Style discovery" title="Which style feels like home?" copy="Choose a look with reviewed furniture available for your budget and room. You can select more than one." />
               <div className="styleDiscoveryGrid">
                 {styles.map((style) => {
                   const active = state.styles.includes(style.name);
+                  const styleAvailable = !catalogueLoading && !catalogueError && catalogueStyles.some(option => option.name === style.name && option.available);
                   return (
                     <button
                       className={`styleChoice ${active ? 'isSelected' : ''}`}
                       type="button"
                       aria-pressed={active}
+                      aria-disabled={!styleAvailable && !active}
                       key={style.name}
-                      onClick={() => setState((current) => ({ ...current, styles: toggle(current.styles, style.name) }))}
+                      disabled={!styleAvailable && !active}
+                      onClick={() => {
+                        if (styleAvailable || active) setState((current) => ({ ...current, styles: toggle(current.styles, style.name) }));
+                      }}
                     >
                       <img src={style.image} alt="" aria-hidden="true" />
                       <span className="styleChoiceShade" />
-                      <span className="styleChoiceCopy"><strong>{style.name}</strong><small>{style.note}</small></span>
+                      <span className="styleChoiceCopy"><strong>{style.name}</strong><small>{style.note}</small><small>{styleAvailable ? 'Reviewed products available' : active ? 'No longer matches your current filters · remove this style' : 'No reviewed products match your current filters'}</small></span>
                       <i>{active ? '✓' : '+'}</i>
                     </button>
                   );
                 })}
               </div>
+              {catalogueLoading ? <p aria-live="polite">Checking which styles have matching furniture…</p> : null}
+              {catalogueError ? <p className={ui.error} role="alert">{catalogueError} <button className="textButton" type="button" onClick={() => setCatalogueRetry(value => value + 1)}>Try again</button></p> : null}
+              {!catalogueLoading && !catalogueError && !catalogueStyles.some(style => style.available) ? (
+                <p className={ui.note} role="status">No reviewed furniture matches these styles for your chosen item types and filters. <button className="textButton" type="button" onClick={() => setStep(1)}>Change item types</button></p>
+              ) : null}
             </>
           ) : null}
 
@@ -692,9 +696,9 @@ export function DesignIntake() {
 
           {step === 8 ? (
             <>
-              <StepIntro eyebrow="9 · Total room budget" title="What is your furniture budget?" copy="Your allowance for new furniture and accessories. Transform My Room image-generation charges are separate; delivery costs will be confirmed with the products." />
+              <StepIntro eyebrow="9 · Total room budget" title="What is the most you want to spend?" copy="Set the maximum for new furniture and accessories. We’ll keep the initial product collection within this limit where suitable items are available. Image-generation charges are separate; delivery costs are confirmed with the products." />
               <div className="intakeBudget">
-                <strong>{formatBudget(state.budget)}</strong>
+                <strong>{formatBudget(state.budget)} <small>maximum</small></strong>
                 <input
                   type="range"
                   min="750"
@@ -702,7 +706,7 @@ export function DesignIntake() {
                   step="250"
                   value={state.budget}
                   onChange={(event) => setState((current) => ({ ...current, budget: Number(event.target.value) }))}
-                  aria-label="Total room budget"
+                  aria-label="Maximum total room furniture budget"
                 />
                 <div className="budgetRangeLabels"><span>£750</span><span>£10,000</span></div>
                 <div className="budgetPresets">
@@ -710,7 +714,7 @@ export function DesignIntake() {
                     <button className={state.budget === budget ? 'isSelected' : ''} key={budget} type="button" onClick={() => setState((current) => ({ ...current, budget }))}>{formatBudget(budget)}</button>
                   ))}
                 </div>
-                <p><strong>Budget principle:</strong> leave room for the entire scheme. Furniture you keep does not count as a new purchase. You will see any image-generation credit requirement before proceeding.</p>
+                <p><strong>Budget principle:</strong> this is the maximum for the new furniture collection. Furniture you keep does not count. If you later swap an item for a more expensive one, we’ll show whether the collection goes over this limit.</p>
               </div>
             </>
           ) : null}

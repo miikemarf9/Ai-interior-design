@@ -1,8 +1,10 @@
 # Design credit policy
 
-## Launch recommendation
+## Launch policy
 
-**3 free design credits per verified new account.**
+- Each verified customer account receives **1 free image generation**.
+- Customers can buy **10 more image generations for £2** through Stripe Checkout.
+- The verified admin email in `ADMIN_EMAILS` is exempt from the site's image-credit cap. Its usage is still subject to the image provider's account limit and billing.
 
 A design credit is spent only when the system performs a compute-heavy room image generation or regeneration.
 
@@ -20,39 +22,22 @@ A design credit is spent only when the system performs a compute-heavy room imag
 - Regenerate a room image
 - Later: other image-generation actions that have a meaningful model cost
 
-## Why 3 free renders
-
-Three is intentionally between products that offer only one free design and competitors that currently offer five free designs. It gives a homeowner enough room to experience the workflow and recover from one result they dislike without encouraging unlimited image generation.
-
-The free allowance should be issued **once per verified account**, not merely per browser/device.
-
-## Purchase-earned credits
-
-Architecture supports rewarding commerce without making retailer clicks exploitable.
-
-Recommended beta rule:
-
-**Confirmed qualifying purchase from a room → +1 design credit.**
-
-Rules:
-- Do not award on affiliate click.
-- Award only after the affiliate network/direct checkout confirms the conversion.
-- Maximum one purchase reward per qualifying order.
-- Record the order/conversion ID in the immutable credit ledger to prevent duplicate rewards.
-- If affiliate reporting is delayed, show the reward as pending rather than immediately usable.
-- When direct checkout exists, rewards can become instant and more generous.
+The free allowance is issued **once per verified account**, not per browser or device. Failed technical generations are refunded; each successful generation or regeneration uses one image credit.
 
 ## Principle
 
 People should be able to think, refine and get confident for free. Credits pay for expensive visual generation, not conversation.
 
 
-## Stage 10 enforcement
+## Account enforcement
 
 The verified-account rule is now implemented.
 
 - New accounts start with an unverified account wallet and 0 production render credits.
 - Email verification changes the wallet to `verified`.
-- The account receives the 3-credit signup grant exactly once.
+- The account receives the 1-credit signup grant exactly once.
 - The immutable ledger uses a verified-account idempotency key to prevent duplicate signup grants.
 - Anonymous/development wallets are not treated as verified production accounts.
+- A successful £2 Stripe Checkout payment adds 10 credits from the signed `checkout.session.completed` webhook, once per checkout session.
+- Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` on the production Worker. Configure the Stripe webhook to call `/api/stripe/webhook` for `checkout.session.completed`.
+- Set `ADMIN_EMAILS` to the verified owner email. This grants the admin area and bypasses the site's credit counter; the image API's usage limit still applies.

@@ -1,10 +1,12 @@
 import { getCatalogDb } from "@/lib/catalog/neon";
 import { creditPolicy } from "@/lib/credits";
+import { isAdminEmail } from "@/lib/auth/admin";
 
 export type CreditStatus = {
   balance: number;
   verificationStatus: "unverified" | "development" | "verified";
   verifiedRequired: boolean;
+  siteCreditExempt: boolean;
 };
 
 const allowDevelopmentWallets = () =>
@@ -54,14 +56,17 @@ export async function ensureRenderWallet(ownerKey: string): Promise<CreditStatus
   }
 
   const rows = await sql.query(
-    `select balance, verification_status
-     from public.design_credit_wallets
-     where owner_key = $1
+    `select w.balance, w.verification_status,a.email,a.email_verified_at::text as email_verified_at
+     from public.design_credit_wallets w
+     left join public.customer_accounts a on a.id=w.account_id
+     where w.owner_key = $1
      limit 1`,
     [ownerKey],
   ) as Array<{
     balance: number;
     verification_status: "unverified" | "development" | "verified";
+    email: string | null;
+    email_verified_at: string | null;
   }>;
 
   const row = rows[0];
@@ -69,6 +74,7 @@ export async function ensureRenderWallet(ownerKey: string): Promise<CreditStatus
     balance: row?.balance ?? 0,
     verificationStatus: row?.verification_status ?? "unverified",
     verifiedRequired: !allowDevelopmentWallets() && row?.verification_status !== "verified",
+    siteCreditExempt: Boolean(row?.email_verified_at && isAdminEmail(row?.email)),
   };
 }
 
@@ -88,17 +94,18 @@ export async function spendCreditAndCreateGeneration(args: {
   const idempotencyKey = `render-spend:${args.ownerKey}:${args.requestId}`;
 
   const existing = await sql.query(
-    `select
-       g.id::text as generation_id,
-       w.balance,
-       g.status
-     from public.design_credit_ledger l
-     join public.render_generations g on g.id = l.generation_id
-     join public.design_credit_wallets w on w.id = l.wallet_id
-     where l.idempotency_key = $1
+    `select g.id::text as generation_id,w.balance,g.status,
+       coalesce((g.metadata->>'siteCreditExempt')::boolean,false) as site_credit_exempt
+     from public.render_generations g
+     join public.design_credit_wallets w on w.id=g.wallet_id
+     where w.owner_key=$1 and (
+       g.metadata->>'requestId'=$2
+       or exists (select 1 from public.design_credit_ledger l
+         where l.generation_id=g.id and l.idempotency_key=$3)
+     )
      limit 1`,
-    [idempotencyKey],
-  ) as Array<{ generation_id: string; balance: number; status: string }>;
+    [args.ownerKey, idempotencyKey, idempotencyKey],
+  ) as Array<{ generation_id: string; balance: number; status: string; site_credit_exempt: boolean }>;
 
   if (existing[0]) {
     return { ...existing[0], reused: true };
@@ -109,13 +116,19 @@ export async function spendCreditAndCreateGeneration(args: {
     : ["verified"];
 
   const rows = await sql.query(
-    `with debited as (
-      update public.design_credit_wallets
-      set balance = balance - 1, updated_at = now()
-      where owner_key = $1
-        and balance >= 1
-        and verification_status = any($9::text[])
-      returning id, balance
+    `with locked_wallet as (
+      select w.id,w.balance,w.verification_status,
+        (a.email_verified_at is not null and lower(a.email)=any($12::text[])) as site_credit_exempt
+      from public.design_credit_wallets w
+      left join public.customer_accounts a on a.id=w.account_id
+      where w.owner_key=$1 and w.verification_status=any($9::text[])
+        and (w.balance>=1 or (a.email_verified_at is not null and lower(a.email)=any($12::text[])))
+      for update of w
+    ), debited as (
+      update public.design_credit_wallets w
+      set balance=case when lw.site_credit_exempt then w.balance else w.balance-1 end,updated_at=now()
+      from locked_wallet lw where w.id=lw.id
+      returning w.id,w.balance,lw.site_credit_exempt
     ),
     generation as (
       insert into public.render_generations (
@@ -133,7 +146,7 @@ export async function spendCreditAndCreateGeneration(args: {
         'processing',
         $8,
         $10,
-        $11::jsonb
+        $11::jsonb || jsonb_build_object('requestId',$3::text,'siteCreditExempt',d.site_credit_exempt,'creditMode',case when d.site_credit_exempt then 'provider_allowance' else 'credits' end)
       from debited d
       returning id, wallet_id
     ),
@@ -150,12 +163,14 @@ export async function spendCreditAndCreateGeneration(args: {
         g.id,
         $3,
         jsonb_build_object('credit_cost', 1)
-      from generation g
+      from generation g join debited d on d.id=g.wallet_id
+      where not d.site_credit_exempt
       returning generation_id
     )
     select
       g.id::text as generation_id,
       d.balance,
+      d.site_credit_exempt,
       'processing'::text as status
     from generation g
     join debited d on d.id = g.wallet_id`,
@@ -171,8 +186,9 @@ export async function spendCreditAndCreateGeneration(args: {
       allowedStatuses,
       args.outputSize,
       JSON.stringify(args.metadata || {}),
+      (process.env.ADMIN_EMAILS || "").split(",").map((email) => email.trim().toLowerCase()).filter(Boolean),
     ],
-  ) as Array<{ generation_id: string; balance: number; status: string }>;
+  ) as Array<{ generation_id: string; balance: number; status: string; site_credit_exempt: boolean }>;
 
   if (!rows[0]) {
     throw new Error("NO_RENDER_CREDIT");
@@ -218,7 +234,7 @@ export async function refundFailedGeneration(args: {
         cost_gbp_minor = $12,
         cost_fx_usd_gbp = $13
       where id = $1::uuid
-      returning wallet_id, design_id
+      returning wallet_id, design_id, metadata
     ),
     refund as (
       insert into public.design_credit_ledger (
@@ -234,6 +250,7 @@ export async function refundFailedGeneration(args: {
         $2,
         jsonb_build_object('reason', $6)
       from generation
+      where coalesce((metadata->>'siteCreditExempt')::boolean,false)=false
       on conflict (idempotency_key) do nothing
       returning wallet_id
     )
