@@ -271,12 +271,13 @@ export function DesignIntake() {
   }, [step]);
 
   const canContinue = useMemo(() => {
+    if (step === 0) return state.roomType === 'living_room';
     if (step === 1) return !catalogueLoading && !catalogueError;
     if (step === 2) return Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto);
     if (step === 9) return validMeasurements;
     if (step === 4) return state.styles.length > 0;
     return true;
-  }, [step, photoUrl, designId, roomAssetId, uploadingPhoto, state.styles.length, validMeasurements, catalogueLoading, catalogueError]);
+  }, [step, state.roomType, photoUrl, designId, roomAssetId, uploadingPhoto, state.styles.length, validMeasurements, catalogueLoading, catalogueError]);
 
   function saveRuntime(next: { ownerKey: string; designId: string; roomAssetId: string; photoName: string }) {
     window.localStorage.setItem('roomfound-design-runtime-v1', JSON.stringify(next));
@@ -350,47 +351,6 @@ export function DesignIntake() {
       setPhotoUrl('');
     } finally {
       URL.revokeObjectURL(preview);
-      setUploadingPhoto(false);
-    }
-  }
-
-  async function useExampleRoom() {
-    const exampleUrl = 'https://images.unsplash.com/photo-1753911372198-50b1b254ad4d?auto=format&fit=crop&q=84&w=1600';
-    setPhotoError('');
-    setUploadingPhoto(true);
-    setPhotoUrl(exampleUrl);
-    setPhotoName('Example living room');
-
-    try {
-      const key = ownerKey || crypto.randomUUID();
-      const response = await fetch('/api/designs/room-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ownerKey: key,
-          designId: designId || null,
-          exampleUrl,
-          roomType: 'living_room',
-        }),
-      });
-      const data = await response.json();
-
-      if (!response.ok || !data.assetId || !data.designId) {
-        throw new Error(data.error || 'Example room could not be stored.');
-      }
-
-      saveRuntime({
-        ownerKey: data.ownerKey || key,
-        designId: data.designId,
-        roomAssetId: data.assetId,
-        photoName: 'Example living room',
-      });
-    } catch (error) {
-      setPhotoError(error instanceof Error ? error.message : 'Example room could not be stored.');
-      setDesignId('');
-      setRoomAssetId('');
-      setPhotoUrl('');
-    } finally {
       setUploadingPhoto(false);
     }
   }
@@ -526,7 +486,7 @@ export function DesignIntake() {
               <div className={ui.setup}>
                 <label className={ui.field}>Room type
                   <select value={state.roomType} disabled={uploadingPhoto} onChange={event => changeRoomType(event.target.value as 'living_room' | 'bedroom')}>
-                    <option value="living_room">Living room</option><option value="bedroom">Bedroom</option>
+                    <option value="living_room">Living room</option><option value="bedroom" disabled>Bedroom · coming soon</option>
                   </select>
                 </label>
                 <label className={ui.field}>What would you like to do?
@@ -535,7 +495,7 @@ export function DesignIntake() {
                   </select>
                 </label>
               </div>
-              {state.roomType === 'bedroom' && <p className={ui.note}>You can prepare and edit a bedroom brief. Bedroom furniture selection and image generation are not available yet.</p>}
+              {state.roomType === 'bedroom' && <p className={ui.note}>Bedroom product collections are being prepared. Choose Living room to start a design with reviewed furniture and retailer links.</p>}
 
             </>
           ) : null}
@@ -600,7 +560,6 @@ export function DesignIntake() {
                   <div><strong>01</strong><p>Stand far enough back to show as much of the room as possible.</p></div>
                   <div><strong>02</strong><p>Use daylight if you can. Avoid strong filters or portrait mode.</p></div>
                   <div><strong>03</strong><p>Leave the room as it really is. Existing furniture helps us understand it.</p></div>
-                  {state.roomType !== 'bedroom' && <button className="textArrowLink buttonAsText" type="button" disabled={uploadingPhoto} onClick={useExampleRoom}>Try with an example room <span>→</span></button>}
                 <div><strong>04</strong><p>Your photo is saved privately in your room gallery. Sharing a finished design publicly is a separate choice.</p></div>
                 </aside>
               </div>
