@@ -9,6 +9,21 @@ import { trackRoomfound } from '@/components/PrivacyAnalytics';
 
 type Runtime = { ownerKey: string; designId: string; roomAssetId: string };
 type Attempt = { generation_id: string; status: string; resultUrl: string | null; cost_usd_micros: number | null; duration_ms: number | null; metadata: { correctionAttempt: number; parentGenerationId?: string; snapshot: { placements: Placement[]; selection: ProductSelection; intake: IntakeForBrief; brief: DesignBrief; roomAssetId: string }; humanReview?: PilotReview & { outcome: string } } };
+
+async function parseRenderResponse(response: Response) {
+  const body = await response.text();
+  try {
+    return body ? JSON.parse(body) : {};
+  } catch {
+    const isHtml = response.headers.get('content-type')?.includes('text/html') || /^\s*</.test(body);
+    throw new Error(
+      isHtml
+        ? \`The rendering service returned an HTML error page (HTTP \${response.status}). Your generation was not confirmed. Check the attempt history before retrying.\`
+        : \`The rendering service returned an unreadable response (HTTP \${response.status}). Your generation was not confirmed. Check the attempt history before retrying.\`,
+    );
+  }
+}
+
 export function RenderExperience() {
   const [room, setRoom] = useState<IntakeForBrief | null>(null);
   const [brief, setBrief] = useState<DesignBrief | null>(null);
@@ -84,7 +99,7 @@ export function RenderExperience() {
       const requestId = old?.state === requestState ? old.id : crypto.randomUUID();
       localStorage.setItem(key, JSON.stringify({ id: requestId, state: requestState }));
       const response = await fetch('/api/render', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...runtime, requestId, intake: room, brief, selection, placements, parentGenerationId: result?.generation_id, correction: result ? correction : undefined }) });
-      const data = await response.json();
+      const data = await parseRenderResponse(response);
       if (!response.ok) {
         if (data.code?.endsWith('_REFUNDED')) localStorage.removeItem(key);
         throw new Error(data.error || 'Generation could not be confirmed. Reload the saved attempt before retrying.');
