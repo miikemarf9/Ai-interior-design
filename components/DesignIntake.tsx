@@ -118,23 +118,13 @@ export function DesignIntake() {
   const [ownerKey, setOwnerKey] = useState('');
   const [designId, setDesignId] = useState('');
   const [roomAssetId, setRoomAssetId] = useState('');
-  const [catalogueItems, setCatalogueItems] = useState<CatalogueItemChoice[]>([]);
   const [catalogueStyles, setCatalogueStyles] = useState<CatalogueStyleChoice[]>([]);
   const [catalogueLoading, setCatalogueLoading] = useState(false);
   const [catalogueError, setCatalogueError] = useState('');
   const [catalogueRetry, setCatalogueRetry] = useState(0);
-  const [unavailableLabels, setUnavailableLabels] = useState<string[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
   const savedAnswers = useRef('');
-  const defaultedCatalogueRooms = useRef(new Set<string>());
-  const latestState = useRef(state);
-  latestState.current = state;
   const roomName = state.roomType === 'bedroom' ? 'bedroom' : 'living room';
-  const availableItemChoices = catalogueItems.filter(item => item.available);
-  const recommendedItems = catalogueItems.filter(item => item.recommended && item.available).map(item => item.label);
-  const availableRecommendedItems = catalogueItems.filter(item => item.recommended && item.available).map(item => item.label);
-  const comingSoonItems = catalogueItems.filter(item => item.catalogueCount === 0).map(item => item.label);
-  const noMatchItems = catalogueItems.filter(item => item.catalogueCount > 0 && !item.available).map(item => item.label);
   const uses = state.roomType === 'bedroom' ? [
     { name: 'Sleeping', detail: 'A calm, comfortable place to rest' },
     { name: 'Storage', detail: 'Clothes, bedding and everyday belongings' },
@@ -179,11 +169,11 @@ export function DesignIntake() {
           setState(restored);
         }
         const savedStep = typeof parsed.step === 'number' && Number.isInteger(parsed.step)
-          ? Math.min(2, Math.max(0, parsed.step))
+          ? Math.min(1, Math.max(0, parsed.step))
           : 0;
         const requestedStepParam = new URLSearchParams(window.location.search).get('step');
         const requestedStep = requestedStepParam === null ? null : Number(requestedStepParam);
-        setStep(requestedStep !== null && Number.isInteger(requestedStep) && requestedStep >= 0 && requestedStep <= 2
+        setStep(requestedStep !== null && Number.isInteger(requestedStep) && requestedStep >= 0 && requestedStep <= 1
           ? requestedStep
           : savedStep);
       }
@@ -234,23 +224,7 @@ export function DesignIntake() {
         const payload = await response.json() as { items?: CatalogueItemChoice[]; styles?: CatalogueStyleChoice[]; error?: string };
         if (!response.ok || !Array.isArray(payload.items)) throw new Error(payload.error || 'The product list could not be checked.');
         if (controller.signal.aborted) return;
-        const items = payload.items;
         setCatalogueStyles(Array.isArray(payload.styles) ? payload.styles : []);
-        setCatalogueItems(items);
-        const availableLabels = new Set(items.filter(item => item.available).map(item => item.label));
-        const suggested = items.filter(item => item.recommended && item.available).map(item => item.label);
-        const catalogueLabels = new Set(items.filter(item => item.catalogueCount > 0).map(item => item.label));
-        const removed = latestState.current.change.filter(label => catalogueLabels.has(label) && !availableLabels.has(label));
-        setUnavailableLabels(current => Array.from(new Set([...current, ...removed])).filter(label => {
-          const item = items.find(choice => choice.label === label);
-          return Boolean(item && item.catalogueCount > 0 && !item.available);
-        }));
-        const firstCheckForRoom = !defaultedCatalogueRooms.current.has(state.roomType || 'living_room');
-        defaultedCatalogueRooms.current.add(state.roomType || 'living_room');
-        setState(current => {
-          const saved = current.change.filter(item => availableLabels.has(item));
-          return { ...current, change: firstCheckForRoom && !saved.length ? suggested : saved };
-        });
       })
       .catch(error => {
         if (error instanceof Error && error.name === 'AbortError') return;
@@ -278,14 +252,14 @@ export function DesignIntake() {
     if (photoUrl.startsWith('blob:')) URL.revokeObjectURL(photoUrl);
   }, [photoUrl]);
 
-  const progress = complete ? 100 : ((step + 1) / 3) * 100;
-  const stepLabels = ['Your room', 'Choose your style', 'Furniture'];
+  const progress = complete ? 100 : ((step + 1) / 2) * 100;
+  const stepLabels = ['Your room', 'Choose your style'];
   const stepLabel = stepLabels[step] || 'Your room';
   // Only the room photograph is required. Style, budget refinements, measurements,
   // retained-item markers and product-category choices are all optional.
   const canContinue = step === 0
     ? state.roomType === 'living_room' && Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto)
-    : step === 1 || step === 2;
+    : step === 1;
 
   function goToStep(target: number) {
     if (target >= step || target < 0 || target > 2) return;
@@ -295,7 +269,7 @@ export function DesignIntake() {
 
   function skipStyle() {
     setState(current => ({ ...current, styles: [] }));
-    setStep(2);
+    setComplete(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -306,29 +280,6 @@ export function DesignIntake() {
     const pool = alternatives.length ? alternatives : available;
     const selected = pool[Math.floor(Math.random() * pool.length)];
     setState(current => ({ ...current, styles: [selected] }));
-  }
-
-  function useSuggestedItems() {
-    setState(current => ({
-      ...current,
-      change: availableRecommendedItems.filter(item => !current.keep.includes(item)),
-    }));
-  }
-
-  function letDesignerChoose() {
-    const categoryMap: Record<string, string> = {
-      'Sofa':'sofas','Armchairs':'armchairs','Coffee table':'coffee-tables','TV unit':'tv-units',
-      'Side tables':'side-tables','Rug':'rugs','Lighting':'lighting','Storage':'storage-cabinets',
-      'Bed':'beds','Bedside tables':'bedside-tables','Wardrobe':'wardrobes','Chest of drawers':'chest-of-drawers',
-    };
-    trackRoomfound('item_choices_submitted', {
-      roomType: state.roomType || 'living_room',
-      categories: [],
-      keptCategories: [...state.keep].map(item => categoryMap[item]).filter(Boolean),
-    });
-    setState(current => ({ ...current, change: [] }));
-    setComplete(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function saveRuntime(next: { ownerKey: string; designId: string; roomAssetId: string; photoName: string }) {
@@ -438,30 +389,20 @@ export function DesignIntake() {
       });
     }
 
-    if (step === 2) {
-      const categoryMap: Record<string,string> = {
-        'Sofa':'sofas','Armchairs':'armchairs','Coffee table':'coffee-tables','TV unit':'tv-units',
-        'Side tables':'side-tables','Rug':'rugs','Lighting':'lighting','Storage':'storage-cabinets',
-        'Bed':'beds','Bedside tables':'bedside-tables','Wardrobe':'wardrobes','Chest of drawers':'chest-of-drawers',
-      };
-      trackRoomfound('item_choices_submitted', {
-        roomType: state.roomType || 'living_room',
-        categories: [...state.change].map(item => categoryMap[item]).filter(Boolean),
-        keptCategories: [...state.keep].map(item => categoryMap[item]).filter(Boolean),
-      });
+    if (step === 1) {
       setComplete(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    setStep(value => Math.min(2, value + 1));
+    setStep(value => Math.min(1, value + 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function back() {
     if (complete) {
       setComplete(false);
-      setStep(2);
+      setStep(1);
       return;
     }
     setStep(value => Math.max(0, value - 1));
@@ -489,7 +430,7 @@ export function DesignIntake() {
     <div className="designIntake">
       <div className="intakeProgress" aria-label="Design intake progress">
         <div className="intakeProgressMeta">
-          <span>Step {complete ? '3' : step + 1} of 3</span>
+          <span>Step {complete ? '2' : step + 1} of 2</span>
           <strong>{complete ? 'Ready to review' : stepLabel}</strong>
           
         </div>
@@ -791,48 +732,6 @@ export function DesignIntake() {
             </>
           ) : null}
 
-          {step === 2 ? (
-            <>
-              <StepIntro eyebrow="03 / 03 · Furniture" title="What should stay, and what should change?" copy="Keep the pieces you already own, then choose the furniture you would like us to find for your room." />
-
-              <section className="changeSection">
-                <div className="choiceSectionHeading">
-                  <div><h2>Replace or add</h2><p>We have preselected a useful starting collection. Change it to suit your plans.</p></div>
-                  <span>Optional</span>
-                </div>
-                <div className="choiceHint">
-                  <span className="microLabel">Suggested for your {roomName}</span>
-                  <p>{catalogueLoading ? 'Checking suggestions…' : recommendedItems.length ? recommendedItems.join(' · ') : 'No suggested item types match these filters yet.'}</p>
-                </div>
-                {catalogueLoading ? <p aria-live="polite" className="choiceHint">Checking reviewed furniture…</p> : null}
-                {catalogueError ? <p className={ui.error} role="alert">{catalogueError} <button className="textButton" type="button" onClick={() => setCatalogueRetry(value => value + 1)}>Try again</button></p> : null}
-                {!catalogueLoading && !catalogueError && availableItemChoices.length ? (
-                  <ChoiceGrid
-                    items={availableItemChoices.filter(item => !state.keep.includes(item.label)).map(item => item.label)}
-                    selected={state.change}
-                    onChange={value => { setUnavailableLabels([]); setState(current => ({ ...current, change: toggle(current.change, value) })); }}
-                  />
-                ) : !catalogueLoading && !catalogueError ? (
-                  <p className="choiceHint">There are no reviewed furniture types matching this combination yet. Go back to adjust your style or budget.</p>
-                ) : null}
-                {!catalogueLoading && !catalogueError && noMatchItems.length ? (
-                  <p className="choiceHint" role="status">
-                    No reviewed item matches: {noMatchItems.join(' · ')}.{' '}
-                    <button className="textButton" type="button" onClick={() => setState(current => ({ ...current, styles: [], budget: 10000, dislikes: '', measurements: { ...current.measurements, width: '', length: '', height: '' } }))}>Show all reviewed options</button>
-                  </p>
-                ) : null}
-                {!catalogueLoading && !catalogueError && comingSoonItems.length ? <p className="choiceHint">Not in the reviewed catalogue yet: {comingSoonItems.join(' · ')}.</p> : null}
-                <div className="furnitureQuickActions">
-                  {availableRecommendedItems.length ? (
-                    <button className="selectAllButton" type="button" onClick={useSuggestedItems}>Use suggested items</button>
-                  ) : null}
-                  <button className="textButton" type="button" onClick={letDesignerChoose}>Let the designer choose →</button>
-                </div>
-              </section>
-              {unavailableLabels.length ? <p className={ui.note} role="status">{unavailableLabels.join(', ')} {unavailableLabels.length === 1 ? 'is' : 'are'} no longer available with the current style, budget or room details. <button className="textButton" type="button" onClick={() => setStep(1)}>Review style and budget</button></p> : null}
-              {state.roomType === 'bedroom' ? <p className={ui.note}>Bedroom product selection and image generation are not available yet.</p> : null}
-            </>
-          ) : null}
 
           <div className="intakeNav">
             <button className="textButton" type="button" onClick={back} disabled={step === 0}>← Back</button>
@@ -848,16 +747,16 @@ export function DesignIntake() {
       <JourneyAssistant
         visible={true}
         defaultOpen={Boolean(roomAssetId)}
-        currentStep={complete ? 4 : step + 1}
-        nextTitle={complete ? 'Review your design direction' : step === 0 ? 'Choose your style' : step === 1 ? 'Choose your furniture direction' : 'Review your room'}
+        currentStep={complete ? 3 : step + 1}
+        nextTitle={complete ? 'Review your design direction' : step === 0 ? 'Choose your style' : 'Review your room'}
         nextDescription={complete
           ? 'Your room choices are saved. Next, we will turn them into an editable design brief.'
           : step === 0
             ? 'Your room photograph is the starting point. Continue when it has been saved.'
             : step === 1
-              ? state.styles.length ? 'We will use your ' + state.styles[0] + ' direction and budget to guide the furniture collection.' : 'A style is optional. Continue with your budget and we will create a balanced direction.'
+              ? state.styles.length ? 'We will use your ' + state.styles[0] + ' direction and budget to prepare your design brief.' : 'A style is optional. Continue with your budget and we will create a balanced direction.'
               : 'Your room, style and furniture preferences are ready to review.'}
-        nextLabel={complete ? 'Review my design brief' : step === 0 ? 'Continue to style' : step === 1 ? 'Continue to furniture' : 'Review my room'}
+        nextLabel={complete ? 'Review my design brief' : step === 0 ? 'Continue to style' : step === 1 ? 'Review my room' : 'Review my room'}
         nextHref={complete ? '/brief' : undefined}
         onNext={complete ? undefined : next}
         nextDisabled={!complete && !canContinue}

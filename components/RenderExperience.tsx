@@ -162,7 +162,7 @@ export function RenderExperience() {
     {summary && <section className={styles.panel}><h2>Pilot attempt record</h2><p>{summary.attempts} recent attempts · {summary.corrections} corrections · {Math.round(summary.knownDurationMs / 1000)} seconds recorded</p><p>Known image-generation cost estimate: ${(summary.knownCostUsdMicros / 1e6).toFixed(4)} USD. {summary.unknownCostAttempts} attempt(s) with unknown cost. This excludes human review, hosting and any unreported provider usage; it is not a final invoice.</p><ol>{attempts.map(item => <li key={item.generation_id}>{item.generation_id.slice(0, 8)} · {item.status} · correction {item.metadata.correctionAttempt || 0} · {item.cost_usd_micros === null ? 'cost unknown' : `${(item.cost_usd_micros / 1e6).toFixed(4)} estimated`} · {item.duration_ms === null ? 'time unknown' : `${Math.round(item.duration_ms / 1000)}s`}</li>)}</ol></section>}
     <JourneyAssistant
       visible={true}
-      currentStep={6}
+      currentStep={5}
       ownerKey={runtime.ownerKey}
       refreshKey={balance}
       nextTitle={result
