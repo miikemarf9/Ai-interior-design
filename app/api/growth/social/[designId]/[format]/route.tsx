@@ -62,6 +62,9 @@ export async function GET(
 
   const room=rows[0];
   if(!room) return new Response("Not found",{status:404});
+  if(!Array.isArray(room.product_selection?.products) || room.product_selection.products.length===0){
+    return new Response("A shoppable room design is required",{status:409});
+  }
 
   const original=room.original_external || (room.original_base64 && room.original_mime
     ? `data:${room.original_mime};base64,${room.original_base64}`
