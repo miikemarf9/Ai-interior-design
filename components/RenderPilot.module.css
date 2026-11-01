@@ -60,3 +60,45 @@
   .purchaseChecks { margin-top: 36px; padding: 20px; }
   .purchaseCheckGrid { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+.generationStatus {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  margin: 28px 0;
+  padding: 24px;
+  border: 1px solid var(--line, #c9cec8);
+  background: var(--bone, #f4f1e9);
+  color: #293b31;
+}
+.generationStatus p { margin: 0; }
+.generationStatus .eyebrow { margin-bottom: 8px; color: var(--green, #17633a); }
+.generationProgressTrack {
+  height: 6px;
+  overflow: hidden;
+  background: #d9dfd9;
+  border-radius: 999px;
+}
+.generationProgressTrack span {
+  display: block;
+  width: 36%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green, #17633a);
+  animation: roomGenerationSweep 1.7s ease-in-out infinite;
+}
+.generationElapsed {
+  margin-top: 10px !important;
+  color: var(--muted, #6f716b);
+  font-size: 13px !important;
+  font-variant-numeric: tabular-nums;
+}
+@keyframes roomGenerationSweep {
+  0% { transform: translateX(-110%); }
+  50% { transform: translateX(105%); }
+  100% { transform: translateX(290%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .generationProgressTrack span { width: 100%; animation: none; }
+}
