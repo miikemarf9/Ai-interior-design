@@ -42,6 +42,7 @@ export function RenderExperience() {
   const [correction, setCorrection] = useState('');
   const [summary, setSummary] = useState<any>(null);
   const started = useRef(false);
+  const autoStarted = useRef(false);
   useEffect(() => {
     if (started.current) return; started.current = true;
     (async () => {
@@ -60,17 +61,25 @@ export function RenderExperience() {
           try {
             const response = await fetch('/api/products/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ intake: savedRoom, brief: savedBrief.brief, choices: savedSelection.selection.products.map((p: any) => ({ slot: p.slot, variantId: p.selected.variantId, quantity: p.quantity })), approve: true, acknowledgeLimitations: true, expectedSnapshot: approvalSnapshot(savedSelection.selection) }) });
             const checked = await response.json();
-            if (response.ok && checked.approved) nextSelection = checked.selection;
+            if (response.ok && checked.approved) {
+              nextSelection = checked.selection;
+              localStorage.setItem('roomfound-product-selection-v1', JSON.stringify({ ...savedSelection, selection: checked.selection, approved: true, updatedAt: new Date().toISOString() }));
+            }
           } catch { /* Keep rendering locked until a product collection is approved. */ }
         }
         if (!nextSelection.products.length) {
-          setBlocked('Choose and approve at least one reviewed retailer product before creating a room visual.');
+          setBlocked('Your room details are saved, but your furniture collection still needs approval. Approve it on the furniture page and your room visual will start automatically.');
           return;
         }
         setSelection(nextSelection);
         const prior = history.attempts?.find((item: Attempt) => item.status === 'succeeded' && item.metadata?.snapshot?.roomAssetId === savedRuntime.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(nextSelection) && JSON.stringify([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === JSON.stringify([savedRoom, savedBrief.brief]));
         const savedPlan: Placement[] = prior?.metadata.snapshot.placements || JSON.parse(localStorage.getItem(`roomfound-placements:${savedRuntime.designId}`) || '[]') as Placement[];
-        setPlacements(nextSelection.products.map((p: any) => ({ variantId: p.selected.variantId, instruction: savedPlan.find(item => item.variantId === p.selected.variantId)?.instruction || '' })));
+        const nextPlacements: Placement[] = nextSelection.products.map((p: any) => ({
+          variantId: p.selected.variantId,
+          instruction: savedPlan.find(item => item.variantId === p.selected.variantId)?.instruction || `Place the ${p.slotLabel.toLowerCase()} naturally in the room while keeping walkways clear.`,
+        }));
+        setPlacements(nextPlacements);
+        localStorage.setItem(`roomfound-placements:${savedRuntime.designId}`, JSON.stringify(nextPlacements));
         await loadCredits(savedRuntime);
       } catch { setBlocked('We could not prepare the pilot. Your saved brief and furniture choices have not been changed.'); }
       finally { setReady(true); }
@@ -90,6 +99,15 @@ export function RenderExperience() {
   const result = attempts.find(item => item.status === 'succeeded' && item.resultUrl && selection && item.metadata?.snapshot?.roomAssetId === runtime?.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(selection) && JSON.stringify([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === JSON.stringify([room, brief]));
   const processing = attempts.some(item => item.status === 'processing');
   const failedCorrection = attempts.some(item => item.status === 'failed' && item.metadata?.parentGenerationId === result?.generation_id);
+  useEffect(() => {
+    if (!ready || blocked || !selection?.products.length || !runtime || !room || !brief || !verified || busy || processing || result || autoStarted.current) return;
+    if (!siteCreditExempt && (balance === null || balance < 1)) return;
+    if (placements.some(item => item.instruction.trim().length < 5)) return;
+    autoStarted.current = true;
+    void generate();
+    // Start only once for this page load; a failure is shown for the user to review before retrying.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, blocked, selection, runtime, room, brief, verified, busy, processing, result, siteCreditExempt, balance, placements]);
   async function generate() {
     if (!runtime || !room || !brief || !selection) return;
     setBusy(true); setError('');
@@ -152,6 +170,7 @@ export function RenderExperience() {
     </section>
     {result && <Review key={result.generation_id} selection={result.metadata.snapshot.selection} initial={reviewed} disabled={busy} onSave={saveReview} />}
     {error && <p role="alert" className="renderError">{error}</p>}
+    {busy && !result && <p role="status">Your room visual is starting now. Your image use is only charged after a successful generation.</p>}
     {processing && <div className={styles.panel}><p>An attempt is processing. Refresh its status before starting another.</p><button className="button buttonSecondary" onClick={() => readHistory(runtime).catch(error => setError(error.message))}>Refresh attempt status</button></div>}
     {!result && !processing && <button className="button buttonPrimary" disabled={busy || !verified || (!siteCreditExempt && (balance === null || balance < 1)) || placements.some(item => item.instruction.trim().length < 5)} onClick={generate}>{busy ? 'Generating…' : `Generate illustrative room design · ${siteCreditExempt ? 'API allowance' : '1 credit'}`}</button>}
     {!siteCreditExempt && verified && balance === 0 && <p>You’ve used your free image. <Link href="/account">Buy 10 more for £2</Link>.</p>}
