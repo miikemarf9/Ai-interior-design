@@ -460,8 +460,27 @@ export function applySelectionChoices(
 ) {
   if (choices.length > 15 || new Set(choices.map(item => item.slot)).size !== choices.length) throw new Error('Invalid product choices.');
   for (const choice of choices) {
-    const product = selection.products.find(item => item.slot === choice.slot);
-    if (!product || !Number.isInteger(choice.quantity) || choice.quantity < 1 || choice.quantity > 10) throw new Error('Your saved collection has changed. Please review a fresh recommendation.');
+    let product = selection.products.find(item => item.slot === choice.slot);
+    if (!Number.isInteger(choice.quantity) || choice.quantity < 1 || choice.quantity > 10) throw new Error('Your saved collection has changed. Please review a fresh recommendation.');
+    if (!product) {
+      const definition = SLOT_DEFINITIONS.find(slot => slot.category === choice.slot);
+      const picked = candidatePool.find(candidate => candidate.variantId === choice.variantId);
+      if (!definition || !picked || !eligibleForSlot(picked, choice.slot)) throw new Error('That product is not currently cleared for this category. Please refresh the catalogue.');
+      const totalWeight = SLOT_DEFINITIONS.reduce((sum, slot) => sum + slot.weight, 0);
+      product = {
+        quantity: choice.quantity,
+        slot: choice.slot,
+        slotLabel: definition.label,
+        budgetMinor: Math.round(selection.budgetMinor * definition.weight / totalWeight),
+        selected: picked,
+        score: 0,
+        reasons: ['Added from the cleared catalogue. Check style, fit and delivery details before approving.'],
+        alternatives: [],
+      };
+      selection.products.push(product);
+      selection.missingItems = selection.missingItems.filter(item => item.toLowerCase() !== definition.label.toLowerCase());
+      continue;
+    }
     if (choice.variantId !== product.selected.variantId) {
       const alternative = product.alternatives.find(item => item.candidate.variantId === choice.variantId);
       const picked = alternative?.candidate || candidatePool.find(candidate => candidate.variantId === choice.variantId);
