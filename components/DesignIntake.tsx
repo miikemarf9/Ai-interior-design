@@ -859,7 +859,7 @@ export function DesignIntake() {
             <ol className="intakeSideSteps">
               {[
                 { title: 'Your room', detail: 'Room type and photograph' },
-                { title: 'Style and budget', detail: 'Choose a look, if you wish' },
+                { title: 'Style and budget', detail: state.styles.length ? state.styles[0] + ' selected' : 'Choose a look, if you wish' },
                 { title: 'Furniture', detail: 'Keep, add or replace pieces' },
               ].map((item, index) => (
                 <li key={item.title}>
@@ -877,16 +877,22 @@ export function DesignIntake() {
               ))}
             </ol>
 
-            <div className="intakeSideAction">
+            <div className="intakeSideAction" aria-live="polite">
               <p className="microLabel">Up next</p>
               <h2>{step === 0 ? 'Choose your style' : step === 1 ? 'Choose your furniture' : 'Review your room'}</h2>
               <p>
                 {step === 0
                   ? 'Add one clear photograph to continue.'
                   : step === 1
-                    ? state.styles.length ? 'Your chosen look will guide the furniture suggestions.' : 'No style is required. Continue and we will create a balanced direction.'
+                    ? state.styles.length ? 'We’ll use your ' + state.styles[0] + ' direction to guide the furniture suggestions.' : 'No style is required. Continue and we will create a balanced direction.'
                     : 'Your choices are ready. You can use the suggestions or leave the selection to us.'}
               </p>
+              {step === 1 && state.styles.length ? (
+                <div className="intakeSelectedStyle">
+                  <span>Selected style</span>
+                  <strong>{state.styles[0]}</strong>
+                </div>
+              ) : null}
               <button className="button buttonPrimary" type="button" onClick={next} disabled={!canContinue}>
                 {step === 0 ? 'Continue to style' : step === 1 ? (state.styles.length ? 'Continue to furniture' : 'Continue without a style') : 'Review my room'}
               </button>
