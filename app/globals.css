@@ -4716,3 +4716,6 @@ button.journeyAssistantStep:hover strong {
     aspect-ratio: auto;
   }
 }
+
+.roomPhotoSaved { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; border: 1px solid var(--line); background: var(--chalk); color: var(--forest); font-size: 13px; }
+.roomPhotoSaved .textButton { color: var(--forest); }
