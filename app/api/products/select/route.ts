@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     } catch (error) {
       return NextResponse.json({ selection, approved: false, warning: error instanceof Error ? error.message : 'Please review the refreshed collection.' });
     }
-    const approved = Boolean(body.approve && body.acknowledgeLimitations && selection.products.length && selection.remainingMinor >= 0 && body.expectedSnapshot === approvalSnapshot(selection));
+    const approved = Boolean(body.approve && body.acknowledgeLimitations && selection.products.length && body.expectedSnapshot === approvalSnapshot(selection));
     const warning = body.approve && !approved ? 'Please review the refreshed prices and collection, acknowledge the outstanding checks and approve again.' : undefined;
 
     return NextResponse.json({
