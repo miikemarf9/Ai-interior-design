@@ -117,8 +117,15 @@ export async function POST(request: Request) {
     for await (const row of readCsvObjects(csvBody)) {
       scanned += 1;
       if (scanned > MAX_FEED_ROWS) break;
+      const externalProductId = row.merchant_product_id?.trim()
+        || row.aw_product_id?.trim()
+        || row.ean?.trim()
+        || row.mpn?.trim()
+        || "";
+      if (!externalProductId || !wanted.has(externalProductId)) continue;
+
       const candidate = normalizeLegacyAwinRow(row);
-      if (!candidate || !wanted.has(candidate.externalProductId)) continue;
+      if (!candidate) continue;
       if (candidate.priceMinor === null || candidate.priceMinor <= 0 || candidate.currency !== "GBP" || !candidate.productUrl) continue;
 
       const parsedSourceDate = candidate.sourceUpdatedAt ? Date.parse(candidate.sourceUpdatedAt) : Number.NaN;
