@@ -116,7 +116,7 @@ export function ProductSelectionExperience() {
   </section>;
   const over = selection.remainingMinor < 0;
   return <div className="productSelectionExperience shell" aria-busy={busy}>
-    <section className="selectionHero"><div><p className="eyebrow">Recommended for your room</p><h1>A considered collection. Your final say.</h1><p>Review the exact variants below, or swap a piece from a small shortlist. We use your style and furniture allowance to guide the collection; you can check practical details before accepting it.</p><Link href="/brief">Edit my brief</Link></div>
+    <section className="selectionHero"><div><p className="eyebrow">Real products for your room</p><h1>Choose the products you want in your room</h1><p>Review real furniture matched to your style and budget. Pick the pieces you’d like to see in your room design, then visit a retailer if you decide to buy.</p><Link href="/design?step=1">Edit room and style choices</Link></div>
       <aside className="selectionBudget"><span className="microLabel">Furniture allowance · {money(selection.budgetMinor)}</span>
         <strong>{money(selection.totalMinor)} <small>{selection.unknownDelivery ? 'known total' : 'collection total'}</small></strong>
         <dl className={styles.totals}><div><dt>Products</dt><dd>{money(selection.productSubtotalMinor)}</dd></div><div><dt>Known delivery</dt><dd>{money(selection.knownDeliveryMinor)}</dd></div><div><dt>Other delivery</dt><dd>{selection.unknownDelivery ? 'To confirm' : 'None listed'}</dd></div></dl>
