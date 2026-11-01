@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import type { DesignBrief, IntakeForBrief } from '@/lib/brief';
+import { buildFallbackBrief, type DesignBrief, type IntakeForBrief } from '@/lib/brief';
 import { applySelectionChoices, approvalSnapshot, type ProductAlternative, type ProductSelection, type ProposedProduct, type SelectionCandidate, type SelectionChoice } from '@/lib/catalog/selection';
 import { InventoryPicker } from '@/components/InventoryPicker';
 import { trackRoomfound } from '@/components/PrivacyAnalytics';
@@ -55,10 +55,13 @@ export function ProductSelectionExperience() {
     started.current = true;
     try {
       const intakeSaved = JSON.parse(localStorage.getItem('roomfound-intake-v1') || 'null');
-      const briefSaved = JSON.parse(localStorage.getItem('roomfound-brief-v1') || 'null');
-      if (!intakeSaved?.state || !briefSaved?.brief || !briefSaved.approved) { setLoading(false); return; }
-      setIntake(intakeSaved.state); setBrief(briefSaved.brief);
-      fingerprint.current = JSON.stringify([intakeSaved.state, briefSaved.brief]);
+      if (!intakeSaved?.state) { setLoading(false); return; }
+      const storedBrief = JSON.parse(localStorage.getItem('roomfound-brief-v1') || 'null');
+      const brief = storedBrief?.brief || buildFallbackBrief(intakeSaved.state);
+      const briefSaved = { ...storedBrief, brief, approved: true, source: storedBrief?.source || 'preview' };
+      localStorage.setItem('roomfound-brief-v1', JSON.stringify(briefSaved));
+      setIntake(intakeSaved.state); setBrief(brief);
+      fingerprint.current = JSON.stringify([intakeSaved.state, brief]);
       let saved: { selection?: ProductSelection; fingerprint?: string } | null = null;
       try { saved = JSON.parse(localStorage.getItem('roomfound-product-selection-v1') || 'null'); } catch { /* Rebuild malformed saved data. */ }
       // Never display cached photographs or restore approval before server clearance/price checks.
@@ -147,7 +150,7 @@ export function ProductSelectionExperience() {
     </section>
     <JourneyAssistant
       visible={Boolean(intake && brief && selection)}
-      currentStep={4}
+      currentStep={3}
       nextTitle={approved ? 'Create your room visual' : 'Approve your furniture collection'}
       nextDescription={approved
         ? 'Your chosen real products are saved. The next step creates an illustrative design in your room.'

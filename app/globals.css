@@ -4557,3 +4557,24 @@ button.journeyAssistantStep:hover strong {
     padding-inline: 13px;
   }
 }
+
+/* Editable decision list in the journey progress panel. */
+.journeyAssistantDecisions {
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+}
+.journeyAssistantDecisions > .microLabel { margin: 0 0 9px; }
+.journeyAssistantDecisions ul { margin: 0; padding: 0; list-style: none; }
+.journeyAssistantDecisions li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+.journeyAssistantDecisions li > span { display: grid; gap: 4px; min-width: 0; }
+.journeyAssistantDecisions li strong { font-size: 11px; }
+.journeyAssistantDecisions li small { color: var(--muted); font-size: 10px; line-height: 1.4; overflow-wrap: anywhere; }
+.journeyAssistantDecisions li a { color: var(--forest); font-size: 10px; font-weight: 700; text-underline-offset: 3px; }
