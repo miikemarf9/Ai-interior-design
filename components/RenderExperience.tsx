@@ -18,8 +18,8 @@ async function parseRenderResponse(response: Response) {
     const isHtml = response.headers.get('content-type')?.includes('text/html') || /^\s*</.test(body);
     throw new Error(
       isHtml
-        ? \`The rendering service returned an HTML error page (HTTP \${response.status}). Your generation was not confirmed. Check the attempt history before retrying.\`
-        : \`The rendering service returned an unreadable response (HTTP \${response.status}). Your generation was not confirmed. Check the attempt history before retrying.\`,
+        ? 'The rendering service returned an HTML error page (HTTP ' + response.status + '). Your generation was not confirmed. Check the attempt history before retrying.'
+        : 'The rendering service returned an unreadable response (HTTP ' + response.status + '). Your generation was not confirmed. Check the attempt history before retrying.',
     );
   }
 }
