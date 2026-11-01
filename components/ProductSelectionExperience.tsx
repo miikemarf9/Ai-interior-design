@@ -6,6 +6,7 @@ import type { DesignBrief, IntakeForBrief } from '@/lib/brief';
 import { applySelectionChoices, approvalSnapshot, type ProductAlternative, type ProductSelection, type ProposedProduct, type SelectionCandidate, type SelectionChoice } from '@/lib/catalog/selection';
 import { InventoryPicker } from '@/components/InventoryPicker';
 import { trackRoomfound } from '@/components/PrivacyAnalytics';
+import { JourneyAssistant } from '@/components/JourneyAssistant';
 import styles from './ProductSelection.module.css';
 
 function money(minor: number) {
@@ -137,13 +138,23 @@ export function ProductSelectionExperience() {
       setBrowseProduct(null);
       void loadSelection(intake, brief, selection, false, nextChoices);
     }} /> : null}
-    <section className={`selectionApproval ${approved ? 'isApproved' : ''}`}>
+    <section id="selection-approval" className={`selectionApproval ${approved ? 'isApproved' : ''}`}>
       <div><span className="microLabel">{approved ? 'Collection accepted' : 'Your decision'}</span><h2>{approved ? 'Your chosen furniture is saved.' : 'Happy with this collection?'}</h2>
         <p>Approval saves these variants and quantities for your design. It does not place an order, reserve stock or confirm that everything fits.</p>
         {!approved && <label className={styles.acknowledge}><input type="checkbox" checked={acknowledged} disabled={busy} onChange={event => setAcknowledged(event.target.checked)} />I understand that fit, retailer availability and any missing costs or products still need checking.</label>}
       </div>
       {approved ? <Link className="button buttonLight" href="/render">Continue to design</Link> : <button className="button buttonLight" disabled={busy || over || !acknowledged} onClick={() => loadSelection(intake, brief, selection, true)}>{busy ? 'Checking collection…' : 'Accept this collection · Free'}</button>}
     </section>
+    <JourneyAssistant
+      visible={Boolean(intake && brief && selection)}
+      currentStep={5}
+      nextTitle={approved ? 'Create your room visual' : 'Approve your furniture collection'}
+      nextDescription={approved
+        ? 'Your chosen real products are saved. The next step creates an illustrative design in your room.'
+        : 'Check the selected variants, quantities, prices and delivery notes before approving your collection.'}
+      nextLabel={approved ? 'Continue to room visual' : 'Review my collection'}
+      nextHref={approved ? '/render' : '#selection-approval'}
+    />
   </div>;
 }
 
