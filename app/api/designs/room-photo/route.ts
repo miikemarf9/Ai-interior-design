@@ -102,6 +102,9 @@ async function saveExternalExample(args: {
 
 export async function POST(request: Request) {
   const contentType=request.headers.get("content-type") || "";
+  if(contentType.includes("application/json")){
+    return NextResponse.json({error:"Example rooms are for inspiration only. Upload a photo of your own living room to create a product-backed design."},{status:409});
+  }
   const account=await getCurrentAccount();
   const accountHomeId=account ? await ensurePrimaryHome(account.id) : null;
 

@@ -43,7 +43,7 @@ export async function GET(request:Request){
   const styleName=style && styles.has(style) ? style : null;
 
   const rows=await sql.query(
-    "select cr.id::text as id,cr.slug,cr.title,cr.room_type as room_type,cr.styles,rs.share_token::text as share_token,cr.published_at::text as published_at,count(v.account_id)::int as votes,count(v.account_id) filter (where v.created_at>=now()-interval '7 days')::int as recent_votes,coalesce(bool_or(v.account_id=$1::uuid),false) as voted from public.community_rooms cr join public.room_shares rs on rs.id=cr.share_id and rs.is_active left join public.community_room_votes v on v.community_room_id=cr.id where cr.status='published' and ($2::text is null or cr.room_type=$2) and ($3::text is null or $3=any(cr.styles)) group by cr.id,rs.share_token order by case when $4='top' then count(v.account_id) end desc nulls last,case when $4='trending' then count(v.account_id) filter (where v.created_at>=now()-interval '7 days') end desc nulls last,cr.published_at desc limit 60",
+    "select cr.id::text as id,cr.slug,cr.title,cr.room_type as room_type,cr.styles,rs.share_token::text as share_token,cr.published_at::text as published_at,count(v.account_id)::int as votes,count(v.account_id) filter (where v.created_at>=now()-interval '7 days')::int as recent_votes,coalesce(bool_or(v.account_id=$1::uuid),false) as voted from public.community_rooms cr join public.room_shares rs on rs.id=cr.share_id and rs.is_active join public.render_generations g on g.id=cr.generation_id and jsonb_array_length(coalesce(g.metadata #> '{snapshot,selection,products}','[]'::jsonb))>0 left join public.community_room_votes v on v.community_room_id=cr.id where cr.status='published' and ($2::text is null or cr.room_type=$2) and ($3::text is null or $3=any(cr.styles)) group by cr.id,rs.share_token order by case when $4='top' then count(v.account_id) end desc nulls last,case when $4='trending' then count(v.account_id) filter (where v.created_at>=now()-interval '7 days') end desc nulls last,cr.published_at desc limit 60",
     [account?.id ?? null,roomType,styleName,sort],
   ) as Array<Record<string,unknown>>;
 
@@ -88,12 +88,13 @@ export async function POST(request:Request){
 
   const sql=getCatalogDb();
   const sourceRows=await sql.query(
-    "select d.room_type,d.intake,exists (select 1 from public.room_verifications rv where rv.generation_id=g.id and rv.status in ('complete','partial') and rv.overall_status<>'failed') as verified from public.room_designs d join public.render_generations g on g.id=$2::uuid and g.design_id=d.id and g.status='succeeded' and g.result_asset_id is not null where d.id=$1::uuid and d.account_id=$3::uuid limit 1",
+    "select d.room_type,d.intake,jsonb_array_length(coalesce(g.metadata #> '{snapshot,selection,products}','[]'::jsonb))>0 as has_products,exists (select 1 from public.room_verifications rv where rv.generation_id=g.id and rv.status in ('complete','partial') and rv.overall_status<>'failed') as verified from public.room_designs d join public.render_generations g on g.id=$2::uuid and g.design_id=d.id and g.status='succeeded' and g.result_asset_id is not null where d.id=$1::uuid and d.account_id=$3::uuid limit 1",
     [designId,generationId,account.id],
-  ) as Array<{room_type:string;intake:any;verified:boolean}>;
+  ) as Array<{room_type:string;intake:any;has_products:boolean;verified:boolean}>;
 
   const source=sourceRows[0];
   if(!source) return NextResponse.json({error:"Finished room not found in your account."},{status:404});
+  if(!source.has_products) return NextResponse.json({error:"Only room designs with reviewed products can be published to the community."},{status:409});
   if(!source.verified){
     return NextResponse.json({error:"Complete the room check before publishing it."},{status:409});
   }

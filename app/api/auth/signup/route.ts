@@ -15,6 +15,7 @@ import {
 } from "@/lib/auth/account";
 import { sendVerificationEmail } from "@/lib/auth/email";
 import { getCatalogDb } from "@/lib/catalog/neon";
+import { isAdminEmail } from "@/lib/auth/admin";
 
 export const runtime = "nodejs";
 
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
 
   const controlledBeta = process.env.BETA_CONTROLLED_ACCESS === "true";
   const expectedInviteCode = process.env.BETA_SIGNUP_CODE || "";
-  if (controlledBeta && (!expectedInviteCode || body.inviteCode !== expectedInviteCode)) {
+  if (controlledBeta && !isAdminEmail(email) && (!expectedInviteCode || body.inviteCode !== expectedInviteCode)) {
     return NextResponse.json({ error: "A valid beta access code is required." }, { status: 403 });
   }
 

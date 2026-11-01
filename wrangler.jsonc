@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ai-interior-design",
+  "main": "cloudflare-worker.ts",
+  "compatibility_date": "2026-10-28",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
+  "workers_dev": true,
+  "vars": {
+    "APP_URL": "https://transformmyroom.com",
+    "NEXT_PUBLIC_SITE_URL": "https://transformmyroom.com",
+    "BETA_CONTROLLED_ACCESS": "true",
+    "NEXT_PUBLIC_BETA_CONTROLLED_ACCESS": "true"
+  }
+}

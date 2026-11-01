@@ -195,3 +195,30 @@ export async function stageFeedCandidates(
 
   return staged;
 }
+
+
+export async function rejectFeedCandidates(
+  source: SourceRow,
+  externalProductIds: string[],
+) {
+  const uniqueIds = [...new Set(externalProductIds)];
+  if (!uniqueIds.length) return 0;
+
+  const sql = getCatalogDb();
+  const updated = await sql.query(
+    `update public.catalog_feed_candidates
+     set candidate_status = 'rejected',
+         review_notes = concat_ws(E'\\n', nullif(review_notes, ''), 'Excluded by the current Awin living-room import filter.'),
+         updated_at = now()
+     where source_id = $1::uuid
+       and retailer_id = $2::uuid
+       and candidate_status = 'pending'
+       and external_product_id = any(array(
+         select jsonb_array_elements_text($3::jsonb)
+       ))
+     returning id`,
+    [source.source_id, source.retailer_id, JSON.stringify(uniqueIds)],
+  ) as Array<{ id: string }>;
+
+  return updated.length;
+}

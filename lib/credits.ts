@@ -1,5 +1,5 @@
 export const creditPolicy = {
-  freeRenderCredits: 3,
+  freeRenderCredits: 1,
   renderCreditCost: 1,
   briefCreditCost: 0,
   briefRevisionCreditCost: 0,
@@ -29,7 +29,7 @@ export type CreditLedgerEntry = {
 /**
  * Stage 7/10 enforcement notes:
  * - Stage 7 now enforces a server-side wallet + immutable ledger.
- * - Grant the 3 free render credits once, after account/email verification.
+ * - Grant 1 free render credit once, after account/email verification.
  * - Private/local testing can temporarily enable development wallets with RENDER_ALLOW_DEVELOPMENT_WALLETS=true.
  * - Public deployments must keep development wallets disabled until Stage 10 account verification is connected.
  * - A successful generation or regeneration costs 1 credit.

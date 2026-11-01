@@ -16,6 +16,7 @@ export type SelectionCandidate = {
   styles: string[];
   materials: string[];
   colours: string[];
+  featureTags: string[];
   curationScore: number;
   qualityScore: number;
   offer: {
@@ -77,19 +78,18 @@ type SlotDefinition = {
   label: string;
   weight: number;
   keywords: string[];
-  minBudget?: number;
 };
 
 const SLOT_DEFINITIONS: SlotDefinition[] = [
   { category: "sofas", label: "Sofa", weight: 0.38, keywords: ["sofa", "settee", "couch"] },
-  { category: "armchairs", label: "Armchair", weight: 0.16, keywords: ["armchair", "chair"], minBudget: 1200 },
+  { category: "armchairs", label: "Armchair", weight: 0.16, keywords: ["armchair", "chair"] },
   { category: "coffee-tables", label: "Coffee table", weight: 0.09, keywords: ["coffee table"] },
   { category: "tv-units", label: "TV unit", weight: 0.1, keywords: ["tv unit", "media unit", "media cabinet", "tv stand"] },
-  { category: "side-tables", label: "Side table", weight: 0.055, keywords: ["side table", "end table"], minBudget: 1000 },
+  { category: "side-tables", label: "Side table", weight: 0.055, keywords: ["side table", "end table"] },
   { category: "rugs", label: "Rug", weight: 0.11, keywords: ["rug"] },
-  { category: "floor-lamps", label: "Floor lamp", weight: 0.055, keywords: ["floor lamp", "lamp"], minBudget: 900 },
-  { category: "table-lamps", label: "Table lamp", weight: 0.035, keywords: ["table lamp"], minBudget: 1800 },
-  { category: "storage-cabinets", label: "Storage", weight: 0.115, keywords: ["storage", "cabinet", "sideboard"], minBudget: 2300 },
+  { category: "floor-lamps", label: "Floor lamp", weight: 0.055, keywords: ["floor lamp", "lamp"] },
+  { category: "table-lamps", label: "Table lamp", weight: 0.035, keywords: ["table lamp"] },
+  { category: "storage-cabinets", label: "Storage", weight: 0.115, keywords: ["storage", "cabinet", "sideboard"] },
 ];
 
 const STYLE_ALIASES: Record<string, string> = {
@@ -175,13 +175,7 @@ function buildSlots(intake: IntakeForBrief, brief: DesignBrief) {
     if (shouldSkipForRetention(slot, retained) || (intake.keep.some(item => normalize(item) === 'lighting') && slot.category.includes('lamps'))) return false;
     if (intake.change.length && !intake.change.some(item => slot.keywords.some(keyword => normalize(item).includes(keyword)) || (normalize(item) === 'lighting' && slot.category.includes('lamps')))) return false;
 
-    const requirementOverride =
-      (slot.category === "armchairs" && needs.has("entertaining"))
-      || (slot.category === "side-tables" && needs.has("entertaining"))
-      || (slot.category === "floor-lamps" && needs.has("reading"))
-      || (slot.category === "storage-cabinets" && needs.has("storage"));
-
-    return requirementOverride || !slot.minBudget || intake.budget >= slot.minBudget;
+    return true;
   }).map((slot) => {
     let weight = slot.weight;
     if (slot.category === "armchairs" && needs.has("entertaining")) weight += 0.05;
@@ -257,6 +251,7 @@ function scoreCandidate(
   const wantedMaterials = mapped(intake.materials, MATERIAL_ALIASES);
 
   const styleMatches = candidate.styles.filter((style) => wantedStyles.includes(style)).length;
+  if (wantedStyles.length && styleMatches === 0) return null;
   const colourMatches = candidate.colours.filter((colour) => wantedColours.includes(colour)).length;
   const materialMatches = candidate.materials.filter((material) => wantedMaterials.includes(material)).length;
 
@@ -322,7 +317,7 @@ function allocateSlotBudgets(
   candidates: SelectionCandidate[],
   totalBudgetMinor: number,
 ) {
-  const stocked = slots.map(slot => {
+  let stocked = slots.map(slot => {
     const prices = candidates
       .filter(candidate => eligibleForSlot(candidate, slot.category))
       .map(candidate => candidate.offer.priceMinor)
@@ -332,10 +327,21 @@ function allocateSlotBudgets(
 
   if (!stocked.length) return slots.map(slot => ({ ...slot, budgetMinor: 0 }));
 
-  const minimumTotal = stocked.reduce((sum, entry) => sum + entry.minimumPrice, 0);
   const availableBudget = Math.max(0, Math.floor(totalBudgetMinor));
-  const distribute = minimumTotal <= availableBudget;
-  const baseTotal = distribute ? minimumTotal : 0;
+  let minimumTotal = stocked.reduce((sum, entry) => sum + entry.minimumPrice, 0);
+  if (minimumTotal > availableBudget) {
+    const affordable: typeof stocked = [];
+    let remaining = availableBudget;
+    for (const entry of [...stocked].sort((a, b) => a.minimumPrice - b.minimumPrice || b.slot.weight - a.slot.weight)) {
+      if (entry.minimumPrice <= remaining) {
+        affordable.push(entry);
+        remaining -= entry.minimumPrice;
+      }
+    }
+    stocked = affordable;
+    minimumTotal = stocked.reduce((sum, entry) => sum + entry.minimumPrice, 0);
+  }
+  const baseTotal = minimumTotal;
   const remaining = availableBudget - baseTotal;
   const totalWeight = stocked.reduce((sum, entry) => sum + entry.slot.weight, 0) || 1;
   const budgets = new Map<string, number>();
@@ -343,7 +349,7 @@ function allocateSlotBudgets(
 
   for (const entry of stocked) {
     const share = Math.floor(remaining * entry.slot.weight / totalWeight);
-    const budget = (distribute ? entry.minimumPrice : 0) + share;
+    const budget = entry.minimumPrice + share;
     budgets.set(entry.slot.category, budget);
     allocated += share;
   }
@@ -367,10 +373,13 @@ export function buildProductSelection(
   const slots = allocateSlotBudgets(eligibleSlots, candidates, intake.budget * 100);
   const usedProducts = new Set<string>();
   const products: ProposedProduct[] = [];
+  let selectedProductSpendMinor = 0;
 
   for (const slot of slots) {
+    const remainingRoomBudgetMinor = Math.max(0, intake.budget * 100 - selectedProductSpendMinor);
     const ranked = candidates
       .filter((candidate) => eligibleForSlot(candidate, slot.category))
+      .filter(candidate => candidate.offer.priceMinor <= remainingRoomBudgetMinor)
       .map((candidate) => {
         const result = scoreCandidate(candidate, intake, slot.budgetMinor);
         return result ? { candidate, ...result } : null;
@@ -398,6 +407,7 @@ export function buildProductSelection(
       reasons: selected.reasons,
       alternatives,
     });
+    selectedProductSpendMinor += selected.candidate.offer.priceMinor;
   }
 
   const budgetMinor = intake.budget * 100;

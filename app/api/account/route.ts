@@ -82,6 +82,7 @@ export async function GET() {
       ownerKey: account.ownerKey,
     },
     credits,
+    paymentsEnabled: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
     primaryHomeId: homeId,
     preferences: {
       marketingEmails: Boolean((preferences as Array<any>)[0]?.marketing_email_consent_at)
