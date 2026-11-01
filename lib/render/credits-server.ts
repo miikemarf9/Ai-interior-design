@@ -7,6 +7,7 @@ export type CreditStatus = {
   verificationStatus: "unverified" | "development" | "verified";
   verifiedRequired: boolean;
   siteCreditExempt: boolean;
+  freeCreditAvailable: boolean;
 };
 
 const allowDevelopmentWallets = () =>
@@ -56,7 +57,18 @@ export async function ensureRenderWallet(ownerKey: string): Promise<CreditStatus
   }
 
   const rows = await sql.query(
-    `select w.balance, w.verification_status,a.email,a.email_verified_at::text as email_verified_at
+    `select
+        w.balance,
+        w.verification_status,
+        w.free_grant_applied,
+        a.email,
+        a.email_verified_at::text as email_verified_at,
+        exists (
+          select 1
+          from public.design_credit_ledger l
+          where l.wallet_id=w.id
+            and l.event_type='credit_pack_purchase'
+        ) as has_paid_purchase
      from public.design_credit_wallets w
      left join public.customer_accounts a on a.id=w.account_id
      where w.owner_key = $1
@@ -67,6 +79,8 @@ export async function ensureRenderWallet(ownerKey: string): Promise<CreditStatus
     verification_status: "unverified" | "development" | "verified";
     email: string | null;
     email_verified_at: string | null;
+    free_grant_applied: boolean;
+    has_paid_purchase: boolean;
   }>;
 
   const row = rows[0];
@@ -75,6 +89,7 @@ export async function ensureRenderWallet(ownerKey: string): Promise<CreditStatus
     verificationStatus: row?.verification_status ?? "unverified",
     verifiedRequired: !allowDevelopmentWallets() && row?.verification_status !== "verified",
     siteCreditExempt: Boolean(row?.email_verified_at && isAdminEmail(row?.email)),
+    freeCreditAvailable: Boolean(row && row.free_grant_applied && !row.has_paid_purchase && row.balance > 0),
   };
 }
 

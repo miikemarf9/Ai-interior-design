@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { buildFallbackBrief, type DesignBrief, type IntakeForBrief } from '@/lib/brief';
 import { trackRoomfound } from '@/components/PrivacyAnalytics';
+import { JourneyAssistant } from '@/components/JourneyAssistant';
 import ui from './RoomBrief.module.css';
 
 type BriefSource = 'ai' | 'preview';
@@ -200,13 +201,6 @@ export function BriefExperience() {
           <p>Check the direction we have created from your choices. Edit anything that does not feel right before choosing real products.</p>
         </div>
 
-        <aside className="creditStatus">
-          <span className="microLabel">Design credits</span>
-          <div className="creditRule"><span>This brief</span><strong>0 credits</strong></div>
-          <div className="creditRule"><span>Brief changes</span><strong>0 credits</strong></div>
-          <div className="creditRule"><span>Future room render</span><strong>1 credit</strong></div>
-          <p>Your furniture allowance is separate from any image-generation charge. Any charge will be shown before you confirm.</p>
-        </aside>
       </section>
 
       <div className={ui.summary}>
@@ -316,7 +310,17 @@ export function BriefExperience() {
         )}
       </section>
 
-
+      <JourneyAssistant
+        visible={Boolean(intake && brief)}
+        currentStep={4}
+        nextTitle={approved ? 'Choose real furniture' : 'Approve your design direction'}
+        nextDescription={approved
+          ? 'Your written direction is saved. Next, we will match it with real UK furniture.'
+          : 'Approval saves this direction for product selection. It does not generate an image or use a credit.'}
+        nextLabel={approved ? 'Choose real furniture' : 'Approve design direction'}
+        nextHref={approved ? '/products' : undefined}
+        onNext={approved ? undefined : approve}
+      />
     </div>
   );
 }
