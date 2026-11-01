@@ -158,7 +158,7 @@ export function ProductSelectionExperience() {
       nextDescription={approved
         ? 'Your chosen real products are saved. The next step creates an illustrative design in your room.'
         : 'Check the selected variants, quantities, prices and delivery notes before approving your collection.'}
-      nextLabel={approved ? 'Continue to room visual' : 'Review my collection'}
+      nextLabel={approved ? 'Continue to room visual' : 'Review my collection · ' + money(selection.totalMinor)}
       nextHref={approved ? '/render' : '#selection-approval'}
       refreshKey={`${selection.totalMinor}:${selection.products.map(product => product.slot + ':' + product.quantity).join(',')}`} 
     />
