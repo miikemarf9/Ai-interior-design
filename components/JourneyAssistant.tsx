@@ -153,7 +153,7 @@ export function JourneyAssistant({
             <div className="journeyAssistantHeader">
               <div>
                 <p className="eyebrow">Your progress</p>
-                <span>{String(Math.min(6, Math.max(1, currentStep))).padStart(2, '0')} / 06</span>
+                <span>{String(Math.min(5, Math.max(1, currentStep))).padStart(2, '0')} / 05</span>
               </div>
               <button type="button" className="journeyAssistantClose" aria-label="Close progress panel" onClick={closePanel}>×</button>
             </div>
