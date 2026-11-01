@@ -125,14 +125,6 @@ export function ProductSelectionExperience() {
       </aside>
     </section>
     <div className={styles.notice} role="status">{notice || 'Review each item before approving. No purchase is made here.'}</div>
-    <section className={styles.checks} aria-label="Outstanding checks">
-      <h2>Before you decide</h2>
-      <p><strong>Fit is not verified.</strong> {intake.measurements.accuracy === 'measured' ? 'Room measurements are customer supplied.' : 'Room measurements are approximate or unknown.'} Check clear wall space, walkways, existing furniture, doorways and delivery access.</p>
-      <p><strong>Keeping:</strong> {selection.retainedItems.join(', ') || 'No furniture specified.'} Photo markers identify items, not their dimensions. Check that every retained item is accounted for.</p>
-      {selection.missingItems.length > 0 && <p><strong>Not included in this total:</strong> {selection.missingItems.join(', ')}. This is a partial collection.</p>}
-      {selection.unknownDelivery && <p><strong>Delivery is incomplete.</strong> Fees, postcode restrictions, lead times and assembly must be confirmed with the retailer.</p>}
-      {selection.notes.map(note => <p key={note}>{note}</p>)}
-    </section>
     <section className="selectedProducts" aria-label="Recommended furniture">
       {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onBrowse={() => setBrowseProduct(product)} retailerHref={retailerHref} />)}
     </section>
