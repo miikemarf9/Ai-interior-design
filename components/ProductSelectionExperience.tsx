@@ -208,7 +208,7 @@ export function ProductSelectionExperience() {
       currentStep={3}
       nextTitle={approved ? 'Create your room visual' : 'Disclaimer'}
       nextDescription={approved
-        ? 'Your chosen real products are saved. The next step creates an illustrative design in your room.'
+        ? 'Next, your room visual starts generating automatically. It may take about 2 minutes. One image use is charged only if generation succeeds; no furniture is purchased.'
         : 'Please review the disclaimer before saving these products for your room design.'}
       nextDisclaimer={approved ? undefined : {
         text: selection.remainingMinor < 0
