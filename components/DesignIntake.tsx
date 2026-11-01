@@ -9,6 +9,7 @@ import ui from './RoomBrief.module.css';
 type CreativeFreedom = 'Safe' | 'Balanced' | 'Surprise me';
 type IntakeState = IntakeForBrief;
 type CatalogueItemChoice = { label: string; recommended: boolean; available: boolean; count: number; catalogueCount: number };
+type CatalogueStyleChoice = { name: string; available: boolean };
 
 const initialState: IntakeState = {
   roomType: 'living_room', projectGoal: 'refresh', retainedFurniture: [],
@@ -119,6 +120,7 @@ export function DesignIntake() {
   const [designId, setDesignId] = useState('');
   const [roomAssetId, setRoomAssetId] = useState('');
   const [catalogueItems, setCatalogueItems] = useState<CatalogueItemChoice[]>([]);
+  const [catalogueStyles, setCatalogueStyles] = useState<CatalogueStyleChoice[]>([]);
   const [catalogueLoading, setCatalogueLoading] = useState(false);
   const [catalogueError, setCatalogueError] = useState('');
   const [catalogueRetry, setCatalogueRetry] = useState(0);
@@ -217,10 +219,11 @@ export function DesignIntake() {
 
     fetch(`/api/products/categories?${params.toString()}`, { cache: 'no-store', signal: controller.signal })
       .then(async response => {
-        const payload = await response.json() as { items?: CatalogueItemChoice[]; error?: string };
+        const payload = await response.json() as { items?: CatalogueItemChoice[]; styles?: CatalogueStyleChoice[]; error?: string };
         if (!response.ok || !Array.isArray(payload.items)) throw new Error(payload.error || 'The product list could not be checked.');
         if (controller.signal.aborted) return;
         const items = payload.items;
+        setCatalogueStyles(Array.isArray(payload.styles) ? payload.styles : []);
         setCatalogueItems(items);
         const availableLabels = new Set(items.filter(item => item.available).map(item => item.label));
         const suggested = items.filter(item => item.recommended && item.available).map(item => item.label);
@@ -275,9 +278,9 @@ export function DesignIntake() {
     if (step === 1) return !catalogueLoading && !catalogueError;
     if (step === 2) return Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto);
     if (step === 9) return validMeasurements;
-    if (step === 4) return state.styles.length > 0;
+    if (step === 4) return !catalogueLoading && !catalogueError && state.styles.some(style => catalogueStyles.some(option => option.name === style && option.available));
     return true;
-  }, [step, state.roomType, photoUrl, designId, roomAssetId, uploadingPhoto, state.styles.length, validMeasurements, catalogueLoading, catalogueError]);
+  }, [step, state.roomType, photoUrl, designId, roomAssetId, uploadingPhoto, state.styles, validMeasurements, catalogueLoading, catalogueError, catalogueStyles]);
 
   function saveRuntime(next: { ownerKey: string; designId: string; roomAssetId: string; photoName: string }) {
     window.localStorage.setItem('roomfound-design-runtime-v1', JSON.stringify(next));
@@ -421,7 +424,7 @@ export function DesignIntake() {
     <div className="designIntake">
       <div className="intakeProgress" aria-label="Design intake progress">
         <div className="intakeProgressMeta">
-          <span>{complete ? 'Review' : `Step ${step + 1} of 10`}</span>
+          <span>{complete ? 'Review' : `Step ${step + 1} of 11`}</span>
           <strong>{complete ? 'Ready for your brief' : stepLabel}</strong>
           <span>{Math.round(progress)}%</span>
         </div>
@@ -577,26 +580,36 @@ export function DesignIntake() {
 
           {step === 4 ? (
             <>
-              <StepIntro eyebrow="5 · Style discovery" title="Which style feels like home?" copy="Choose the look you want to start with. You can select more than one." />
+              <StepIntro eyebrow="5 · Style discovery" title="Which style feels like home?" copy="Choose a look with reviewed furniture available for your budget and room. You can select more than one." />
               <div className="styleDiscoveryGrid">
                 {styles.map((style) => {
                   const active = state.styles.includes(style.name);
+                  const styleAvailable = !catalogueLoading && !catalogueError && catalogueStyles.some(option => option.name === style.name && option.available);
                   return (
                     <button
                       className={`styleChoice ${active ? 'isSelected' : ''}`}
                       type="button"
                       aria-pressed={active}
+                      aria-disabled={!styleAvailable && !active}
                       key={style.name}
-                      onClick={() => setState((current) => ({ ...current, styles: toggle(current.styles, style.name) }))}
+                      disabled={!styleAvailable && !active}
+                      onClick={() => {
+                        if (styleAvailable || active) setState((current) => ({ ...current, styles: toggle(current.styles, style.name) }));
+                      }}
                     >
                       <img src={style.image} alt="" aria-hidden="true" />
                       <span className="styleChoiceShade" />
-                      <span className="styleChoiceCopy"><strong>{style.name}</strong><small>{style.note}</small></span>
+                      <span className="styleChoiceCopy"><strong>{style.name}</strong><small>{style.note}</small><small>{styleAvailable ? 'Reviewed products available' : active ? 'No longer matches your current filters · remove this style' : 'No reviewed products match your current filters'}</small></span>
                       <i>{active ? '✓' : '+'}</i>
                     </button>
                   );
                 })}
               </div>
+              {catalogueLoading ? <p aria-live="polite">Checking which styles have matching furniture…</p> : null}
+              {catalogueError ? <p className={ui.error} role="alert">{catalogueError} <button className="textButton" type="button" onClick={() => setCatalogueRetry(value => value + 1)}>Try again</button></p> : null}
+              {!catalogueLoading && !catalogueError && !catalogueStyles.some(style => style.available) ? (
+                <p className={ui.note} role="status">No reviewed furniture matches these styles with your current budget and filters. <button className="textButton" type="button" onClick={() => setStep(8)}>Adjust my budget</button></p>
+              ) : null}
             </>
           ) : null}
 
