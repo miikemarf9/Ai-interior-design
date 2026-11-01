@@ -43,6 +43,7 @@ export async function POST(request: Request) {
         )
         and g.status = 'succeeded'
         and g.result_asset_id is not null
+        and jsonb_array_length(coalesce(g.metadata #> '{snapshot,selection,products}','[]'::jsonb)) > 0
       limit 1
     ),
     existing as (
