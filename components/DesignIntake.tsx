@@ -4,6 +4,7 @@ import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import type { IntakeForBrief } from '@/lib/brief';
 import { RetainedFurniture } from './RetainedFurniture';
 import { trackRoomfound } from '@/components/PrivacyAnalytics';
+import { JourneyAssistant } from '@/components/JourneyAssistant';
 import ui from './RoomBrief.module.css';
 
 type CreativeFreedom = 'Safe' | 'Balanced' | 'Surprise me';
@@ -850,61 +851,34 @@ export function DesignIntake() {
           </div>
         </section>
 
-        <aside className="intakeSidePanel" aria-label="Your progress and next step">
-          <div className="intakeSideCard">
-            <div className="intakeSideHeader">
-              <p className="eyebrow">Your progress</p>
-              <span>0{step + 1} / 03</span>
-            </div>
-            <ol className="intakeSideSteps">
-              {[
-                { title: 'Your room', detail: 'Room type and photograph' },
-                { title: 'Style and budget', detail: state.styles.length ? state.styles[0] + ' selected' : 'Choose a look, if you wish' },
-                { title: 'Furniture', detail: 'Keep, add or replace pieces' },
-              ].map((item, index) => (
-                <li key={item.title}>
-                  <button
-                    type="button"
-                    className={'intakeSideStep ' + (step === index ? 'isCurrent' : step > index ? 'isComplete' : '')}
-                    disabled={index > step}
-                    aria-current={step === index ? 'step' : undefined}
-                    onClick={() => goToStep(index)}
-                  >
-                    <span className="intakeSideStepNumber">{step > index ? '✓' : index + 1}</span>
-                    <span><strong>{item.title}</strong><small>{item.detail}</small></span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-
-            <div className="intakeSideAction" aria-live="polite">
-              <p className="microLabel">Up next</p>
-              <h2>{step === 0 ? 'Choose your style' : step === 1 ? 'Choose your furniture' : 'Review your room'}</h2>
-              <p>
-                {step === 0
-                  ? 'Add one clear photograph to continue.'
-                  : step === 1
-                    ? state.styles.length ? 'We’ll use your ' + state.styles[0] + ' direction to guide the furniture suggestions.' : 'No style is required. Continue and we will create a balanced direction.'
-                    : 'Your choices are ready. You can use the suggestions or leave the selection to us.'}
-              </p>
-              {step === 1 && state.styles.length ? (
-                <div className="intakeSelectedStyle">
-                  <span>Selected style</span>
-                  <strong>{state.styles[0]}</strong>
-                </div>
-              ) : null}
-              <button className="button buttonPrimary" type="button" onClick={next} disabled={!canContinue}>
-                {step === 0 ? 'Continue to style' : step === 1 ? (state.styles.length ? 'Continue to furniture' : 'Continue without a style') : 'Review my room'}
-              </button>
-              {step === 2 ? (
-                <button className="intakeSideSecondary" type="button" onClick={letDesignerChoose}>Let the designer choose</button>
-              ) : null}
-              <p className="intakeSideNote">Only your room photograph is required. All other preferences are optional.</p>
-            </div>
-          </div>
-        </aside>
         </div>
       )}
+      <JourneyAssistant
+        visible={Boolean(roomAssetId)}
+        currentStep={complete ? 4 : step + 1}
+        nextTitle={complete ? 'Review your design direction' : step === 0 ? 'Choose your style' : step === 1 ? 'Choose your furniture direction' : 'Review your room'}
+        nextDescription={complete
+          ? 'Your room choices are saved. Next, we will turn them into an editable design brief.'
+          : step === 0
+            ? 'Your room photograph is the starting point. Continue when it has been saved.'
+            : step === 1
+              ? state.styles.length ? 'We will use your ' + state.styles[0] + ' direction and budget to guide the furniture collection.' : 'A style is optional. Continue with your budget and we will create a balanced direction.'
+              : 'Your room, style and furniture preferences are ready to review.'}
+        nextLabel={complete ? 'Review my design brief' : step === 0 ? 'Continue to style' : step === 1 ? 'Continue to furniture' : 'Review my room'}
+        nextHref={complete ? '/brief' : undefined}
+        onNext={complete ? undefined : next}
+        nextDisabled={!complete && !canContinue}
+        ownerKey={ownerKey}
+        onStageClick={(stage) => {
+          if (complete && stage === 3) {
+            setComplete(false);
+            setStep(2);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            goToStep(stage - 1);
+          }
+        }}
+      />
     </div>
   );
 }
