@@ -83,14 +83,9 @@ export function JourneyAssistant({
 
   useEffect(() => {
     if (!visible) return;
-    let dismissed = false;
-    try {
-      dismissed = window.localStorage.getItem(DISMISS_KEY) === 'true';
-    } catch {
-      dismissed = false;
-    }
-    setOpen(defaultOpen && !dismissed);
-  }, [visible, defaultOpen]);
+    // Reopen the contextual assistant when the customer reaches a new journey screen.
+    setOpen(defaultOpen);
+  }, [visible, defaultOpen, currentStep]);
 
   useEffect(() => {
     document.body.classList.toggle('journeyAssistantOpen', visible && open);
@@ -135,11 +130,6 @@ export function JourneyAssistant({
 
   function closePanel() {
     setOpen(false);
-    try {
-      window.localStorage.setItem(DISMISS_KEY, 'true');
-    } catch {
-      // The panel still closes for this page if storage is unavailable.
-    }
   }
 
   function openPanel() {
