@@ -57,7 +57,7 @@ ${JSON.stringify(visualBrief)}
 
 CUSTOMER CONSTRAINTS
 Keep / retained furniture: ${intake.keep.length ? intake.keep.join(", ") : "none explicitly listed"}.
-Retained photo markers (normalised x/y, not measurements): ${JSON.stringify(intake.retainedFurniture || [])}. Preserve these items.
+Photo annotations (normalised x/y, visual guidance only, not measurements): ${JSON.stringify(intake.retainedFurniture || [])}. Preserve markers tagged keep. Treat markers tagged place as requested positions for new items where practical; never treat them as items to remove.
 Measurement source: ${intake.measurements.accuracy || "unknown"}; never treat estimates as verified fit.
 Allowed to change: ${intake.change.length ? intake.change.join(", ") : "open to the approved brief"}.
 Room uses: ${intake.uses.length ? intake.uses.join(", ") : "general living room use"}.
