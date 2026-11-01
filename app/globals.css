@@ -4724,3 +4724,56 @@ button.journeyAssistantStep:hover strong {
 .photoGuidance h2 { margin: 5px 0 14px; font-size: clamp(24px, 2.6vw, 34px); line-height: 1.12; }
 .photoGuidance .annotationStart { width: fit-content; margin-top: 20px; }
 .photoAnnotationCount { margin: 14px 0 0; color: var(--forest); font-size: 12px; font-weight: 700; }
+
+/* Keep the progress panel present but visually quieter while the customer chooses products. */
+.journeyAssistantPanel.isProductChoosing {
+  background: rgba(251, 250, 247, .94);
+  border-color: rgba(32, 34, 29, .09);
+  box-shadow: 0 10px 30px rgba(28, 32, 27, .08);
+  backdrop-filter: blur(8px);
+}
+.journeyAssistantPanel.isProductChoosing:focus-within,
+.journeyAssistantPanel.isProductChoosing:hover {
+  background: #fff;
+  box-shadow: 0 18px 56px rgba(28, 32, 27, .16);
+}
+.journeyAssistantStep.isAvailableNext {
+  color: var(--forest);
+  text-decoration: none;
+}
+.journeyAssistantStep.isAvailableNext .journeyAssistantStepNumber {
+  border-color: var(--forest);
+  color: var(--forest);
+}
+.journeyAssistantStep.isAvailableNext:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.productIncludeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid rgba(125, 73, 61, .24);
+  background: #faf6f3;
+  color: #7d493d;
+  text-decoration: none;
+}
+.productIncludeToggle > span {
+  font-size: 16px;
+  line-height: .8;
+}
+.productIncludeToggle:hover:not(:disabled) {
+  border-color: #7d493d;
+  background: #f4e9e3;
+}
+.productBudgetNotice {
+  margin: 14px 0;
+  padding: 12px 15px;
+  border-left: 3px solid #a97839;
+  background: #f8f3e8;
+  color: #554a35;
+  font-size: 13px;
+  line-height: 1.5;
+}
