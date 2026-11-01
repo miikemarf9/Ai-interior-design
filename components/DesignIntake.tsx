@@ -748,16 +748,16 @@ export function DesignIntake() {
         visible={true}
         defaultOpen={Boolean(roomAssetId)}
         currentStep={complete ? 3 : step + 1}
-        nextTitle={complete ? 'Review your design direction' : step === 0 ? 'Choose your style' : 'Review your room'}
+        nextTitle={complete ? 'Choose real furniture' : step === 0 ? 'Choose your style' : 'Review your room'}
         nextDescription={complete
-          ? 'Your room choices are saved. Next, we will turn them into an editable design brief.'
+          ? 'Your room and style choices are saved. Next, choose real furniture.'
           : step === 0
             ? 'Your room photograph is the starting point. Continue when it has been saved.'
             : step === 1
               ? state.styles.length ? 'We will use your ' + state.styles[0] + ' direction and budget to prepare your design brief.' : 'A style is optional. Continue with your budget and we will create a balanced direction.'
               : 'Your room, style and furniture preferences are ready to review.'}
-        nextLabel={complete ? 'Review my design brief' : step === 0 ? 'Continue to style' : step === 1 ? 'Review my room' : 'Review my room'}
-        nextHref={complete ? '/brief' : undefined}
+        nextLabel={complete ? 'Choose real furniture' : step === 0 ? 'Continue to style' : step === 1 ? 'Review my room' : 'Review my room'}
+        nextHref={complete ? '/products' : undefined}
         onNext={complete ? undefined : next}
         nextDisabled={!complete && !canContinue}
         ownerKey={ownerKey}
