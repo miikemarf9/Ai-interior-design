@@ -7,8 +7,8 @@ export default function ProductsPage() {
     <main className="productSelectionPage">
       <header className="designHeader shellWide">
         <Brand />
-        <span className="designHeaderNote">Step 5 of 6 · About 2 minutes · Free</span>
-        <Link className="textLink" href="/brief">Back to design brief</Link>
+        <span className="designHeaderNote">Step 3 of 4 · Free</span>
+        <Link className="textLink" href="/design?step=1">Back to style and budget</Link>
       </header>
       <ProductSelectionExperience />
     </main>
