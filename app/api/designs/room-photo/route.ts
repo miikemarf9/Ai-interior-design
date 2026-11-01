@@ -196,7 +196,12 @@ export async function POST(request: Request) {
         : `/api/assets/${rows[0].asset_id}?ownerKey=${encodeURIComponent(resolvedOwnerKey)}`,
     });
   } catch(error){
-    console.error("Room photo upload failed",error);
+    const uploadError = error instanceof Error ? error as Error & { code?: unknown } : null;
+    console.error("Room photo upload failed", {
+      name: uploadError?.name || "UnknownError",
+      code: typeof uploadError?.code === "string" ? uploadError.code : undefined,
+      message: (uploadError?.message || "Unknown upload error").slice(0, 240),
+    });
     return NextResponse.json({error:"The room photograph could not be stored."},{status:500});
   }
 }
