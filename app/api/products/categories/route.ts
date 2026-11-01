@@ -71,6 +71,8 @@ export async function GET(request: Request) {
     const roomLength = positiveCm(params.get("roomLengthCm"));
     const ceiling = positiveCm(params.get("ceilingCm"));
     const dislikes = (params.get("dislikes") || "").trim().toLowerCase();
+    const definitions = roomType === "living_room" ? livingRoomItems : bedroomItems;
+    const requestedItems = new Set((params.get("items") || "").split(",").map(value => value.trim()).filter(Boolean));
     const hardFiltered = current.filter(item => {
       if (maxPriceMinor !== null && item.offer.priceMinor > maxPriceMinor) return false;
       if (roomWidth !== null && roomLength !== null) {
@@ -90,15 +92,17 @@ export async function GET(request: Request) {
       !wantedStyles.length || item.styles.some(style => wantedStyles.includes(style))
     );
 
-    const definitions = roomType === "living_room" ? livingRoomItems : bedroomItems;
     const items = definitions.map(definition => {
       const catalogueCount = current.filter(candidate => definition.categories.includes(candidate.category)).length;
       const count = filtered.filter(candidate => definition.categories.includes(candidate.category)).length;
       return { label: definition.label, recommended: definition.recommended, available: count > 0, count, catalogueCount };
     });
+    const styleCandidates = hardFiltered.filter(candidate =>
+      definitions.some(definition => requestedItems.has(definition.label) && definition.categories.includes(candidate.category))
+    );
     const styles = (roomType === "living_room" ? livingRoomStyles : []).map(style => ({
       name: style.name,
-      available: hardFiltered.some(candidate => candidate.styles.includes(style.slug)),
+      available: styleCandidates.some(candidate => candidate.styles.includes(style.slug)),
     }));
     return NextResponse.json({ roomType, items, styles });
   } catch (error) {
