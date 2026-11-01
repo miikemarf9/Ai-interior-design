@@ -86,9 +86,9 @@ export function HomeHeroCarousel() {
       }}>
       {[0, 1].map(index => (
         <div key={index} className={`heroSlide${active === index ? ' isActive' : ''}`}
-          role="group" aria-roledescription="slide" aria-label={`${index + 1} of 2: ${index === 0 ? 'Furnish an empty living room' : 'Redesign an existing bedroom'}`}
+          role="group" aria-roledescription="slide" aria-label={`${index + 1} of 2: ${index === 0 ? 'Start with your living room' : 'Choose furniture for your room'}`}
           aria-hidden={active !== index} inert={active !== index}>
-          <HomeHeroImage key={runs[index]} room={index === 0 ? 'living' : 'bedroom'}
+          <HomeHeroImage key={runs[index]} room="living"
             paused={paused || active !== index} onReady={index === 0 ? readyLiving : readyBedroom} />
           <div className="homeHeroShade" />
           <div key={`copy-${runs[index]}`} className="homeHeroContent shellWide">
@@ -98,10 +98,10 @@ export function HomeHeroCarousel() {
               <p className="heroLine heroLineThree">Choose your style and budget. Get a design for your space, with furniture selected to work together and links to buy it.</p>
               <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Upload my room</Link>
             </> : <>
-              <p className="eyebrow eyebrowLight heroLine heroLineOne">Refresh your existing room</p>
-              <h1 className="heroLine heroLineTwo">Keep what you love.<br />Redesign the rest.</h1>
-              <p className="heroLine heroLineThree">Upload a room photo and tell us what stays. See a new look built around your furniture, style and budget.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Upload my room</Link>
+              <p className="eyebrow eyebrowLight heroLine heroLineOne">Review the furniture first</p>
+              <h1 className="heroLine heroLineTwo">Choose the pieces.<br />Then see them in your room.</h1>
+              <p className="heroLine heroLineThree">Check reviewed retailer products, dimensions and prices before creating a room visual from your photo.</p>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Plan my living room</Link>
             </>}
           </div>
         </div>
@@ -111,7 +111,7 @@ export function HomeHeroCarousel() {
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
         </button>
         {[0, 1].map(index => <button key={index} type="button" className="heroCarouselDot"
-          aria-label={`Show ${index === 0 ? 'living room' : 'bedroom'} transformation`} aria-current={active === index ? 'true' : undefined}
+          aria-label={`Show ${index === 0 ? 'room photo' : 'product selection'} introduction`} aria-current={active === index ? 'true' : undefined}
           onClick={() => choose(index)} disabled={active !== index && !ready[index]}><span /></button>)}
         <button type="button" onClick={() => choose(active + 1)} aria-label="Next slide" disabled={!ready[1 - active]}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
