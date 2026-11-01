@@ -861,7 +861,8 @@ export function DesignIntake() {
         </div>
       )}
       <JourneyAssistant
-        visible={Boolean(roomAssetId)}
+        visible={true}
+        defaultOpen={Boolean(roomAssetId)}
         currentStep={complete ? 4 : step + 1}
         nextTitle={complete ? 'Review your design direction' : step === 0 ? 'Choose your style' : step === 1 ? 'Choose your furniture direction' : 'Review your room'}
         nextDescription={complete
