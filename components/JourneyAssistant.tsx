@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useId, useState } from 'react';
 
-type CreditStatus = {
+type JourneyIntake = { roomType?: string; projectGoal?: string; styles?: string[]; budget?: number; colours?: string[]; materials?: string[]; dislikes?: string; uses?: string[]; keep?: string[]; change?: string[]; retainedFurniture?: Array<{ label?: string }> };\n\ntype CreditStatus = {
   balance: number;
   verificationStatus: string;
   verifiedRequired: boolean;
@@ -31,7 +31,6 @@ const DISMISS_KEY = 'transform-my-room-journey-assistant-dismissed-v1';
 const stages = [
   { label: 'Your room', detail: 'Room type and photograph', href: '/design?step=0' },
   { label: 'Style and budget', detail: 'Choose the look and allowance', href: '/design?step=1' },
-  { label: 'Design brief', detail: 'Review and approve the direction', href: '/brief' },
   { label: 'Furniture collection', detail: 'Choose real products', href: '/products' },
   { label: 'Room visual', detail: 'Create your room design', href: '/render' },
 ];
@@ -78,7 +77,7 @@ export function JourneyAssistant({
 }: JourneyAssistantProps) {
   const panelId = useId();
   const [open, setOpen] = useState(false);
-  const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
+  const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);\n  const [intakeSummary, setIntakeSummary] = useState<JourneyIntake | null>(null);\n  const [photoName, setPhotoName] = useState('');\n  const [productSummary, setProductSummary] = useState('');
 
   useEffect(() => {
     if (!visible) return;
@@ -90,6 +89,26 @@ export function JourneyAssistant({
     document.body.classList.toggle('journeyAssistantOpen', visible && open);
     return () => document.body.classList.remove('journeyAssistantOpen');
   }, [visible, open]);
+
+  useEffect(() => {
+    if (!visible) return;
+    try {
+      const intake = JSON.parse(window.localStorage.getItem('roomfound-intake-v1') || 'null');
+      const runtime = JSON.parse(window.localStorage.getItem('roomfound-design-runtime-v1') || 'null');
+      const savedProducts = JSON.parse(window.localStorage.getItem('roomfound-product-selection-v1') || 'null');
+      setIntakeSummary(intake?.state || null);
+      setPhotoName(typeof runtime?.photoName === 'string' ? runtime.photoName : '');
+      const products = Array.isArray(savedProducts?.selection?.products)
+        ? savedProducts.selection.products.map((item: { selected?: { productName?: string; variantName?: string }; quantity?: number }) =>
+            [item.selected?.productName, item.selected?.variantName].filter(Boolean).join(' · ') + (item.quantity && item.quantity > 1 ? ' × ' + item.quantity : ''))
+        : [];
+      setProductSummary(products.filter(Boolean).join(', '));
+    } catch {
+      setIntakeSummary(null);
+      setPhotoName('');
+      setProductSummary('');
+    }
+  }, [visible, currentStep]);
 
   useEffect(() => {
     if (!visible) return;
@@ -142,6 +161,17 @@ export function JourneyAssistant({
 
   if (!visible) return null;
 
+  const decisionRows = intakeSummary ? [
+    { label: 'Room', value: [intakeSummary.roomType === 'living_room' ? 'Living room' : intakeSummary.roomType, intakeSummary.projectGoal === 'furnish' ? 'Furnish' : intakeSummary.projectGoal === 'refresh' ? 'Refresh' : ''].filter(Boolean).join(' · '), href: '/design?step=0' },
+    { label: 'Room photo', value: photoName || 'Photo saved', href: '/design?step=0' },
+    { label: 'Style and budget', value: [(intakeSummary.styles || []).join(', ') || 'Designer choice', typeof intakeSummary.budget === 'number' ? new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(intakeSummary.budget) : ''].filter(Boolean).join(' · '), href: '/design?step=1' },
+    { label: 'Furniture to keep', value: [...(intakeSummary.keep || []), ...(intakeSummary.retainedFurniture || []).map(item => item.label).filter((label): label is string => Boolean(label))].join(', '), href: '/design?step=1' },
+    { label: 'Room preferences', value: [...(intakeSummary.colours || []), ...(intakeSummary.materials || []), ...(intakeSummary.uses || [])].join(', '), href: '/design?step=1' },
+    { label: 'Avoid', value: intakeSummary.dislikes || '', href: '/design?step=1' },
+    { label: 'Furniture to find', value: (intakeSummary.change || []).join(', '), href: '/design?step=1' },
+    { label: 'Selected products', value: productSummary, href: '/products' },
+  ].filter(row => row.value) : [];
+
   return (
     <>
       {open ? (
@@ -153,7 +183,7 @@ export function JourneyAssistant({
             <div className="journeyAssistantHeader">
               <div>
                 <p className="eyebrow">Your progress</p>
-                <span>{String(Math.min(5, Math.max(1, currentStep))).padStart(2, '0')} / 05</span>
+                <span>{String(Math.min(4, Math.max(1, currentStep))).padStart(2, '0')} / 04</span>
               </div>
               <button type="button" className="journeyAssistantClose" aria-label="Close progress panel" onClick={closePanel}>×</button>
             </div>
@@ -187,6 +217,20 @@ export function JourneyAssistant({
                 );
               })}
             </ol>
+
+            {decisionRows.length ? (
+              <section className="journeyAssistantDecisions" aria-label="Your choices">
+                <p className="microLabel">Your choices</p>
+                <ul>
+                  {decisionRows.map(row => (
+                    <li key={row.label}>
+                      <span><strong>{row.label}</strong><small>{row.value}</small></span>
+                      <Link href={row.href} aria-label={'Edit ' + row.label}>Edit</Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
 
             <section className="journeyAssistantNext" aria-live="polite">
               <p className="microLabel">Up next</p>
