@@ -13,7 +13,8 @@ export async function POST(request: Request) {
       choices?: SelectionChoice[];
       approve?: boolean;
       acknowledgeLimitations?: boolean;
-      expectedSnapshot?: string;\n      includedSlots?: string[];
+      expectedSnapshot?: string;
+      includedSlots?: string[];
     };
 
     if (body.intake?.roomType === 'bedroom') return NextResponse.json({ error: 'Bedroom briefs can be saved, but bedroom product selection is not available yet.' }, { status: 409 });
