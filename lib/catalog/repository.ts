@@ -37,8 +37,8 @@ type CandidateRow = {
   image_alt: string | null;
 };
 
-export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]> {
-  const clearances = currentClearances();
+export async function getLiveSelectionCandidates(roomType: 'living_room' | 'bedroom' = 'living_room'): Promise<SelectionCandidate[]> {
+  const clearances = currentClearances().filter(item => item.roomType === roomType);
   if (!clearances.length) return [];
   const sql = getCatalogDb();
 

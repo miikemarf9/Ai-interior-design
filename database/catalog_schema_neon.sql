@@ -48,7 +48,7 @@ create table public.categories (
   sort_order integer not null default 0,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
-  constraint categories_room_type check (room_type in ('living_room'))
+  constraint categories_room_type check (room_type in ('living_room','bedroom'))
 );
 
 create table public.styles (
@@ -101,7 +101,7 @@ create table public.products (
   source_updated_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint products_room_type check (room_type in ('living_room')),
+  constraint products_room_type check (room_type in ('living_room','bedroom')),
   constraint products_curation_score check (curation_score between 0 and 100),
   constraint products_name_nonempty check (length(trim(name)) > 0)
 );

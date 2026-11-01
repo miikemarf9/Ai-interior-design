@@ -3,6 +3,7 @@
  * Evidence references identify private approval records; never return them to the browser.
  */
 export type CatalogueClearance = {
+  roomType: 'living_room' | 'bedroom';
   productId: string;
   variantId: string;
   offerId: string;
@@ -24,6 +25,7 @@ export type CatalogueClearance = {
 // The photos appear in the affiliate product picker; product photos are not sent to the image model.
 export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
   {
+    roomType: 'living_room',
     productId: 'cbbeafca-74f8-45a0-9bff-5657d837408f',
     variantId: 'd094ea50-ef93-41f8-9e1e-c302d0f6b5b4',
     offerId: '10c81fad-d1da-4fa3-ab7c-9327537be1a0',
@@ -41,6 +43,7 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     deliveryDetails: 'Delivery charge, lead time and postcode availability are not confirmed here; check the Aosom listing and checkout.',
   },
   {
+    roomType: 'living_room',
     productId: 'e22306f7-944d-4452-b5ac-cb2242ff76c8',
     variantId: 'e9cce523-1138-4d9a-a2e4-9fb9fdca4694',
     offerId: 'dc119dc8-365e-46eb-8026-2aeefe63cbea',
@@ -58,6 +61,7 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     deliveryDetails: 'Delivery charge, lead time and postcode availability are not confirmed here; check the Aosom listing and checkout.',
   },
   {
+    roomType: 'living_room',
     productId: 'a3838162-5a67-449d-8dcb-fabff7560830',
     variantId: 'd0a68616-abd6-465a-93b4-44aa138fa75d',
     offerId: 'c82212a3-dab3-4928-8a10-7a3daf14d72f',
@@ -75,6 +79,7 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     deliveryDetails: 'Delivery charge, lead time and postcode availability are not confirmed here; check the Aosom listing and checkout.',
   },
   {
+    roomType: 'living_room',
     productId: 'd91ae382-79e4-47c5-a9cc-7e323c564fe5',
     variantId: '6a5f7136-5b93-408f-90d7-173b23a921f3',
     offerId: 'ef1edd81-ab5b-4fb0-ab7e-3bb746dfbcff',
@@ -93,6 +98,7 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
   },
 
   {
+    roomType: 'living_room',
     productId: '3d4b64f7-3f28-4606-93b2-ea52c3f3cb86',
     variantId: '3da48ba7-eb99-446b-8cb0-b73145e01166',
     offerId: '1aad4485-a894-42c9-abaa-09ae90309487',
@@ -110,6 +116,7 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     deliveryDetails: 'Aosom states free UK mainland delivery; the page showed 05/11/2026–09/11/2026. Confirm current postcode delivery at checkout.',
   },
   {
+    roomType: 'living_room',
     productId: '45459ec0-16c4-4235-b417-77a6cb8e87ee',
     variantId: 'bc814259-ea3f-4daf-a15d-521e26032a05',
     offerId: 'b69b0eb0-2d0f-440d-9a58-131d0302824e',

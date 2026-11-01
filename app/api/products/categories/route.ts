@@ -32,7 +32,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const candidates = roomType === "living_room" ? await getLiveSelectionCandidates() : [];
+    const candidates = await getLiveSelectionCandidates(roomType);
     const now = Date.now();
     const current = candidates.filter(item => item.clearedForSelection === true
       && item.image

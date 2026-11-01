@@ -34,7 +34,6 @@ export function RenderExperience() {
         const savedSelection = JSON.parse(localStorage.getItem('roomfound-product-selection-v1') || '{}');
         const savedRuntime = JSON.parse(localStorage.getItem('roomfound-design-runtime-v1') || '{}');
         if (!savedRoom || !savedBrief.approved || !savedBrief.brief || !savedRuntime.roomAssetId || !savedRuntime.designId || !savedRuntime.ownerKey) { setBlocked('Upload your room photo and approve your room brief first.'); return; }
-        if (savedRoom.roomType === 'bedroom') { setBlocked('The first pilot is living-room only. Bedroom generation remains unavailable.'); return; }
         setRoom(savedRoom); setBrief(savedBrief.brief); setRuntime(savedRuntime);
         const history = await readHistory(savedRuntime);
         if (!history.available) { setBlocked(history.reason); return; }

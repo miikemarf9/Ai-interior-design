@@ -35,6 +35,10 @@ export type FeedCandidate = {
 };
 
 const CATEGORY_RULES: Array<{ slug: string; terms: string[] }> = [
+  { slug: "beds", terms: ["ottoman bed", "bed frame", "bedframe", "platform bed", "upholstered bed", "king bed", "double bed", "single bed"] },
+  { slug: "bedside-tables", terms: ["bedside table", "bedside cabinet", "nightstand", "night stand"] },
+  { slug: "wardrobes", terms: ["wardrobe", "closet"] },
+  { slug: "chest-of-drawers", terms: ["chest of drawers", "drawer dresser", "bedroom dresser"] },
   { slug: "sofas", terms: ["sofa", "settee", "couch"] },
   { slug: "armchairs", terms: ["armchair", "accent chair", "lounge chair", "wing chair"] },
   { slug: "footstools-pouffes", terms: ["footstool", "ottoman", "pouffe"] },
@@ -248,7 +252,7 @@ export function normalizeLegacyAwinRow(row: Record<string, unknown>): FeedCandid
   return { ...base, qualityScore: qualityScore(base), raw: row };
 }
 
-export function isUsefulLivingRoomCandidate(candidate: FeedCandidate) {
+export function isUsefulCatalogCandidate(candidate: FeedCandidate) {
   return Boolean(
     candidate.normalizedCategorySlug
     && candidate.qualityScore >= 55
@@ -257,4 +261,8 @@ export function isUsefulLivingRoomCandidate(candidate: FeedCandidate) {
     && candidate.currency === "GBP"
     && ["in_stock", "low_stock", "preorder"].includes(candidate.availability),
   );
+}
+
+export function isUsefulLivingRoomCandidate(candidate: FeedCandidate) {
+  return isUsefulCatalogCandidate(candidate) && !["beds", "bedside-tables", "wardrobes", "chest-of-drawers"].includes(candidate.normalizedCategorySlug || "");
 }

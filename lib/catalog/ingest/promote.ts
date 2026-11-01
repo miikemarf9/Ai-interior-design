@@ -72,7 +72,7 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
         c.ean,
         c.description,
         c.description,
-        'living_room',
+        case when c.normalized_category_slug in ('beds','bedside-tables','wardrobes','chest-of-drawers') then 'bedroom' else 'living_room' end,
         'active',
         true,
         c.quality_score,

@@ -98,7 +98,6 @@ export function ProductSelectionExperience() {
 
   if (loading) return <section className="selectionLoading shell"><p className="eyebrow">Your furniture collection</p><h1>Checking products for your room.</h1><div className="briefLoadingLine"><i /></div><p>No image-generation credit is used.</p></section>;
   if (!intake || !brief) return <section className="selectionMissing shell"><p className="eyebrow">Your furniture collection</p><h1>Agree your room brief first.</h1><p>We use your preferences and the furniture you are keeping to recommend a small collection.</p><Link className="button buttonPrimary" href="/brief">Return to brief</Link></section>;
-  if (intake.roomType === 'bedroom') return <section className="selectionMissing shell"><h1>Your bedroom brief is saved.</h1><p>Bedroom furniture selection is not available yet.</p><Link className="button buttonPrimary" href="/brief">Back to my brief</Link></section>;
   if (error) return <section className="selectionMissing shell"><h1>We couldn’t check your collection.</h1><p role="alert">{error}</p><button className="button buttonPrimary" disabled={busy} onClick={() => loadSelection(intake, brief, selection || undefined)}>Try again</button><p><Link href="/brief">Back to my brief</Link></p></section>;
   if (!selection?.products.length) return <section className="selectionEmpty shell">
     <p className="eyebrow">Your furniture collection</p><h1>Your brief is ready. The furniture collection is coming next.</h1>
