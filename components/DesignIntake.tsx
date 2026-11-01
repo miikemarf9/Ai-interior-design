@@ -798,18 +798,6 @@ export function DesignIntake() {
             <>
               <StepIntro eyebrow="03 / 03 · Furniture" title="What should stay, and what should change?" copy="Keep the pieces you already own, then choose the furniture you would like us to find for your room." />
 
-              <section className="keepSection">
-                <div className="choiceSectionHeading">
-                  <div><h2>Keep</h2><p>Select anything you want the design to work around.</p></div>
-                  <span>Optional</span>
-                </div>
-                <ChoiceGrid
-                  items={keepItems}
-                  selected={state.keep}
-                  onChange={value => setState(current => ({ ...current, keep: toggle(current.keep, value), change: current.change.filter(item => item !== value) }))}
-                />
-              </section>
-
               <section className="changeSection">
                 <div className="choiceSectionHeading">
                   <div><h2>Replace or add</h2><p>We have preselected a useful starting collection. Change it to suit your plans.</p></div>
