@@ -7,6 +7,7 @@ import { getCatalogDb } from "@/lib/catalog/neon";
 export const runtime = "nodejs";
 
 const MAX_ROOM_BYTES = 8 * 1024 * 1024;
+const ROOM_ASSET_CHUNK_BYTES = 512 * 1024;
 const allowedMime = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function validOwnerKey(value: string) {
@@ -15,6 +16,28 @@ function validOwnerKey(value: string) {
 
 function validUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function errorDetails(error: unknown) {
+  if (error instanceof Error) {
+    const databaseError = error as Error & {
+      code?: string;
+      detail?: string;
+      hint?: string;
+      constraint?: string;
+      status?: number;
+    };
+    return {
+      name: error.name,
+      message: error.message,
+      code: databaseError.code,
+      detail: databaseError.detail,
+      hint: databaseError.hint,
+      constraint: databaseError.constraint,
+      status: databaseError.status,
+    };
+  }
+  return { message: String(error) };
 }
 
 async function ensureDesign(args: {
@@ -162,41 +185,96 @@ export async function POST(request: Request) {
       homeId:accountHomeId,
     });
 
-    const bytes=Buffer.from(await file.arrayBuffer());
-    const base64=bytes.toString("base64");
-    const sha256=createHash("sha256").update(bytes).digest("hex");
-    const sql=getCatalogDb();
+    const bytes = Buffer.from(await file.arrayBuffer());
+    if (bytes.length !== file.size) {
+      throw new Error("The received room photograph was incomplete.");
+    }
+    const sha256 = createHash("sha256").update(bytes).digest("hex");
+    const sql = getCatalogDb();
+    let assetId: string | null = null;
 
-    const rows=await sql.query(
-      `with asset as (
-        insert into public.design_assets (
+    try {
+      const created = await sql.query(
+        `insert into public.design_assets (
           design_id,asset_kind,mime_type,byte_size,data,
           sha256,storage_backend,metadata
         )
         values (
-          $1::uuid,'room_original',$2,$3,decode($4,'base64'),
-          $5,'postgres_bytea_mvp',jsonb_build_object('original_name',$6)
+          $1::uuid,'room_original',$2,0,''::bytea,
+          null,'postgres_bytea_mvp',jsonb_build_object('original_name',$3,'expected_byte_size',$4)
         )
-        returning id
-      )
-      update public.room_designs d
-      set original_room_asset_id=a.id,status='intake',updated_at=now()
-      from asset a
-      where d.id=$1::uuid
-      returning a.id::text as asset_id`,
-      [designId,file.type,file.size,base64,sha256,file.name],
-    ) as Array<{ asset_id:string }>;
+        returning id::text as asset_id`,
+        [designId, file.type, file.name, file.size],
+      ) as Array<{ asset_id: string }>;
 
-    return NextResponse.json({
-      designId,
-      assetId:rows[0].asset_id,
-      ownerKey:resolvedOwnerKey,
-      url:account
-        ? `/api/assets/${rows[0].asset_id}`
-        : `/api/assets/${rows[0].asset_id}?ownerKey=${encodeURIComponent(resolvedOwnerKey)}`,
-    });
+      assetId = created[0]?.asset_id ?? null;
+      if (!assetId) {
+        throw new Error("Room photo asset record could not be created.");
+      }
+
+      // Keep each Neon HTTP query small; one Base64 parameter for the whole
+      // photograph can exceed the SQL-over-HTTP request limit.
+      let storedBytes = 0;
+      for (let offset = 0; offset < bytes.length; offset += ROOM_ASSET_CHUNK_BYTES) {
+        const chunk = bytes.subarray(offset, Math.min(offset + ROOM_ASSET_CHUNK_BYTES, bytes.length));
+        const chunkBase64 = chunk.toString("base64");
+        const progress = await sql.query(
+          `update public.design_assets
+           set data = data || decode($2,'base64')
+           where id=$1::uuid
+           returning octet_length(data)::int as stored_bytes`,
+          [assetId, chunkBase64],
+        ) as Array<{ stored_bytes: number }>;
+
+        storedBytes += chunk.length;
+        if (progress[0]?.stored_bytes !== storedBytes) {
+          throw new Error("Room photo storage did not write the complete chunk.");
+        }
+      }
+
+      if (storedBytes !== file.size) {
+        throw new Error("Room photo storage size did not match the upload.");
+      }
+
+      const rows = await sql.query(
+        `with asset as (
+          update public.design_assets
+          set byte_size=$2,sha256=$3,metadata=jsonb_build_object('original_name',$4)
+          where id=$1::uuid and octet_length(data)=$2
+          returning id
+        )
+        update public.room_designs d
+        set original_room_asset_id=a.id,status='intake',updated_at=now()
+        from asset a
+        where d.id=$5::uuid
+        returning a.id::text as asset_id`,
+        [assetId, file.size, sha256, file.name, designId],
+      ) as Array<{ asset_id: string }>;
+
+      if (!rows[0]?.asset_id) {
+        throw new Error("Room photo storage did not pass its final size check.");
+      }
+
+      return NextResponse.json({
+        designId,
+        assetId: rows[0].asset_id,
+        ownerKey: resolvedOwnerKey,
+        url: account
+          ? `/api/assets/${rows[0].asset_id}`
+          : `/api/assets/${rows[0].asset_id}?ownerKey=${encodeURIComponent(resolvedOwnerKey)}`,
+      });
+    } catch (error) {
+      if (assetId) {
+        try {
+          await sql.query("delete from public.design_assets where id=$1::uuid", [assetId]);
+        } catch (cleanupError) {
+          console.error("Room photo cleanup failed", JSON.stringify(errorDetails(cleanupError)));
+        }
+      }
+      throw error;
+    }
   } catch(error){
-    console.error("Room photo upload failed",error);
+    console.error("Room photo upload failed", JSON.stringify(errorDetails(error)));
     return NextResponse.json({error:"The room photograph could not be stored."},{status:500});
   }
 }
