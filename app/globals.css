@@ -4044,3 +4044,107 @@ p { line-height: 1.58; }
     font-size: 11px;
   }
 }
+
+
+/* Refined desktop intake layout: keep the style cards inside their own column. */
+.intakeLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 292px);
+  column-gap: 40px;
+  align-items: start;
+}
+.intakeStep {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.styleDiscoveryGrid {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 14px;
+}
+.styleChoice {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 0;
+  height: auto;
+  aspect-ratio: 4 / 3;
+}
+.styleChoiceCopy {
+  min-width: 0;
+  right: 48px;
+}
+.styleChoiceCopy strong,
+.styleChoiceCopy small {
+  overflow-wrap: anywhere;
+}
+.intakeSidePanel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-width: 0;
+}
+.intakeSideCard {
+  position: sticky;
+  top: 88px;
+  background: #fff;
+  border: 1px solid #e8e6e1;
+  box-shadow: 0 12px 32px rgba(28, 32, 27, .045);
+}
+.intakeSideAction {
+  min-width: 0;
+}
+.intakeSelectedStyle {
+  display: grid;
+  gap: 5px;
+  margin-top: 16px;
+  padding: 13px 14px;
+  border: 1px solid #e5e9e4;
+  background: #f8faf8;
+}
+.intakeSelectedStyle span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.intakeSelectedStyle strong {
+  color: var(--forest);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+@media (max-width: 1100px) and (min-width: 761px) {
+  .intakeLayout {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    column-gap: 28px;
+  }
+  .styleDiscoveryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .styleChoice {
+    aspect-ratio: 4 / 3;
+  }
+}
+@media (max-width: 760px) {
+  .intakeLayout {
+    display: block;
+  }
+  .intakeSidePanel {
+    display: none;
+  }
+  .styleDiscoveryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+  .styleChoice {
+    aspect-ratio: 3 / 4;
+  }
+}
