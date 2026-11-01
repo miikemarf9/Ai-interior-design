@@ -1,7 +1,7 @@
 export type IntakeForBrief = {
   roomType?: 'living_room' | 'bedroom';
   projectGoal?: 'furnish' | 'refresh';
-  retainedFurniture?: Array<{ id: string; label: string; x: number; y: number }>;
+  retainedFurniture?: Array<{ id: string; label: string; intent?: 'keep' | 'place'; x: number; y: number }>;
   keep: string[];
   change: string[];
   styles: string[];
@@ -50,6 +50,10 @@ export function buildFallbackBrief(intake: IntakeForBrief): DesignBrief {
   const uses = naturalList(intake.uses, 'comfortable everyday living');
   const keeps = naturalList(intake.keep, 'the strongest existing features');
   const changes = naturalList(intake.change, 'the furniture and styling that will make the biggest difference');
+  const photoKeeps = (intake.retainedFurniture || []).filter(item => item.intent !== 'place');
+  const photoPlaces = (intake.retainedFurniture || []).filter(item => item.intent === 'place');
+  const keepNotes = photoKeeps.length ? ` Photo notes to keep: ${photoKeeps.map((item, index) => `${index + 1}: ${item.label}`).join('; ')}.` : '';
+  const placeNotes = photoPlaces.length ? ` Photo placement notes: ${photoPlaces.map((item, index) => `${index + 1}: ${item.label}`).join('; ')}.` : '';
 
   const measureParts = [
     intake.measurements.width ? `${intake.measurements.width} cm wide` : '',
@@ -60,8 +64,8 @@ export function buildFallbackBrief(intake: IntakeForBrief): DesignBrief {
   return {
     title: `Your ${room} brief`,
     direction: `${intake.projectGoal === 'furnish' ? 'Furnish' : 'Refresh'} your ${room} in ${style.toLowerCase()} style, with ${colour.toLowerCase()}.`,
-    keep: `Retain ${keeps.toLowerCase()}.${intake.retainedFurniture?.length ? ` Photo markers: ${intake.retainedFurniture.map((item, index) => `${index + 1}: ${item.label}`).join('; ')}.` : ''}`,
-    change: `Focus on ${changes.toLowerCase()}.`,
+    keep: `Retain ${keeps.toLowerCase()}.${keepNotes}`,
+    change: `Focus on ${changes.toLowerCase()}.${placeNotes}`,
     palette: colour,
     materials: materials,
     function: `Make space for ${uses.toLowerCase()}.`,
