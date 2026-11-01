@@ -318,6 +318,11 @@ export function DesignIntake() {
     if (!file) return;
 
     setPhotoError('');
+    if (file.size > 8 * 1024 * 1024) {
+      setPhotoError('That photograph is larger than 8 MB. Choose a smaller image and try again.');
+      event.currentTarget.value = '';
+      return;
+    }
     setUploadingPhoto(true);
 
     const preview = URL.createObjectURL(file);
@@ -366,6 +371,7 @@ export function DesignIntake() {
       setPhotoUrl('');
     } finally {
       URL.revokeObjectURL(preview);
+      if (fileInput.current) fileInput.current.value = '';
       setUploadingPhoto(false);
     }
   }
