@@ -24,6 +24,6 @@ export function HomeRoomExample() {
         <Link className="button buttonPrimary" href="/design">Build my room with real products</Link>
       </div>
     </div>
-    <div className={styles.exampleFootnote}><p>This image is for style inspiration only. Its furniture and prices are not retailer listings.</p></div>
+    <div className={styles.exampleFootnote}><p>This image is for style inspiration only. Its furniture is not a retailer product listing.</p></div>
   </>;
 }
