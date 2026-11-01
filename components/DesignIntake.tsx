@@ -796,7 +796,7 @@ export function DesignIntake() {
 
           {step === 2 ? (
             <>
-              <StepIntro eyebrow="03 / 03 · Furniture" title="What should stay, and what should change?" copy="Keep the pieces you already own, then choose the furniture you would like us to find for your room." time="About 30 seconds" />
+              <StepIntro eyebrow="03 / 03 · Furniture" title="What should stay, and what should change?" copy="Keep the pieces you already own, then choose the furniture you would like us to find for your room." />
 
               <section className="keepSection">
                 <div className="choiceSectionHeading">
