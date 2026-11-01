@@ -144,22 +144,24 @@ export function ProductSelectionExperience() {
       setBrowseProduct(null);
       void loadSelection(intake, brief, selection, false, nextChoices);
     }} /> : null}
-    <section id="selection-approval" className={`selectionApproval ${approved ? 'isApproved' : ''}`}>
-      <div><span className="microLabel">{approved ? 'Collection accepted' : 'Your decision'}</span><h2>{approved ? 'Your chosen furniture is saved.' : 'Happy with this collection?'}</h2>
-        <p>Approval saves these variants and quantities for your design. It does not place an order, reserve stock or confirm that everything fits.</p>
-        {!approved && <label className={styles.acknowledge}><input type="checkbox" checked={acknowledged} disabled={busy} onChange={event => setAcknowledged(event.target.checked)} />I understand that fit, retailer availability and any missing costs or products still need checking.</label>}
-      </div>
-      {approved ? <Link className="button buttonLight" href="/render">Continue to design</Link> : <button className="button buttonLight" disabled={busy || over || !acknowledged || !selection.products.length} onClick={() => loadSelection(intake, brief, selection, true)}>{busy ? 'Checking collection…' : 'Accept this collection · Free'}</button>}
-    </section>
     <JourneyAssistant
       visible={Boolean(intake && brief && selection)}
       currentStep={3}
-      nextTitle={approved ? 'Create your room visual' : 'Approve your furniture collection'}
+      nextTitle={approved ? 'Create your room visual' : 'Disclaimer'}
       nextDescription={approved
         ? 'Your chosen real products are saved. The next step creates an illustrative design in your room.'
-        : 'Check the selected variants, quantities, prices and delivery notes before approving your collection.'}
+        : 'Please review the disclaimer before saving these products for your room design.'}
+      nextDisclaimer={approved ? undefined : {
+        text: 'Fit is not verified. Retailer prices, stock, delivery costs and missing products may still need checking. Approval saves this collection for your design; it does not place an order or reserve stock.',
+        label: 'I understand these details need checking before I buy.',
+        checked: acknowledged,
+        onChange: setAcknowledged,
+        disabled: busy,
+      }}
       nextLabel={approved ? 'Continue to room visual' : 'Review my collection · ' + money(selection.totalMinor)}
-      nextHref={approved ? '/render' : '#selection-approval'}
+      nextHref={approved ? '/render' : undefined}
+      onNext={!approved ? () => loadSelection(intake, brief, selection, true) : undefined}
+      nextDisabled={!approved && (busy || over || !acknowledged || !selection.products.length)}
       refreshKey={`${selection.totalMinor}:${selection.products.map(product => product.slot + ':' + product.quantity).join(',')}`} 
     />
   </div>;

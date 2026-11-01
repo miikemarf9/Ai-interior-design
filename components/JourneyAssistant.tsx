@@ -23,6 +23,7 @@ type JourneyAssistantProps = {
   nextHref?: string;
   onNext?: () => void;
   nextDisabled?: boolean;
+  nextDisclaimer?: { text: string; label: string; checked: boolean; onChange: (checked: boolean) => void; disabled?: boolean };
   ownerKey?: string;
   refreshKey?: number | string | null;
   onStageClick?: (stage: number) => void;
@@ -73,6 +74,7 @@ export function JourneyAssistant({
   nextHref,
   onNext,
   nextDisabled = false,
+  nextDisclaimer,
   ownerKey,
   refreshKey,
   onStageClick,
@@ -83,7 +85,6 @@ export function JourneyAssistant({
   const [intakeSummary, setIntakeSummary] = useState<JourneyIntake | null>(null);
   const [photoName, setPhotoName] = useState('');
   const [productSummary, setProductSummary] = useState('');
-  const [furniturePrice, setFurniturePrice] = useState<{ totalMinor: number; budgetMinor: number; unknownDelivery: boolean } | null>(null);
 
   useEffect(() => {
     if (!visible) return;
@@ -105,20 +106,14 @@ export function JourneyAssistant({
       setIntakeSummary(intake?.state || null);
       setPhotoName(typeof runtime?.photoName === 'string' ? runtime.photoName : '');
       const products = Array.isArray(savedProducts?.selection?.products)
-        ? savedProducts.selection.products.map((item: { selected?: { productName?: string; variantName?: string }; quantity?: number }) =>
-            [item.selected?.productName, item.selected?.variantName].filter(Boolean).join(' · ') + (item.quantity && item.quantity > 1 ? ' × ' + item.quantity : ''))
+        ? savedProducts.selection.products.map((item: { slot?: string; slotLabel?: string; selected?: { productName?: string }; quantity?: number }) =>
+            (item.slotLabel || item.slot || item.selected?.productName || '').replace(/_/g, ' ') + (item.quantity && item.quantity > 1 ? ' × ' + item.quantity : ''))
         : [];
       setProductSummary(products.filter(Boolean).join(', '));
-      const totalMinor = savedProducts?.selection?.totalMinor;
-      const budgetMinor = savedProducts?.selection?.budgetMinor;
-      setFurniturePrice(Number.isFinite(totalMinor) && Number.isFinite(budgetMinor)
-        ? { totalMinor, budgetMinor, unknownDelivery: Boolean(savedProducts.selection.unknownDelivery) }
-        : null);
     } catch {
       setIntakeSummary(null);
       setPhotoName('');
       setProductSummary('');
-      setFurniturePrice(null);
     }
   }, [visible, currentStep, refreshKey]);
 
@@ -173,16 +168,16 @@ export function JourneyAssistant({
 
   if (!visible) return null;
 
-  const decisionRows = intakeSummary ? [
-    { label: 'Room', value: [intakeSummary.roomType === 'living_room' ? 'Living room' : intakeSummary.roomType, intakeSummary.projectGoal === 'furnish' ? 'Furnish' : intakeSummary.projectGoal === 'refresh' ? 'Refresh' : ''].filter(Boolean).join(' · '), href: '/design?step=0' },
-    { label: 'Room photo', value: photoName || 'Photo saved', href: '/design?step=0' },
-    { label: 'Style and budget', value: [(intakeSummary.styles || []).join(', ') || 'Designer choice', typeof intakeSummary.budget === 'number' ? new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(intakeSummary.budget) : ''].filter(Boolean).join(' · '), href: '/design?step=1' },
-    { label: 'Furniture to keep', value: [...(intakeSummary.keep || []), ...(intakeSummary.retainedFurniture || []).map(item => item.label).filter((label): label is string => Boolean(label))].join(', '), href: '/design?step=1' },
-    { label: 'Room preferences', value: [...(intakeSummary.colours || []), ...(intakeSummary.materials || []), ...(intakeSummary.uses || [])].join(', '), href: '/design?step=1' },
-    { label: 'Avoid', value: intakeSummary.dislikes || '', href: '/design?step=1' },
-    { label: 'Furniture to find', value: (intakeSummary.change || []).join(', '), href: '/design?step=1' },
-    { label: 'Selected products', value: productSummary, href: '/products' },
-  ].filter(row => row.value) : [];
+  const stageSummaries = [
+    intakeSummary
+      ? [intakeSummary.roomType === 'living_room' ? 'Living room' : intakeSummary.roomType, photoName ? 'Photo added' : ''].filter(Boolean).join(' · ')
+      : '',
+    intakeSummary
+      ? [(intakeSummary.styles || []).join(', ') || 'Style not chosen', typeof intakeSummary.budget === 'number' ? new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(intakeSummary.budget) : ''].filter(Boolean).join(' · ')
+      : '',
+    productSummary,
+    '',
+  ];
 
   return (
     <>
@@ -212,58 +207,23 @@ export function JourneyAssistant({
                     {complete && onStageClick && number <= 3 ? (
                       <button type="button" className={className} onClick={() => onStageClick(number)}>
                         <span className="journeyAssistantStepNumber">✓</span>
-                        <span><strong>{stage.label}</strong><small>{stage.detail}</small></span>
+                        <span><strong>{stage.label}</strong><small>{stageSummaries[index] || stage.detail}</small></span>
                       </button>
                     ) : complete ? (
                       <Link className={className} href={stage.href}>
                         <span className="journeyAssistantStepNumber">✓</span>
-                        <span><strong>{stage.label}</strong><small>{stage.detail}</small></span>
+                        <span><strong>{stage.label}</strong><small>{stageSummaries[index] || stage.detail}</small></span>
                       </Link>
                     ) : (
                       <span className={className} aria-current={current ? 'step' : undefined} aria-disabled={!current}>
                         <span className="journeyAssistantStepNumber">{number}</span>
-                        <span><strong>{stage.label}</strong><small>{stage.detail}</small></span>
+                        <span><strong>{stage.label}</strong><small>{stageSummaries[index] || stage.detail}</small></span>
                       </span>
                     )}
                   </li>
                 );
               })}
             </ol>
-
-            {currentStep === 3 && furniturePrice ? (
-              <section className="journeyAssistantFurnitureTotal" aria-label="Furniture estimate">
-                <div><span>Furniture estimate</span><strong>{new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(furniturePrice.totalMinor / 100)}</strong></div>
-                <small>{furniturePrice.unknownDelivery ? 'Known product and delivery costs; some delivery costs are still to confirm.' : 'Estimated product and listed delivery total.'} Allowance: {new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(furniturePrice.budgetMinor / 100)}.</small>
-                <p>No furniture payment before you see your room design. Buying from a retailer is optional.</p>
-              </section>
-            ) : null}
-
-            {decisionRows.length ? (
-              <section className="journeyAssistantDecisions" aria-label="Your choices">
-                <p className="microLabel">Your choices</p>
-                <ul>
-                  {decisionRows.map(row => (
-                    <li key={row.label}>
-                      <span><strong>{row.label}</strong><small>{row.value}</small></span>
-                      <Link href={row.href} aria-label={'Edit ' + row.label}>Edit</Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
-            <section className="journeyAssistantNext" aria-live="polite">
-              <p className="microLabel">Up next</p>
-              <h2 id={panelId + '-title'}>{nextTitle}</h2>
-              <p>{nextDescription}</p>
-              {nextHref ? (
-                <Link className="button buttonPrimary" href={nextHref}>{nextLabel}</Link>
-              ) : (
-                <button className="button buttonPrimary" type="button" onClick={onNext} disabled={nextDisabled || !onNext}>
-                  {nextLabel}
-                </button>
-              )}
-            </section>
 
             <section className="journeyAssistantCredits" aria-label="Image-use balance">
               <div className="journeyAssistantCreditHeading">
@@ -276,6 +236,25 @@ export function JourneyAssistant({
               ) : creditStatus && !creditStatus.siteCreditExempt && creditStatus.balance === 0 ? (
                 <Link href="/account" className="journeyAssistantCreditLink">Buy 10 more uses · £2</Link>
               ) : null}
+            </section>
+
+            <section className="journeyAssistantNext" aria-live="polite">
+              <p className="microLabel">Up next</p>
+              <h2 id={panelId + '-title'}>{nextTitle}</h2>
+              <p>{nextDescription}</p>
+              {nextDisclaimer ? (
+                <section className="journeyAssistantDisclaimer" aria-label="Disclaimer">
+                  <p>{nextDisclaimer.text}</p>
+                  <label><input type="checkbox" checked={nextDisclaimer.checked} disabled={nextDisclaimer.disabled} onChange={event => nextDisclaimer.onChange(event.target.checked)} />{nextDisclaimer.label}</label>
+                </section>
+              ) : null}
+              {nextHref ? (
+                <Link className="button buttonPrimary" href={nextHref}>{nextLabel}</Link>
+              ) : (
+                <button className="button buttonPrimary" type="button" onClick={onNext} disabled={nextDisabled || !onNext}>
+                  {nextLabel}
+                </button>
+              )}
             </section>
         </aside>
       ) : (
