@@ -312,7 +312,7 @@ export function BriefExperience() {
 
       <JourneyAssistant
         visible={Boolean(intake && brief)}
-        currentStep={4}
+        currentStep={3}
         nextTitle={approved ? 'Choose real furniture' : 'Approve your design direction'}
         nextDescription={approved
           ? 'Your written direction is saved. Next, we will match it with real UK furniture.'
