@@ -211,8 +211,12 @@ export function ProductSelectionExperience() {
         ? 'Your chosen real products are saved. The next step creates an illustrative design in your room.'
         : 'Please review the disclaimer before saving these products for your room design.'}
       nextDisclaimer={approved ? undefined : {
-        text: 'Fit is not verified. Retailer prices, stock, delivery costs and missing products may still need checking. Approval saves this collection for your design; it does not place an order or reserve stock.',
-        label: 'I understand these details need checking before I buy.',
+        text: selection.remainingMinor < 0
+          ? `This collection is ${money(Math.abs(selection.remainingMinor))} over your furniture budget. Continuing saves it for your room design only; it does not place an order, reserve stock or charge you. Check fit, retailer prices, stock, delivery costs and any missing products before you buy.`
+          : 'Fit is not verified. Retailer prices, stock, delivery costs and missing products may still need checking. Approval saves this collection for your design; it does not place an order or reserve stock.',
+        label: selection.remainingMinor < 0
+          ? `I understand this collection is ${money(Math.abs(selection.remainingMinor))} over budget and needs checking before I buy.`
+          : 'I understand these details need checking before I buy.',
         checked: acknowledged,
         onChange: setAcknowledged,
         disabled: busy,
