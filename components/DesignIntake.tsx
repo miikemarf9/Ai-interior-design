@@ -276,13 +276,55 @@ export function DesignIntake() {
   const progress = complete ? 100 : ((step + 1) / 3) * 100;
   const stepLabels = ['Your room', 'Choose your style', 'Furniture'];
   const stepLabel = stepLabels[step] || 'Your room';
+  // Only the room photograph is required. Style, budget refinements, measurements,
+  // retained-item markers and product-category choices are all optional.
   const canContinue = step === 0
     ? state.roomType === 'living_room' && Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto)
-    : step === 1
-      ? !catalogueLoading && !catalogueError && state.styles.some(style => catalogueStyles.some(option => option.name === style && option.available))
-      : step === 2
-        ? !catalogueLoading && !catalogueError && validMeasurements && state.change.some(label => catalogueItems.some(item => item.label === label && item.available))
-        : false;
+    : step === 1 || step === 2;
+
+  function goToStep(target: number) {
+    if (target >= step || target < 0 || target > 2) return;
+    setStep(target);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function skipStyle() {
+    setState(current => ({ ...current, styles: [] }));
+    setStep(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function surpriseMe() {
+    const available = catalogueStyles.filter(option => option.available).map(option => option.name);
+    if (!available.length) return;
+    const alternatives = available.filter(name => !state.styles.includes(name));
+    const pool = alternatives.length ? alternatives : available;
+    const selected = pool[Math.floor(Math.random() * pool.length)];
+    setState(current => ({ ...current, styles: [selected] }));
+  }
+
+  function useSuggestedItems() {
+    setState(current => ({
+      ...current,
+      change: availableRecommendedItems.filter(item => !current.keep.includes(item)),
+    }));
+  }
+
+  function letDesignerChoose() {
+    const categoryMap: Record<string, string> = {
+      'Sofa':'sofas','Armchairs':'armchairs','Coffee table':'coffee-tables','TV unit':'tv-units',
+      'Side tables':'side-tables','Rug':'rugs','Lighting':'lighting','Storage':'storage-cabinets',
+      'Bed':'beds','Bedside tables':'bedside-tables','Wardrobe':'wardrobes','Chest of drawers':'chest-of-drawers',
+    };
+    trackRoomfound('item_choices_submitted', {
+      roomType: state.roomType || 'living_room',
+      categories: [],
+      keptCategories: [...state.keep].map(item => categoryMap[item]).filter(Boolean),
+    });
+    setState(current => ({ ...current, change: [] }));
+    setComplete(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   function saveRuntime(next: { ownerKey: string; designId: string; roomAssetId: string; photoName: string }) {
     window.localStorage.setItem('roomfound-design-runtime-v1', JSON.stringify(next));
@@ -504,6 +546,7 @@ export function DesignIntake() {
           </div>
         </section>
       ) : (
+        <div className="intakeLayout">
         <section className="intakeStep">
           {step === 0 ? (
             <>
@@ -557,7 +600,7 @@ export function DesignIntake() {
 
           {step === 1 ? (
             <>
-              <StepIntro eyebrow="02 / 03 · Style and budget" title="Choose the look you love." copy="Pick one style to guide the room, then set a comfortable furniture budget." time="About 30 seconds" />
+              <StepIntro eyebrow="02 / 03 · Style and budget" title="Choose a look, or leave it to us." copy="Pick a style if you have one in mind. Not sure? You can skip this step or let us choose." time="About 30 seconds" />
               <div className="styleDiscoveryGrid">
                 {styles.map(style => {
                   const active = state.styles.includes(style.name);
@@ -577,7 +620,7 @@ export function DesignIntake() {
                       <span className="styleChoiceCopy">
                         <strong>{style.name}</strong>
                         <small>{style.note}</small>
-                        <small>{catalogueLoading ? 'Checking furniture availability…' : styleAvailable ? 'Reviewed furniture available' : active ? 'No longer matches current filters · remove style' : 'No reviewed furniture matches these filters'}</small>
+                        <small>{active ? 'Selected' : catalogueLoading ? 'Checking availability…' : styleAvailable ? 'Products available' : 'Not available yet'}</small>
                       </span>
                       <i>{active ? '✓' : '+'}</i>
                     </button>
@@ -618,6 +661,14 @@ export function DesignIntake() {
                 </div>
                 <p>Set a guide for the new pieces. Anything you keep is excluded; delivery and design charges are separate.</p>
               </section>
+
+              <div className="styleQuickActions">
+                <p><strong>Not sure about style?</strong> It is optional. Your budget choice will be kept if you skip.</p>
+                <div>
+                  <button className="textButton" type="button" onClick={skipStyle}>Continue without a style →</button>
+                  <button className="textButton" type="button" onClick={surpriseMe} disabled={!catalogueStyles.some(option => option.available)}>Surprise me</button>
+                </div>
+              </div>
 
               <details className="advancedSettings">
                 <summary>
@@ -704,7 +755,7 @@ export function DesignIntake() {
                       <span>Anything else we should know? (optional)</span>
                       <textarea rows={3} value={state.measurements.notes} onChange={event => setState(current => ({ ...current, measurements: { ...current.measurements, notes: event.target.value } }))} placeholder="Door and window positions, radiators, narrow access or maximum furniture width…" />
                     </label>
-                    {!validMeasurements ? <p role="alert" className={ui.error}>Enter a positive measurement up to 5,000 cm, or leave the field empty.</p> : null}
+                    {!validMeasurements ? <p role="status" className={ui.error}>One or more measurements look incorrect. You can correct or clear them, but they are optional and will not stop you continuing.</p> : null}
                     <div className="measurementReassurance"><span>Optional</span><p>Fit is not guaranteed, even when dimensions are supplied. Always check product sizes and access before buying.</p></div>
                   </section>
 
@@ -778,9 +829,12 @@ export function DesignIntake() {
                   </p>
                 ) : null}
                 {!catalogueLoading && !catalogueError && comingSoonItems.length ? <p className="choiceHint">Not in the reviewed catalogue yet: {comingSoonItems.join(' · ')}.</p> : null}
-                {availableRecommendedItems.length ? (
-                  <button className="selectAllButton" type="button" onClick={() => setState(current => ({ ...current, change: availableRecommendedItems.filter(item => !current.keep.includes(item)) }))}>Use suggested items</button>
-                ) : null}
+                <div className="furnitureQuickActions">
+                  {availableRecommendedItems.length ? (
+                    <button className="selectAllButton" type="button" onClick={useSuggestedItems}>Use suggested items</button>
+                  ) : null}
+                  <button className="textButton" type="button" onClick={letDesignerChoose}>Let the designer choose →</button>
+                </div>
               </section>
               {unavailableLabels.length ? <p className={ui.note} role="status">{unavailableLabels.join(', ')} {unavailableLabels.length === 1 ? 'is' : 'are'} no longer available with the current style, budget or room details. <button className="textButton" type="button" onClick={() => setStep(1)}>Review style and budget</button></p> : null}
               {state.roomType === 'bedroom' ? <p className={ui.note}>Bedroom product selection and image generation are not available yet.</p> : null}
@@ -791,10 +845,59 @@ export function DesignIntake() {
             <button className="textButton" type="button" onClick={back} disabled={step === 0}>← Back</button>
             <span>Step {step + 1} of 3</span>
             <button className="button buttonPrimary" type="button" onClick={next} disabled={!canContinue}>
-              {step === 0 ? 'Choose your style' : step === 1 ? 'Choose furniture' : 'Review my room'}
+              {step === 0 ? 'Choose your style' : step === 1 ? (state.styles.length ? 'Choose furniture' : 'Continue without a style') : 'Review my room'}
             </button>
           </div>
         </section>
+
+        <aside className="intakeSidePanel" aria-label="Your progress and next step">
+          <div className="intakeSideCard">
+            <div className="intakeSideHeader">
+              <p className="eyebrow">Your progress</p>
+              <span>0{step + 1} / 03</span>
+            </div>
+            <ol className="intakeSideSteps">
+              {[
+                { title: 'Your room', detail: 'Room type and photograph' },
+                { title: 'Style and budget', detail: 'Choose a look, if you wish' },
+                { title: 'Furniture', detail: 'Keep, add or replace pieces' },
+              ].map((item, index) => (
+                <li key={item.title}>
+                  <button
+                    type="button"
+                    className={'intakeSideStep ' + (step === index ? 'isCurrent' : step > index ? 'isComplete' : '')}
+                    disabled={index > step}
+                    aria-current={step === index ? 'step' : undefined}
+                    onClick={() => goToStep(index)}
+                  >
+                    <span className="intakeSideStepNumber">{step > index ? '✓' : index + 1}</span>
+                    <span><strong>{item.title}</strong><small>{item.detail}</small></span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+
+            <div className="intakeSideAction">
+              <p className="microLabel">Up next</p>
+              <h2>{step === 0 ? 'Choose your style' : step === 1 ? 'Choose your furniture' : 'Review your room'}</h2>
+              <p>
+                {step === 0
+                  ? 'Add one clear photograph to continue.'
+                  : step === 1
+                    ? state.styles.length ? 'Your chosen look will guide the furniture suggestions.' : 'No style is required. Continue and we will create a balanced direction.'
+                    : 'Your choices are ready. You can use the suggestions or leave the selection to us.'}
+              </p>
+              <button className="button buttonPrimary" type="button" onClick={next} disabled={!canContinue}>
+                {step === 0 ? 'Continue to style' : step === 1 ? (state.styles.length ? 'Continue to furniture' : 'Continue without a style') : 'Review my room'}
+              </button>
+              {step === 2 ? (
+                <button className="intakeSideSecondary" type="button" onClick={letDesignerChoose}>Let the designer choose</button>
+              ) : null}
+              <p className="intakeSideNote">Only your room photograph is required. All other preferences are optional.</p>
+            </div>
+          </div>
+        </aside>
+        </div>
       )}
     </div>
   );
