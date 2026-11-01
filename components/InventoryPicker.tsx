@@ -31,6 +31,8 @@ type InventoryItem={
 type Facets={materials:string[];colours:string[];features:string[]};
 
 const styleChoices=["Modern Organic","Modern Country","Japandi","Mid-Century Modern","Bold & Colourful","Contemporary Classic"];
+const priceStepMinor=2500;
+const maxPriceBoundMinor=500000;
 
 function money(minor:number){
   return new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP",minimumFractionDigits:minor%100?2:0,maximumFractionDigits:2}).format(minor/100);
@@ -54,7 +56,9 @@ export function InventoryPicker({
 }){
   const [query,setQuery]=useState("");
   const [style,setStyle]=useState(initialStyle);
-  const [maxPrice,setMaxPrice]=useState("");
+  const [priceMinMinor,setPriceMinMinor]=useState(0);
+  const [priceMaxMinor,setPriceMaxMinor]=useState(maxPriceBoundMinor);
+  const [appliedPriceRange,setAppliedPriceRange]=useState<{min:number;max:number}|null>(null);
   const [maxWidth,setMaxWidth]=useState("");
   const [maxDepth,setMaxDepth]=useState("");
   const [maxHeight,setMaxHeight]=useState("");
@@ -75,8 +79,8 @@ export function InventoryPicker({
       const params=new URLSearchParams({category});
       if(query.trim()) params.set("q",query.trim());
       if(style) params.set("style",style);
-      const price=Number(maxPrice);
-      if(Number.isFinite(price) && price>0) params.set("maxPriceMinor",String(Math.round(price*100)));
+      if(appliedPriceRange?.min) params.set("minPriceMinor",String(appliedPriceRange.min));
+      if(appliedPriceRange && appliedPriceRange.max<maxPriceBoundMinor) params.set("maxPriceMinor",String(appliedPriceRange.max));
       if(maxWidth) params.set("maxWidthCm",maxWidth);
       if(maxDepth) params.set("maxDepthCm",maxDepth);
       if(maxHeight) params.set("maxHeightCm",maxHeight);
@@ -98,11 +102,13 @@ export function InventoryPicker({
         .finally(()=>{if(!controller.signal.aborted) setLoading(false);});
     },220);
     return ()=>{window.clearTimeout(timer);controller.abort();};
-  },[category,query,style,maxPrice,maxWidth,maxDepth,maxHeight,material,colour,features]);
+  },[category,query,style,appliedPriceRange,maxWidth,maxDepth,maxHeight,material,colour,features]);
 
   function toggleFeature(value:string){setFeatures(current=>current.includes(value)?current.filter(item=>item!==value):[...current,value]);}
-  const hasFilters=Boolean(query.trim() || style || maxPrice || maxWidth || maxDepth || maxHeight || material || colour || features.length);
-  function clearFilters(){setQuery("");setStyle("");setMaxPrice("");setMaxWidth("");setMaxDepth("");setMaxHeight("");setMaterial("");setColour("");setFeatures([]);}
+  function applyPriceRange(){setAppliedPriceRange(priceMinMinor===0 && priceMaxMinor===maxPriceBoundMinor?null:{min:priceMinMinor,max:priceMaxMinor});}
+  const priceRangeChanged=appliedPriceRange?priceMinMinor!==appliedPriceRange.min || priceMaxMinor!==appliedPriceRange.max:priceMinMinor!==0 || priceMaxMinor!==maxPriceBoundMinor;
+  const hasFilters=Boolean(query.trim() || style || appliedPriceRange || maxWidth || maxDepth || maxHeight || material || colour || features.length);
+  function clearFilters(){setQuery("");setStyle("");setPriceMinMinor(0);setPriceMaxMinor(maxPriceBoundMinor);setAppliedPriceRange(null);setMaxWidth("");setMaxDepth("");setMaxHeight("");setMaterial("");setColour("");setFeatures([]);}
 
   return (
     <div className={styles.backdrop} role="presentation" onMouseDown={event=>{if(event.target===event.currentTarget) onClose();}}>
@@ -126,9 +132,16 @@ export function InventoryPicker({
               {styleChoices.map(choice=><option key={choice} value={choice}>{choice}</option>)}
             </select>
           </label>
-          <label>Up to (£)
-            <input type="number" min="0" step="25" value={maxPrice} onChange={event=>setMaxPrice(event.target.value)} placeholder="Any price" />
-          </label>
+          <fieldset className={styles.priceFilter}>
+            <legend>Price per item</legend>
+            <div className={styles.priceHeading}><strong>{money(priceMinMinor)} – {money(priceMaxMinor)}</strong><button type="button" onClick={applyPriceRange} disabled={!priceRangeChanged}>Apply</button></div>
+            <div className={styles.priceSlider}>
+              <div className={styles.priceTrack} />
+              <input type="range" min="0" max={maxPriceBoundMinor} step={priceStepMinor} value={priceMinMinor} aria-label="Minimum price per item" onChange={event=>setPriceMinMinor(Math.min(Number(event.target.value),priceMaxMinor-priceStepMinor))} />
+              <input type="range" min="0" max={maxPriceBoundMinor} step={priceStepMinor} value={priceMaxMinor} aria-label="Maximum price per item" onChange={event=>setPriceMaxMinor(Math.max(Number(event.target.value),priceMinMinor+priceStepMinor))} />
+            </div>
+            <div className={styles.priceLabels}><span>£0</span><span>£5,000</span></div>
+          </fieldset>
           <fieldset className={styles.sizeFilters}>
             <legend>Maximum item size (cm)</legend>
             <label>Width<input type="number" min="1" step="1" value={maxWidth} onChange={event=>setMaxWidth(event.target.value)} placeholder="Any" /></label>
