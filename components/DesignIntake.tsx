@@ -891,12 +891,11 @@ export function DesignIntake() {
   );
 }
 
-function StepIntro({ eyebrow, title, copy, time }: { eyebrow: string; title: string; copy: string; time: string }) {
+function StepIntro({ eyebrow, title, copy }: { eyebrow: string; title: string; copy: string }) {
   return (
     <div className="intakeIntro">
       <div className="intakeIntroMeta">
         <p className="eyebrow">{eyebrow}</p>
-
       </div>
       <h1>{title}</h1>
       <p>{copy}</p>
