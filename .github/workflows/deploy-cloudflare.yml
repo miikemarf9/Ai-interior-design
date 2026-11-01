@@ -27,7 +27,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --package-lock=false --include=dev
 
       - name: Build and deploy Worker
         run: npm run cf:deploy
