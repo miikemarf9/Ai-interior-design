@@ -102,6 +102,37 @@ function toggle(values: string[], value: string) {
   return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
 }
 
+async function prepareRoomPhoto(file: File): Promise<File> {
+  if (typeof createImageBitmap !== 'function') {
+    if (file.size <= 1024 * 1024) return file;
+    throw new Error('This browser could not prepare the photo for upload. Try saving it as a smaller JPG.');
+  }
+
+  const bitmap = await createImageBitmap(file);
+  try {
+    const maxDimension = 1600;
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('The photo could not be prepared for upload. Please try another image.');
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+    let quality = 0.82;
+    let blob: Blob | null = null;
+    do {
+      blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+      if (!blob) throw new Error('The photo could not be prepared for upload. Please try another image.');
+      quality -= 0.1;
+    } while (blob.size > 1024 * 1024 && quality >= 0.52);
+
+    return new File([blob], 'room-photo.jpg', { type: 'image/jpeg', lastModified: file.lastModified });
+  } finally {
+    bitmap.close();
+  }
+}
+
 function formatBudget(value: number) {
   return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(value);
 }
@@ -330,11 +361,12 @@ export function DesignIntake() {
 
     try {
       const key = ownerKey || crypto.randomUUID();
+      const uploadFile = await prepareRoomPhoto(file);
       const form = new FormData();
       form.set('ownerKey', key);
       form.set('roomType', state.roomType || 'living_room');
       if (designId) form.set('designId', designId);
-      form.set('file', file);
+      form.set('file', uploadFile);
 
       const response = await fetch('/api/designs/room-photo', {
         method: 'POST',
