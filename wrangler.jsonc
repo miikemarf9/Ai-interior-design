@@ -19,5 +19,13 @@
     "NEXT_PUBLIC_SITE_URL": "https://transformmyroom.com",
     "BETA_CONTROLLED_ACCESS": "true",
     "NEXT_PUBLIC_BETA_CONTROLLED_ACCESS": "true"
+  },
+  "previews": {
+    "vars": {
+      "APP_URL": "https://example.com",
+      "NEXT_PUBLIC_SITE_URL": "https://example.com",
+      "BETA_CONTROLLED_ACCESS": "true",
+      "NEXT_PUBLIC_BETA_CONTROLLED_ACCESS": "true"
+    }
   }
 }
