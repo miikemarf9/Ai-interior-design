@@ -302,7 +302,7 @@ export function BriefExperience() {
         </div>
         <div className="confidenceRows">
           <div><span>Budget defined</span><strong>Yes</strong></div>
-          <div><span>Existing items considered</span><strong>{(intake.keep.length || intake.retainedFurniture?.length) ? 'Yes' : 'Open'}</strong></div>
+          <div><span>Existing items considered</span><strong>{(intake.keep.length || intake.retainedFurniture?.some(item => item.intent !== 'place')) ? 'Yes' : 'Open'}</strong></div>
           <div><span>Lifestyle requirements</span><strong>{intake.uses.length ? 'Included' : 'Open'}</strong></div>
           <div><span>Room measurements</span><strong className={measured ? '' : 'needsData'}>{measured ? (intake.measurements.accuracy === 'measured' ? 'Customer measured · fit unverified' : 'Approximate / unconfirmed') : 'Unknown · fit unverified'}</strong></div>
           <div><span>Image credit used</span><strong>None</strong></div>

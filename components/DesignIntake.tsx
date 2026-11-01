@@ -486,7 +486,8 @@ export function DesignIntake() {
               <ReviewRow label="Room" value={roomName + ' · ' + (state.projectGoal === 'furnish' ? 'Furnishing' : 'Refreshing')} />
               <ReviewRow label="Style" value={state.styles.join(', ') || 'Open to recommendations'} />
               {state.keep.length ? <ReviewRow label="Keeping" value={state.keep.join(', ')} /> : null}
-              {state.retainedFurniture?.length ? <ReviewRow label="Marked to keep" value={state.retainedFurniture.map(item => item.label).join(', ')} /> : null}
+              {state.retainedFurniture?.some(item => item.intent !== 'place') ? <ReviewRow label="Photo · keep" value={state.retainedFurniture.filter(item => item.intent !== 'place').map(item => item.label).join(', ')} /> : null}
+              {state.retainedFurniture?.some(item => item.intent === 'place') ? <ReviewRow label="Photo · place" value={state.retainedFurniture.filter(item => item.intent === 'place').map(item => item.label).join(', ')} /> : null}
               <ReviewRow label="New furniture" value={state.change.join(', ') || 'Open to recommendations'} />
               <ReviewRow label="Furniture budget" value={formatBudget(state.budget)} />
               {state.colours.length ? <ReviewRow label="Colour preferences" value={state.colours.join(', ')} /> : null}
@@ -546,21 +547,21 @@ export function DesignIntake() {
 
               <div className="photoStepGrid">
                 <div className="photoUploadColumn">
-                  <button className={'roomUploader ' + (photoUrl ? 'hasPhoto' : '')} type="button" disabled={uploadingPhoto} onClick={() => fileInput.current?.click()}>
-                    {photoUrl ? (
-                      <>
-                        <img src={photoUrl} alt="Preview of your room photograph" />
-                        <span className="replacePhoto">Change photo</span>
-                      </>
-                    ) : (
+                  {photoUrl ? (
+                    <div className="roomPhotoSaved">
+                      <span>✓ Room photo saved</span>
+                      <button type="button" className="textButton" disabled={uploadingPhoto} onClick={() => fileInput.current?.click()}>Change photo</button>
+                    </div>
+                  ) : (
+                    <button className="roomUploader" type="button" disabled={uploadingPhoto} onClick={() => fileInput.current?.click()}>
                       <span className="uploadEmpty">
                         <i>＋</i>
                         <strong>Add a photo of your room</strong>
                         <small>JPG, PNG or WebP · up to 8 MB</small>
                         <small>A single wide-angle photograph works best</small>
                       </span>
-                    )}
-                  </button>
+                    </button>
+                  )}
                   <input ref={fileInput} className="visuallyHidden" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={handlePhoto} />
                   {uploadingPhoto ? <p className="photoUploadState" role="status">Saving your photograph…</p> : null}
                   {photoError ? <p className="photoUploadError" role="alert">{photoError}</p> : null}
@@ -569,10 +570,18 @@ export function DesignIntake() {
                   <span className="microLabel">A good photo makes all the difference</span>
                   <div><strong>01</strong><p>Stand back far enough to show the room and its layout.</p></div>
                   <div><strong>02</strong><p>Use natural light where possible. Avoid filters.</p></div>
-                  <div><strong>03</strong><p>Leave existing furniture in place so we can work around it.</p></div>
+                  <div><strong>03</strong><p>{state.projectGoal === 'furnish' ? 'For an empty room, just show us where you would like new items.' : 'Leave existing furniture in place so we can work around it.'}</p></div>
                   <p className="photoPrivacy">Your photograph is saved privately. Sharing a finished design is always optional.</p>
                 </aside>
               </div>
+              {photoUrl ? (
+                <RetainedFurniture
+                  photoUrl={photoUrl}
+                  items={state.retainedFurniture || []}
+                  projectGoal={state.projectGoal || 'refresh'}
+                  onChange={items => setState(current => ({ ...current, retainedFurniture: items }))}
+                />
+              ) : null}
             </>
           ) : null}
 
@@ -736,12 +745,6 @@ export function DesignIntake() {
                     {!validMeasurements ? <p role="status" className={ui.error}>One or more measurements look incorrect. You can correct or clear them, but they are optional and will not stop you continuing.</p> : null}
                     <div className="measurementReassurance"><span>Optional</span><p>Fit is not guaranteed, even when dimensions are supplied. Always check product sizes and access before buying.</p></div>
                   </section>
-
-                  {photoUrl ? (
-                    <section className="advancedGroup">
-                      <RetainedFurniture photoUrl={photoUrl} items={state.retainedFurniture || []} onChange={items => setState(current => ({ ...current, retainedFurniture: items }))} />
-                    </section>
-                  ) : null}
 
                   <section className="advancedGroup">
                     <h2>Design approach</h2>
