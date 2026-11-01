@@ -49,7 +49,8 @@ export function ProductSelectionExperience() {
   const [notice, setNotice] = useState('');
   const [approved, setApproved] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
-  const [browseProduct, setBrowseProduct] = useState<ProposedProduct | null>(null);\n  const [addProductOpen, setAddProductOpen] = useState(false);\n  const [addingCategory, setAddingCategory] = useState<{ category: string; label: string } | null>(null);
+  const [browseProduct, setBrowseProduct] = useState<ProposedProduct | null>(null);
+  const [addProductOpen, setAddProductOpen] = useState(false);\n  const [addingCategory, setAddingCategory] = useState<{ category: string; label: string } | null>(null);
   const [excludedProducts, setExcludedProducts] = useState<ProposedProduct[]>([]);
   const started = useRef(false);
   const fingerprint = useRef('');
