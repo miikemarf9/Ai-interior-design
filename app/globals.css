@@ -4687,3 +4687,32 @@ button.journeyAssistantStep:hover strong {
   .cookieConsentChoices { grid-template-columns: 1fr; gap: 9px; }
   .cookieConsentActions { justify-content: space-between; }
 }
+
+
+/* Keep the room photo preview compact and show its guidance beside it on wide screens. */
+@media (min-width: 901px) {
+  .photoStepGrid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(250px, 0.8fr);
+    gap: clamp(24px, 3vw, 42px);
+    align-items: center;
+  }
+  .roomUploader {
+    height: clamp(300px, 42vh, 480px);
+    min-height: 0;
+    max-height: 480px;
+    aspect-ratio: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .photoStepGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
+  }
+  .roomUploader {
+    height: clamp(280px, 46vh, 420px);
+    min-height: 0;
+    max-height: 420px;
+    aspect-ratio: auto;
+  }
+}
