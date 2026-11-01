@@ -165,10 +165,16 @@ export function DesignIntake() {
             Scandi: 'Japandi',
             Colourful: 'Bold & Colourful',
           };
+          const restoredStyles = (parsed.state.styles || []).map((style: string) => legacyStyleNames[style] || style);
+          const selectedStyles = restoredStyles.slice(0, 1);
+          if (selectedStyles.length !== restoredStyles.length) {
+            window.localStorage.removeItem('roomfound-brief-v1');
+            window.localStorage.removeItem('roomfound-product-selection-v1');
+          }
           const restored = {
             ...initialState,
             ...parsed.state,
-            styles: (parsed.state.styles || []).map((style: string) => legacyStyleNames[style] || style).slice(0, 1),
+            styles: selectedStyles,
             measurements: { ...initialState.measurements, ...parsed.state.measurements },
           };
           savedAnswers.current = JSON.stringify(restored);
