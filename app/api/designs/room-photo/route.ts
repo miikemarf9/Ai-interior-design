@@ -201,7 +201,7 @@ export async function POST(request: Request) {
         )
         values (
           $1::uuid,'room_original',$2,0,''::bytea,
-          null,'postgres_bytea_mvp',jsonb_build_object('original_name',$3,'expected_byte_size',$4)
+          null,'postgres_bytea_mvp',jsonb_build_object('original_name',$3::text,'expected_byte_size',$4::bigint)
         )
         returning id::text as asset_id`,
         [designId, file.type, file.name, file.size],
@@ -239,7 +239,7 @@ export async function POST(request: Request) {
       const rows = await sql.query(
         `with asset as (
           update public.design_assets
-          set byte_size=$2,sha256=$3,metadata=jsonb_build_object('original_name',$4)
+          set byte_size=$2,sha256=$3,metadata=jsonb_build_object('original_name',$4::text)
           where id=$1::uuid and octet_length(data)=$2
           returning id
         )
