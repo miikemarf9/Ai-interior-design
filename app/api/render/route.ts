@@ -213,7 +213,7 @@ async function getRoomAsset(designId: string, ownerKey: string) {
   const imageUrl = asset.external_url
     ? asset.external_url
     : asset.base64
-      ? `data:${asset.mime_type};base64,${asset.base64}`
+      ? `data:${asset.mime_type};base64,${asset.base64.replace(/\s/g, "")}`
       : null;
 
   return imageUrl ? { ...asset, imageUrl } : null;
