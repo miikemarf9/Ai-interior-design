@@ -31,7 +31,6 @@ const DISMISS_KEY = 'transform-my-room-journey-assistant-dismissed-v1';
 const stages = [
   { label: 'Your room', detail: 'Room type and photograph', href: '/design?step=0' },
   { label: 'Style and budget', detail: 'Choose the look and allowance', href: '/design?step=1' },
-  { label: 'Furniture choices', detail: 'Keep, add or replace pieces', href: '/design?step=2' },
   { label: 'Design brief', detail: 'Review and approve the direction', href: '/brief' },
   { label: 'Furniture collection', detail: 'Choose real products', href: '/products' },
   { label: 'Room visual', detail: 'Create your room design', href: '/render' },
