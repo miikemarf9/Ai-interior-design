@@ -33,6 +33,8 @@ export async function GET(request:Request){
   const styleSlug=styleSlugs[style] || "";
   const priceRaw=Number(params.get("maxPriceMinor") || "");
   const maxPriceMinor=Number.isSafeInteger(priceRaw) && priceRaw>0 ? priceRaw : null;
+  const minPriceRaw=Number(params.get("minPriceMinor") || "");
+  const minPriceMinor=Number.isSafeInteger(minPriceRaw) && minPriceRaw>0 ? minPriceRaw : null;
   const maxWidthCm=positiveLimit(params.get("maxWidthCm"));
   const maxDepthCm=positiveLimit(params.get("maxDepthCm"));
   const maxHeightCm=positiveLimit(params.get("maxHeightCm"));
@@ -45,12 +47,14 @@ export async function GET(request:Request){
     materials:unique(categoryItems.flatMap(item=>item.materials)),
     colours:unique(categoryItems.flatMap(item=>item.colours)),
     features:unique(categoryItems.flatMap(item=>item.featureTags)),
+    priceRange:priceBounds(categoryItems.map(item=>item.offer.priceMinor)),
   };
 
   const matches=candidates.filter(item=>{
     if(item.category!==category || item.clearedForSelection!==true || !item.image) return false;
     if(styleSlug && !item.styles.includes(styleSlug)) return false;
     if(maxPriceMinor!==null && item.offer.priceMinor>maxPriceMinor) return false;
+    if(minPriceMinor!==null && item.offer.priceMinor<minPriceMinor) return false;
     if(maxWidthCm!==null && (!item.dimensions.widthMm || item.dimensions.widthMm>maxWidthCm*10)) return false;
     if(maxDepthCm!==null && (!item.dimensions.depthMm || item.dimensions.depthMm>maxDepthCm*10)) return false;
     if(maxHeightCm!==null && (!item.dimensions.heightMm || item.dimensions.heightMm>maxHeightCm*10)) return false;
@@ -112,4 +116,10 @@ function positiveLimit(value:string|null){
 
 function unique(values:string[]){
   return Array.from(new Set(values)).sort((a,b)=>a.localeCompare(b));
+}
+
+function priceBounds(values:number[]){
+  const prices=values.filter(value=>Number.isSafeInteger(value) && value>0);
+  if(!prices.length) return {minMinor:0,maxMinor:500000};
+  return {minMinor:Math.min(...prices),maxMinor:Math.max(...prices)};
 }
