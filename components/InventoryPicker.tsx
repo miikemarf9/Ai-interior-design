@@ -116,8 +116,8 @@ export function InventoryPicker({
         <header className={styles.header}>
           <div>
             <p className={styles.eyebrow}>Choose from the cleared catalogue</p>
-            <h2 id="inventory-picker-title">Pick a {categoryLabel.toLowerCase()}.</h2>
-            <p>These items have current product details and are approved for room design use.</p>
+            <h2 id="inventory-picker-title">Search the cleared catalogue.</h2>
+            <p>Browse approved items in the {categoryLabel.toLowerCase()} category. Each item has current product details and is cleared for room design use.</p>
           </div>
           <button className={styles.close} type="button" onClick={onClose} aria-label="Close inventory">×</button>
         </header>
