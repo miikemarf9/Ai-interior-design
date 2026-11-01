@@ -175,7 +175,7 @@ export async function POST(request: Request) {
         )
         values (
           $1::uuid,'room_original',$2,$3,decode($4,'base64'),
-          $5,'postgres_bytea_mvp',jsonb_build_object('original_name',$6)
+          $5,'postgres_bytea_mvp',jsonb_build_object('original_name',$6::text)
         )
         returning id
       )
