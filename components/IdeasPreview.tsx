@@ -11,10 +11,10 @@ export function IdeasPreview() {
     <div className={styles.copy}>
       <p className={styles.status}>First collection coming soon</p>
       <h2 id="ideas-preview-title">Find a look.<br/><em>Make it your own.</em></h2>
-      <p>We’re preparing a collection of room designs, with the furniture, colours and details behind each look.</p>
-      <p>While we put the collection together, explore our example living room and its furniture details.</p>
-      <Link href="/#shop-room" className="button buttonPrimary">Explore the example room</Link>
-      <small>Example furniture and prices are illustrative.</small>
+      <p>Explore style inspiration, then build your own living-room plan around reviewed furniture with retailer links.</p>
+      <p>The example is a visual reference only. It is not a selectable design or a retailer product listing.</p>
+      <Link href="/design" className="button buttonPrimary">Plan my room</Link>
+      <small>Example furniture is not available to purchase through this preview.</small>
     </div>
   </section>;
 }
