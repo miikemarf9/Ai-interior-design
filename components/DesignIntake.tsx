@@ -181,7 +181,14 @@ export function DesignIntake() {
           savedAnswers.current = JSON.stringify(restored);
           setState(restored);
         }
-        setStep(typeof parsed.step === 'number' && Number.isInteger(parsed.step) ? Math.min(2, Math.max(0, parsed.step)) : 0);
+        const savedStep = typeof parsed.step === 'number' && Number.isInteger(parsed.step)
+          ? Math.min(2, Math.max(0, parsed.step))
+          : 0;
+        const requestedStepParam = new URLSearchParams(window.location.search).get('step');
+        const requestedStep = requestedStepParam === null ? null : Number(requestedStepParam);
+        setStep(requestedStep !== null && Number.isInteger(requestedStep) && requestedStep >= 0 && requestedStep <= 2
+          ? requestedStep
+          : savedStep);
       }
 
       const runtimeRaw = window.localStorage.getItem('roomfound-design-runtime-v1');
