@@ -57,6 +57,7 @@ export function RenderExperience() {
         const history = await readHistory(savedRuntime);
         if (!history.available) { setBlocked(history.reason); return; }
         let nextSelection = buildProductSelection(savedRoom, savedBrief.brief, []);
+        let selectionCheckMessage = '';
         if (savedSelection.selection?.version === 2 && savedSelection.selection.products?.length) {
           try {
             const response = await fetch('/api/products/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ intake: savedRoom, brief: savedBrief.brief, choices: savedSelection.selection.products.map((p: any) => ({ slot: p.slot, variantId: p.selected.variantId, quantity: p.quantity })), approve: true, acknowledgeLimitations: true, expectedSnapshot: approvalSnapshot(savedSelection.selection) }) });
@@ -64,11 +65,15 @@ export function RenderExperience() {
             if (response.ok && checked.approved) {
               nextSelection = checked.selection;
               localStorage.setItem('roomfound-product-selection-v1', JSON.stringify({ ...savedSelection, selection: checked.selection, approved: true, updatedAt: new Date().toISOString() }));
+            } else {
+              selectionCheckMessage = checked.warning || checked.error || 'Your furniture prices or availability have changed. Please review the updated collection before generating.';
             }
-          } catch { /* Keep rendering locked until a product collection is approved. */ }
+          } catch {
+            selectionCheckMessage = 'We could not confirm your saved furniture prices. Please review the collection again; no image use has been charged.';
+          }
         }
         if (!nextSelection.products.length) {
-          setBlocked('Your room details are saved, but your furniture collection still needs approval. Approve it on the furniture page and your room visual will start automatically.');
+          setBlocked(selectionCheckMessage || 'Your room details are saved, but your furniture collection still needs approval. Review the collection before continuing. No image use has been charged.');
           return;
         }
         setSelection(nextSelection);
@@ -154,7 +159,7 @@ export function RenderExperience() {
     finally { setBusy(false); }
   }
   if (!ready) return <section className="renderLoading shell"><h1>Preparing your room visualisation.</h1><p>Checking your room photograph and approved brief.</p></section>;
-  if (blocked || !selection || !runtime) return <section className="renderMissing shell"><p className="eyebrow">Living-room pilot</p><h1>Choose the furniture before creating your room visual.</h1><p>{blocked || 'The pilot is not ready.'}</p><Link className="button buttonPrimary" href="/products">Review available products</Link></section>;
+  if (blocked || !selection || !runtime) return <section className="renderMissing shell"><p className="eyebrow">Living-room pilot</p><h1>Your room visual can’t start yet.</h1><p>{blocked || 'The pilot is not ready.'}</p><Link className="button buttonPrimary" href="/products">Review furniture and prices</Link></section>;
   const originalUrl = `/api/assets/${runtime.roomAssetId}?ownerKey=${encodeURIComponent(runtime.ownerKey)}`;
   const reviewed = result?.metadata.humanReview;
   const correctionReady = !!result && reviewed?.outcome === 'needs_correction' && result.metadata.correctionAttempt < MAX_CORRECTIONS && !failedCorrection;
