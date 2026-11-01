@@ -280,7 +280,11 @@ export function DesignIntake() {
   // retained-item markers and product-category choices are all optional.
   const canContinue = step === 0
     ? state.roomType === 'living_room' && Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto)
-    : step === 1 || step === 2;
+    : step === 1
+      ? !state.styles.length || !catalogueLoading
+      : step === 2
+        ? !catalogueLoading
+        : false;
 
   function goToStep(target: number) {
     if (target >= step || target < 0 || target > 2) return;
