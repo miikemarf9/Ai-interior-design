@@ -118,23 +118,13 @@ export function DesignIntake() {
   const [ownerKey, setOwnerKey] = useState('');
   const [designId, setDesignId] = useState('');
   const [roomAssetId, setRoomAssetId] = useState('');
-  const [catalogueItems, setCatalogueItems] = useState<CatalogueItemChoice[]>([]);
   const [catalogueStyles, setCatalogueStyles] = useState<CatalogueStyleChoice[]>([]);
   const [catalogueLoading, setCatalogueLoading] = useState(false);
   const [catalogueError, setCatalogueError] = useState('');
   const [catalogueRetry, setCatalogueRetry] = useState(0);
-  const [unavailableLabels, setUnavailableLabels] = useState<string[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
   const savedAnswers = useRef('');
-  const defaultedCatalogueRooms = useRef(new Set<string>());
-  const latestState = useRef(state);
-  latestState.current = state;
   const roomName = state.roomType === 'bedroom' ? 'bedroom' : 'living room';
-  const availableItemChoices = catalogueItems.filter(item => item.available);
-  const recommendedItems = catalogueItems.filter(item => item.recommended && item.available).map(item => item.label);
-  const availableRecommendedItems = catalogueItems.filter(item => item.recommended && item.available).map(item => item.label);
-  const comingSoonItems = catalogueItems.filter(item => item.catalogueCount === 0).map(item => item.label);
-  const noMatchItems = catalogueItems.filter(item => item.catalogueCount > 0 && !item.available).map(item => item.label);
   const uses = state.roomType === 'bedroom' ? [
     { name: 'Sleeping', detail: 'A calm, comfortable place to rest' },
     { name: 'Storage', detail: 'Clothes, bedding and everyday belongings' },
@@ -234,23 +224,7 @@ export function DesignIntake() {
         const payload = await response.json() as { items?: CatalogueItemChoice[]; styles?: CatalogueStyleChoice[]; error?: string };
         if (!response.ok || !Array.isArray(payload.items)) throw new Error(payload.error || 'The product list could not be checked.');
         if (controller.signal.aborted) return;
-        const items = payload.items;
         setCatalogueStyles(Array.isArray(payload.styles) ? payload.styles : []);
-        setCatalogueItems(items);
-        const availableLabels = new Set(items.filter(item => item.available).map(item => item.label));
-        const suggested = items.filter(item => item.recommended && item.available).map(item => item.label);
-        const catalogueLabels = new Set(items.filter(item => item.catalogueCount > 0).map(item => item.label));
-        const removed = latestState.current.change.filter(label => catalogueLabels.has(label) && !availableLabels.has(label));
-        setUnavailableLabels(current => Array.from(new Set([...current, ...removed])).filter(label => {
-          const item = items.find(choice => choice.label === label);
-          return Boolean(item && item.catalogueCount > 0 && !item.available);
-        }));
-        const firstCheckForRoom = !defaultedCatalogueRooms.current.has(state.roomType || 'living_room');
-        defaultedCatalogueRooms.current.add(state.roomType || 'living_room');
-        setState(current => {
-          const saved = current.change.filter(item => availableLabels.has(item));
-          return { ...current, change: firstCheckForRoom && !saved.length ? suggested : saved };
-        });
       })
       .catch(error => {
         if (error instanceof Error && error.name === 'AbortError') return;
