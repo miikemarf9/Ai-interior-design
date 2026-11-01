@@ -19,6 +19,18 @@ function dimensions(item: SelectionCandidate) {
 function checked(value: string) { const date = new Date(value); return Number.isFinite(date.getTime()) ? date.toLocaleDateString('en-GB') : 'Unknown'; }
 const choices = (selection: ProductSelection) => selection.products.map(product => ({ slot: product.slot, variantId: product.selected.variantId, quantity: product.quantity }));
 
+const catalogueCategories = [
+  { category: 'sofas', label: 'Sofas' },
+  { category: 'armchairs', label: 'Armchairs' },
+  { category: 'coffee-tables', label: 'Coffee tables' },
+  { category: 'tv-units', label: 'TV units' },
+  { category: 'side-tables', label: 'Side tables' },
+  { category: 'rugs', label: 'Rugs' },
+  { category: 'floor-lamps', label: 'Floor lamps' },
+  { category: 'table-lamps', label: 'Table lamps' },
+  { category: 'storage-cabinets', label: 'Storage' },
+];
+
 function getCommerceSession() {
   const existing = window.localStorage.getItem('roomfound-commerce-session-v1');
   if (existing && /^[a-zA-Z0-9_-]{16,100}$/.test(existing)) return existing;
@@ -37,7 +49,7 @@ export function ProductSelectionExperience() {
   const [notice, setNotice] = useState('');
   const [approved, setApproved] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
-  const [browseProduct, setBrowseProduct] = useState<ProposedProduct | null>(null);
+  const [browseProduct, setBrowseProduct] = useState<ProposedProduct | null>(null);\n  const [addProductOpen, setAddProductOpen] = useState(false);\n  const [addingCategory, setAddingCategory] = useState<{ category: string; label: string } | null>(null);
   const [excludedProducts, setExcludedProducts] = useState<ProposedProduct[]>([]);
   const started = useRef(false);
   const fingerprint = useRef('');
@@ -81,7 +93,7 @@ export function ProductSelectionExperience() {
     setBusy(true); setError(''); setNotice(''); setApproved(false);
     if (previous) save(previous, false, omitted); else localStorage.removeItem('roomfound-product-selection-v1');
     try {
-      const response = await fetch('/api/products/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ intake: room, brief: direction, choices: choiceOverride || (previous ? choices(previous) : undefined), includedSlots: previous ? previous.products.map(product => product.slot) : undefined, approve, acknowledgeLimitations: acknowledged, expectedSnapshot: previous ? approvalSnapshot(previous) : undefined }) });
+      const response = await fetch('/api/products/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ intake: room, brief: direction, choices: choiceOverride || (previous ? choices(previous) : undefined), includedSlots: previous ? Array.from(new Set([...previous.products.map(product => product.slot), ...(choiceOverride || []).map(choice => choice.slot)])) : undefined, approve, acknowledgeLimitations: acknowledged, expectedSnapshot: previous ? approvalSnapshot(previous) : undefined }) });
       const data = await response.json();
       if (!response.ok || data.selection?.version !== 2) throw new Error(data.error || 'The collection could not be checked. Your brief is still saved.');
       setSelection(data.selection); setApproved(Boolean(data.approved)); setNotice(data.warning || ''); save(data.selection, Boolean(data.approved), omitted);
@@ -138,12 +150,50 @@ export function ProductSelectionExperience() {
     <section className="selectedProducts" aria-label="Recommended furniture">
       {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onToggle={() => toggleProduct(product, false)} onBrowse={() => setBrowseProduct(product)} retailerHref={retailerHref} />)}
     </section>
+    <section className={styles.addCatalogue}>
+      <button type="button" className={styles.addCatalogueButton} disabled={busy} onClick={() => setAddProductOpen(true)}>
+        <span aria-hidden="true">＋</span><strong>Add a product</strong><small>Search the catalogue by category</small>
+      </button>
+    </section>
+    {addProductOpen ? (
+      <div className={styles.categoryBackdrop} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setAddProductOpen(false); }}>
+        <section className={styles.categoryDialog} role="dialog" aria-modal="true" aria-labelledby="catalogue-category-title">
+          <button type="button" className={styles.categoryClose} aria-label="Close categories" onClick={() => setAddProductOpen(false)}>×</button>
+          <p className={styles.categoryEyebrow}>Cleared catalogue</p>
+          <h2 id="catalogue-category-title">What would you like to add?</h2>
+          <p>Choose a category, then search the available products.</p>
+          <div className={styles.categoryGrid}>
+            {catalogueCategories.filter(item => !selection.products.some(product => product.slot === item.category)).map(item => (
+              <button key={item.category} type="button" onClick={() => { setAddingCategory(item); setAddProductOpen(false); }}>
+                <span aria-hidden="true">＋</span>{item.label}
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    ) : null}
     {excludedProducts.length ? <section className="excludedProducts" aria-label="Products not included"><p className="microLabel">Not included in your room</p><ul>{excludedProducts.map(product => <li key={product.slot}><span>{product.slotLabel}</span><button type="button" className="textButton" disabled={busy} onClick={() => toggleProduct(product, true)}>Add back · {money(product.selected.offer.priceMinor * product.quantity)}</button></li>)}</ul></section> : null}
-    {browseProduct && intake && brief && selection ? <InventoryPicker category={browseProduct.slot} categoryLabel={browseProduct.slotLabel} initialStyle={intake.styles[0] || ''} onClose={() => setBrowseProduct(null)} onChoose={(variantId) => {
-      const nextChoices = choices(selection).map(choice => choice.slot === browseProduct.slot ? { ...choice, variantId } : choice);
-      setBrowseProduct(null);
-      void loadSelection(intake, brief, selection, false, nextChoices);
-    }} /> : null}
+    {(browseProduct || addingCategory) && intake && brief && selection ? <InventoryPicker
+      category={addingCategory?.category || browseProduct!.slot}
+      categoryLabel={addingCategory?.label || browseProduct!.slotLabel}
+      initialStyle={intake.styles[0] || ''}
+      onClose={() => { setBrowseProduct(null); setAddingCategory(null); }}
+      onChoose={(variantId) => {
+        if (addingCategory) {
+          const nextChoices = [...choices(selection).filter(choice => choice.slot !== addingCategory.category), { slot: addingCategory.category, variantId, quantity: 1 }];
+          const omitted = excludedProducts.filter(item => item.slot !== addingCategory.category);
+          setAddingCategory(null);
+          setAcknowledged(false);
+          void loadSelection(intake, brief, selection, false, nextChoices, omitted);
+          return;
+        }
+        if (!browseProduct) return;
+        const nextChoices = choices(selection).map(choice => choice.slot === browseProduct.slot ? { ...choice, variantId } : choice);
+        setBrowseProduct(null);
+        setAcknowledged(false);
+        void loadSelection(intake, brief, selection, false, nextChoices);
+      }}
+    /> : null}
     <JourneyAssistant
       visible={Boolean(intake && brief && selection)}
       currentStep={3}
