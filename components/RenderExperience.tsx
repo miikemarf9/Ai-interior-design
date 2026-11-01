@@ -45,7 +45,11 @@ export function RenderExperience() {
             const response = await fetch('/api/products/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ intake: savedRoom, brief: savedBrief.brief, choices: savedSelection.selection.products.map((p: any) => ({ slot: p.slot, variantId: p.selected.variantId, quantity: p.quantity })), approve: true, acknowledgeLimitations: true, expectedSnapshot: approvalSnapshot(savedSelection.selection) }) });
             const checked = await response.json();
             if (response.ok && checked.approved) nextSelection = checked.selection;
-          } catch { /* A room-only illustrative render can continue without a product collection. */ }
+          } catch { /* Keep rendering locked until a product collection is approved. */ }
+        }
+        if (!nextSelection.products.length) {
+          setBlocked('Choose and approve at least one reviewed retailer product before creating a room visual.');
+          return;
         }
         setSelection(nextSelection);
         const prior = history.attempts?.find((item: Attempt) => item.status === 'succeeded' && item.metadata?.snapshot?.roomAssetId === savedRuntime.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(nextSelection) && JSON.stringify([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === JSON.stringify([savedRoom, savedBrief.brief]));
@@ -116,7 +120,7 @@ export function RenderExperience() {
     finally { setBusy(false); }
   }
   if (!ready) return <section className="renderLoading shell"><h1>Preparing your room visualisation.</h1><p>Checking your room photograph and approved brief.</p></section>;
-  if (blocked || !selection || !runtime) return <section className="renderMissing shell"><p className="eyebrow">Living-room pilot</p><h1>There is still something to prepare.</h1><p>{blocked || 'The pilot is not ready.'}</p><Link className="button buttonPrimary" href="/products">Review my furniture collection</Link></section>;
+  if (blocked || !selection || !runtime) return <section className="renderMissing shell"><p className="eyebrow">Living-room pilot</p><h1>Choose the furniture before creating your room visual.</h1><p>{blocked || 'The pilot is not ready.'}</p><Link className="button buttonPrimary" href="/products">Review available products</Link></section>;
   const originalUrl = `/api/assets/${runtime.roomAssetId}?ownerKey=${encodeURIComponent(runtime.ownerKey)}`;
   const reviewed = result?.metadata.humanReview;
   const correctionReady = !!result && reviewed?.outcome === 'needs_correction' && result.metadata.correctionAttempt < MAX_CORRECTIONS && !failedCorrection;
