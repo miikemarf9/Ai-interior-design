@@ -89,6 +89,9 @@ export async function POST(request:Request){
   const productCount=Array.isArray(source.product_selection?.products)
     ? source.product_selection.products.length
     : 0;
+  if(productCount===0){
+    return NextResponse.json({error:"Only room designs with reviewed products can be published to the public ideas collection."},{status:409});
+  }
 
   const published=await sql.query(
     `insert into public.growth_publications (
