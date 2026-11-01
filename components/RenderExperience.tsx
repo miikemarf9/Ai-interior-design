@@ -9,6 +9,14 @@ import { trackRoomfound } from '@/components/PrivacyAnalytics';
 import { JourneyAssistant } from '@/components/JourneyAssistant';
 
 type Runtime = { ownerKey: string; designId: string; roomAssetId: string };
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`).join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
 type Attempt = { generation_id: string; status: string; resultUrl: string | null; cost_usd_micros: number | null; duration_ms: number | null; metadata: { correctionAttempt: number; parentGenerationId?: string; snapshot: { placements: Placement[]; selection: ProductSelection; intake: IntakeForBrief; brief: DesignBrief; roomAssetId: string }; humanReview?: PilotReview & { outcome: string } } };
 
 async function parseRenderResponse(response: Response) {
@@ -39,6 +47,8 @@ export function RenderExperience() {
   const [blocked, setBlocked] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [correction, setCorrection] = useState('');
   const [summary, setSummary] = useState<any>(null);
   const started = useRef(false);
@@ -77,7 +87,7 @@ export function RenderExperience() {
           return;
         }
         setSelection(nextSelection);
-        const prior = history.attempts?.find((item: Attempt) => item.status === 'succeeded' && item.metadata?.snapshot?.roomAssetId === savedRuntime.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(nextSelection) && JSON.stringify([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === JSON.stringify([savedRoom, savedBrief.brief]));
+        const prior = history.attempts?.find((item: Attempt) => item.status === 'succeeded' && item.metadata?.snapshot?.roomAssetId === savedRuntime.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(nextSelection) && stableJson([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === stableJson([savedRoom, savedBrief.brief]));
         const savedPlan: Placement[] = prior?.metadata.snapshot.placements || JSON.parse(localStorage.getItem(`roomfound-placements:${savedRuntime.designId}`) || '[]') as Placement[];
         const nextPlacements: Placement[] = nextSelection.products.map((p: any) => ({
           variantId: p.selected.variantId,
@@ -101,9 +111,31 @@ export function RenderExperience() {
     if (!response.ok) throw new Error(data.error || 'Pilot history unavailable.');
     setAttempts(data.attempts || []); setSummary(data.summary || null); return data;
   }
-  const result = attempts.find(item => item.status === 'succeeded' && item.resultUrl && selection && item.metadata?.snapshot?.roomAssetId === runtime?.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(selection) && JSON.stringify([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === JSON.stringify([room, brief]));
+  const result = attempts.find(item => item.status === 'succeeded' && item.resultUrl && selection && item.metadata?.snapshot?.roomAssetId === runtime?.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(selection) && stableJson([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === stableJson([room, brief]));
   const processing = attempts.some(item => item.status === 'processing');
   const failedCorrection = attempts.some(item => item.status === 'failed' && item.metadata?.parentGenerationId === result?.generation_id);
+  useEffect(() => {
+    if (!busy || generationStartedAt === null) { setElapsedSeconds(0); return; }
+    const updateElapsed = () => setElapsedSeconds(Math.floor((Date.now() - generationStartedAt) / 1000));
+    updateElapsed();
+    const timer = window.setInterval(updateElapsed, 1000);
+    return () => window.clearInterval(timer);
+  }, [busy, generationStartedAt]);
+  useEffect(() => {
+    if (!processing || !runtime || busy) return;
+    let stopped = false;
+    let timer: number | undefined;
+    const refresh = async () => {
+      try {
+        const response = await fetch(`/api/render/pilot?designId=${runtime.designId}&ownerKey=${encodeURIComponent(runtime.ownerKey)}`, { cache: 'no-store' });
+        const data = await response.json();
+        if (response.ok && !stopped) { setAttempts(data.attempts || []); setSummary(data.summary || null); }
+      } catch { /* Keep the in-progress state and try again. */ }
+      if (!stopped) timer = window.setTimeout(refresh, 4000);
+    };
+    timer = window.setTimeout(refresh, 4000);
+    return () => { stopped = true; if (timer) window.clearTimeout(timer); };
+  }, [processing, runtime, busy]);
   useEffect(() => {
     if (!ready || blocked || !selection?.products.length || !runtime || !room || !brief || !verified || busy || processing || result || autoStarted.current) return;
     if (!siteCreditExempt && (balance === null || balance < 1)) return;
@@ -115,7 +147,7 @@ export function RenderExperience() {
   }, [ready, blocked, selection, runtime, room, brief, verified, busy, processing, result, siteCreditExempt, balance, placements]);
   async function generate() {
     if (!runtime || !room || !brief || !selection) return;
-    setBusy(true); setError('');
+    setBusy(true); setGenerationStartedAt(Date.now()); setError('');
     const key = `roomfound-pilot-request:${runtime.designId}`;
     const requestState = JSON.stringify([approvalSnapshot(selection), placements, result?.generation_id, correction]);
     try {
@@ -146,7 +178,7 @@ export function RenderExperience() {
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Generation unavailable.');
       try { await readHistory(runtime); await loadCredits(runtime); } catch { /* Keep the original error and stable request ID. */ }
-    } finally { setBusy(false); }
+    } finally { setBusy(false); setGenerationStartedAt(null); }
   }
   async function saveReview(review: PilotReview) {
     if (!runtime || !result) return;
@@ -175,9 +207,15 @@ export function RenderExperience() {
     </section>
     {result && <Review key={result.generation_id} selection={result.metadata.snapshot.selection} initial={reviewed} disabled={busy} onSave={saveReview} />}
     {error && <p role="alert" className="renderError">{error}</p>}
-    {busy && !result && <p role="status">Your room visual is starting now. Your image use is only charged after a successful generation.</p>}
-    {processing && <div className={styles.panel}><p>An attempt is processing. Refresh its status before starting another.</p><button className="button buttonSecondary" onClick={() => readHistory(runtime).catch(error => setError(error.message))}>Refresh attempt status</button></div>}
-    {!result && !processing && <button className="button buttonPrimary" disabled={busy || !verified || (!siteCreditExempt && (balance === null || balance < 1)) || placements.some(item => item.instruction.trim().length < 5)} onClick={generate}>{busy ? 'Generating…' : `Generate illustrative room design · ${siteCreditExempt ? 'API allowance' : '1 credit'}`}</button>}
+    {(busy || processing) && !result && <section className={styles.generationStatus} role="status" aria-live="polite">
+      <div className={styles.generationProgressTrack} aria-hidden="true"><span /></div>
+      <div><p className="eyebrow">{busy ? 'Creating your room visual' : 'Your room visual is in progress'}</p>
+        <p>{busy ? 'We’re combining your room photo and approved furniture. This can take a minute or two; please keep this page open.' : 'The image is still being created. This page checks for the finished result automatically.'}</p>
+        {busy && <p className={styles.generationElapsed}>Elapsed · {Math.floor(elapsedSeconds / 60)}:{String(elapsedSeconds % 60).padStart(2, '0')}</p>}
+      </div>
+    </section>}
+    {processing && <div className={styles.panel}><p>Your image is still in progress. The page will update when it is ready.</p><button className="button buttonSecondary" onClick={() => readHistory(runtime).catch(error => setError(error.message))}>Check now</button></div>}
+    {!result && !processing && !busy && <button className="button buttonPrimary" disabled={!verified || (!siteCreditExempt && (balance === null || balance < 1)) || placements.some(item => item.instruction.trim().length < 5)} onClick={generate}>{`Generate illustrative room design · ${siteCreditExempt ? 'API allowance' : '1 credit'}`}</button>}
     {!siteCreditExempt && verified && balance === 0 && <p>You’ve used your free image. <Link href="/account">Buy 10 more for £2</Link>.</p>}
     {!verified && <p>A verified account and available credit balance are required before generating.</p>}
     {correctionReady && <section className={styles.panel}><h2>Make a controlled correction</h2><p>Describe the specific failed checks. We reuse the original room, approved references and previous result. A correction costs one credit and must be checked again.</p><label>What needs correcting?<textarea rows={3} maxLength={2000} value={correction} onChange={event => setCorrection(event.target.value)} /></label><button className="button buttonPrimary" disabled={busy || processing || !verified || (!siteCreditExempt && !balance) || correction.trim().length < 10} onClick={generate}>{busy ? 'Correcting…' : `Generate correction · ${siteCreditExempt ? 'API allowance' : '1 credit'}`}</button></section>}
@@ -206,7 +244,7 @@ export function RenderExperience() {
         : !verified ? 'Verify your account'
           : !siteCreditExempt && balance === 0 ? 'Add image uses'
             : 'Create your room visual'}
-      nextDescription={result
+      nextDescription={busy ? 'Your room image is being created. Please keep this page open; it will appear here when ready.' : result
         ? reviewed?.outcome === 'visually_reviewed'
           ? 'Your room visual has been reviewed and is ready to open in your saved room.'
           : 'Compare the generated image with your original room and selected products before continuing.'
@@ -215,7 +253,7 @@ export function RenderExperience() {
           : !siteCreditExempt && balance === 0
             ? 'Your free image has been used. Add another 10 image uses for £2.'
             : 'Your approved furniture is ready. One image use is deducted only after a successful generation.'}
-      nextLabel={result
+      nextLabel={busy ? 'Creating room visual…' : result
         ? reviewed?.outcome === 'visually_reviewed' ? 'Open my designed room' : 'Review generated image'
         : !verified ? 'Verify my account'
           : !siteCreditExempt && balance === 0 ? 'Buy 10 uses · £2'
