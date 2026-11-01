@@ -33,3 +33,30 @@
 .pinPlace { position: absolute; translate: -50% -50%; width: 30px; height: 30px; display: grid; place-items: center; background: var(--clay); color: #fff; border: 2px solid #fff; border-radius: 50%; font-size: 14px; pointer-events: none; }
 .markerList li { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .markerList li strong { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+
+.photoHeading { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 12px; }
+.photoHeading h2 { margin: 0; font-size: 17px; line-height: 1.25; }
+.photoHeading p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+.photoActions { display: flex; gap: 8px; }
+.photoActions button { min-height: 38px; padding: 8px 12px; border: 1px solid var(--line); background: transparent; color: var(--forest); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.photoActions button:disabled { opacity: .45; cursor: not-allowed; }
+.annotationForm { display: grid; grid-template-columns: auto minmax(180px, 1fr); align-items: end; gap: 16px; margin-bottom: 12px; }
+.annotationForm .annotationKinds { margin: 0; }
+.annotationForm .field { display: grid; gap: 6px; color: var(--muted); font-size: 11px; }
+.annotationForm input { width: 100%; min-height: 42px; padding: 9px 12px; border: 1px solid var(--line-strong); background: var(--ivory); color: var(--ink); font: inherit; }
+.annotationForm input:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
+.photo { margin-top: 0; overflow: hidden; border: 1px solid var(--line); background: var(--bone); }
+.photo img { width: 100%; max-height: 360px; object-fit: contain; background: var(--bone); }
+.markingActive .photo img { max-height: min(64vh, 650px); }
+.markSurface { cursor: default; }
+.markSurface:disabled { cursor: default; }
+.markingActive .markSurface { cursor: crosshair; }
+.markerList { margin: 8px 0 0; padding: 0; list-style: none; }
+.markerList li { border-bottom: 1px solid var(--line); }
+.emptyRoomNote { padding: 10px 12px; background: var(--chalk); color: var(--muted); font-size: 12px !important; }
+@media (max-width: 680px) {
+  .photoHeading { align-items: flex-start; }
+  .photoActions { flex-direction: column; }
+  .annotationForm { grid-template-columns: 1fr; gap: 10px; }
+  .photo img { max-height: 42vh; }
+}

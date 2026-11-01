@@ -146,6 +146,7 @@ export function DesignIntake() {
   const [hydrated, setHydrated] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState('');
+  const [annotationMode, setAnnotationMode] = useState(false);
   const [ownerKey, setOwnerKey] = useState('');
   const [designId, setDesignId] = useState('');
   const [roomAssetId, setRoomAssetId] = useState('');
@@ -546,12 +547,18 @@ export function DesignIntake() {
               </div>
 
               <div className="photoStepGrid">
-                <div className="photoUploadColumn">
+                <div className={'photoUploadColumn' + (photoUrl && annotationMode ? ' photoUploadColumnExpanded' : '')}>
                   {photoUrl ? (
-                    <div className="roomPhotoSaved">
-                      <span>✓ Room photo saved</span>
-                      <button type="button" className="textButton" disabled={uploadingPhoto} onClick={() => fileInput.current?.click()}>Change photo</button>
-                    </div>
+                    <RetainedFurniture
+                      photoUrl={photoUrl}
+                      items={state.retainedFurniture || []}
+                      projectGoal={state.projectGoal || 'refresh'}
+                      active={annotationMode}
+                      onActiveChange={setAnnotationMode}
+                      onChange={items => setState(current => ({ ...current, retainedFurniture: items }))}
+                      onChangePhoto={() => fileInput.current?.click()}
+                      photoChangeDisabled={uploadingPhoto}
+                    />
                   ) : (
                     <button className="roomUploader" type="button" disabled={uploadingPhoto} onClick={() => fileInput.current?.click()}>
                       <span className="uploadEmpty">
@@ -566,22 +573,30 @@ export function DesignIntake() {
                   {uploadingPhoto ? <p className="photoUploadState" role="status">Saving your photograph…</p> : null}
                   {photoError ? <p className="photoUploadError" role="alert">{photoError}</p> : null}
                 </div>
-                <aside className="photoGuidance">
-                  <span className="microLabel">A good photo makes all the difference</span>
-                  <div><strong>01</strong><p>Stand back far enough to show the room and its layout.</p></div>
-                  <div><strong>02</strong><p>Use natural light where possible. Avoid filters.</p></div>
-                  <div><strong>03</strong><p>{state.projectGoal === 'furnish' ? 'For an empty room, just show us where you would like new items.' : 'Leave existing furniture in place so we can work around it.'}</p></div>
-                  <p className="photoPrivacy">Your photograph is saved privately. Sharing a finished design is always optional.</p>
-                </aside>
+{!(photoUrl && annotationMode) ? (
+                  <aside className="photoGuidance">
+                    {photoUrl ? (
+                      <>
+                        <span className="microLabel">Photo annotations · optional</span>
+                        <h2>Show us what stays or where things should go.</h2>
+                        <div><strong>01</strong><p>Choose whether your note is for something to keep or a new item to place.</p></div>
+                        <div><strong>02</strong><p>Type a short label, then tap its position on the photo.</p></div>
+                        <p className="photoPrivacy">{state.projectGoal === 'furnish' ? 'For an empty room, there is nothing to remove. Add notes only for where you would like items.' : 'Your notes guide the design; they are visual hints, not measurements.'}</p>
+                        {(state.retainedFurniture || []).length ? <p className="photoAnnotationCount">{state.retainedFurniture?.length} photo note{state.retainedFurniture?.length === 1 ? '' : 's'} added.</p> : null}
+                        <button className="button buttonPrimary annotationStart" type="button" onClick={() => setAnnotationMode(true)}>Annotate this photo</button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="microLabel">A good photo makes all the difference</span>
+                        <div><strong>01</strong><p>Stand back far enough to show the room and its layout.</p></div>
+                        <div><strong>02</strong><p>Use natural light where possible. Avoid filters.</p></div>
+                        <div><strong>03</strong><p>{state.projectGoal === 'furnish' ? 'For an empty room, just show us where you would like new items.' : 'Leave existing furniture in place so we can work around it.'}</p></div>
+                        <p className="photoPrivacy">Your photograph is saved privately. Sharing a finished design is always optional.</p>
+                      </>
+                    )}
+                  </aside>
+                ) : null}
               </div>
-              {photoUrl ? (
-                <RetainedFurniture
-                  photoUrl={photoUrl}
-                  items={state.retainedFurniture || []}
-                  projectGoal={state.projectGoal || 'refresh'}
-                  onChange={items => setState(current => ({ ...current, retainedFurniture: items }))}
-                />
-              ) : null}
             </>
           ) : null}
 

@@ -4719,3 +4719,8 @@ button.journeyAssistantStep:hover strong {
 
 .roomPhotoSaved { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; border: 1px solid var(--line); background: var(--chalk); color: var(--forest); font-size: 13px; }
 .roomPhotoSaved .textButton { color: var(--forest); }
+
+.photoUploadColumnExpanded { grid-column: 1 / -1; }
+.photoGuidance h2 { margin: 5px 0 14px; font-size: clamp(24px, 2.6vw, 34px); line-height: 1.12; }
+.photoGuidance .annotationStart { width: fit-content; margin-top: 20px; }
+.photoAnnotationCount { margin: 14px 0 0; color: var(--forest); font-size: 12px; font-weight: 700; }
