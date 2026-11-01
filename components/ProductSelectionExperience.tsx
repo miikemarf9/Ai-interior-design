@@ -147,7 +147,7 @@ export function ProductSelectionExperience() {
     </section>
     <JourneyAssistant
       visible={Boolean(intake && brief && selection)}
-      currentStep={5}
+      currentStep={4}
       nextTitle={approved ? 'Create your room visual' : 'Approve your furniture collection'}
       nextDescription={approved
         ? 'Your chosen real products are saved. The next step creates an illustrative design in your room.'
