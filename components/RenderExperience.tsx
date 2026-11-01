@@ -57,7 +57,7 @@ export function RenderExperience() {
         const history = await readHistory(savedRuntime);
         if (!history.available) { setBlocked(history.reason); return; }
         let nextSelection = buildProductSelection(savedRoom, savedBrief.brief, []);
-        if (savedSelection.approved && savedSelection.selection?.version === 2) {
+        if (savedSelection.selection?.version === 2 && savedSelection.selection.products?.length) {
           try {
             const response = await fetch('/api/products/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ intake: savedRoom, brief: savedBrief.brief, choices: savedSelection.selection.products.map((p: any) => ({ slot: p.slot, variantId: p.selected.variantId, quantity: p.quantity })), approve: true, acknowledgeLimitations: true, expectedSnapshot: approvalSnapshot(savedSelection.selection) }) });
             const checked = await response.json();
