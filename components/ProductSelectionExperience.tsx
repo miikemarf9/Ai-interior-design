@@ -172,20 +172,24 @@ function ProductCard({ product, index, disabled, onChange, onBrowse, retailerHre
     <div className="selectedProductIndex">{String(index + 1).padStart(2, '0')}</div>
     <div className={`selectedProductImage ${styles.productPhoto}`}><ProductPhoto key={item.variantId} item={item} /><span>{product.slotLabel}</span></div>
     <div className="selectedProductMain">
-      <div className="selectedProductHeading"><div><small>{item.brandName || item.offer.retailerName}</small><h2>{name(item)}</h2></div><strong>{money(item.offer.priceMinor * product.quantity)}</strong></div>
-      <p>{money(item.offer.priceMinor)} per {item.commercial!.unitLabel} · {item.commercial!.packSize} item{item.commercial!.packSize === 1 ? '' : 's'} per pack</p>
-      <div className={`selectedProductMeta ${styles.productMeta}`}><span>W × D × H: {dimensions(item)}</span><span>{item.offer.retailerName}</span><span>{item.offer.availability.replace(/_/g, ' ')} when checked {checked(item.offer.lastCheckedAt)}</span></div>
-      <p>Materials: {item.materials.length ? item.materials.join(', ').replace(/-/g, ' ') : 'Not confirmed'}.</p>
-      <p>Delivery: {item.offer.deliveryPriceMinor === null || item.commercial!.deliveryBasis === 'unknown' ? 'Price to confirm' : `${money(item.offer.deliveryPriceMinor)} ${item.commercial!.deliveryBasis === 'per_order' ? 'per retailer order' : 'per pack'}`}. {item.commercial!.deliveryDetails || 'Timing, postcode eligibility and assembly to confirm.'}</p>
-      <p className="selectedProductWhy">{product.reasons.filter(reason => !reason.includes('stock') && !reason.includes('orderable')).slice(0, 2).join(' ')}</p>
-      <label className={styles.quantity}>Quantity of {item.commercial!.unitLabel}<select aria-label={`Quantity for ${product.slotLabel}`} disabled={disabled} value={product.quantity} onChange={event => onChange(item.variantId, Number(event.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>
-      <div className={`selectedProductActions ${styles.actions}`}><button type="button" className="textButton" disabled={disabled} aria-expanded={open} aria-controls={`alternatives-${product.slot}`} onClick={() => setOpen(!open)}>{open ? 'Hide alternatives' : 'Swap this item'}</button><button type="button" className="textButton" disabled={disabled} onClick={onBrowse}>Browse cleared inventory</button><a className="textButton" href={retailerHref(item.offer.id)} target="_blank" rel="noopener noreferrer">View exact variant at retailer ↗</a></div>
-      {open && <div id={`alternatives-${product.slot}`} className={styles.alternatives}>
-        {!product.alternatives.length && <p>No other cleared variants match this brief yet.</p>}
-        {product.alternatives.map((alternative: ProductAlternative) => <div className={styles.alternative} key={alternative.candidate.variantId}>
-          <ProductPhoto item={alternative.candidate} /><div><strong>{name(alternative.candidate)}</strong><p>{money(alternative.candidate.offer.priceMinor)} per {alternative.candidate.commercial!.unitLabel} · {alternative.candidate.commercial!.packSize} item(s) per pack</p><p>W × D × H: {dimensions(alternative.candidate)}</p><button type="button" disabled={disabled} className="textButton" onClick={() => { onChange(alternative.candidate.variantId, product.quantity); setOpen(false); }}>Use this variant</button></div>
-        </div>)}
-      </div>}
+      <div className="selectedProductHeading"><div><small>{item.brandName || item.offer.retailerName}</small><h2>{item.productName}</h2></div><strong>{money(item.offer.priceMinor * product.quantity)}</strong></div>
+      <p className={styles.productShortDescription}>{[item.variantName, item.materials[0]?.replace(/-/g, ' '), dimensions(item)].filter(Boolean).join(' · ')}</p>
+      <details className={styles.productDetails}>
+        <summary>Product details and options</summary>
+        <p>{money(item.offer.priceMinor)} per {item.commercial!.unitLabel} · {item.commercial!.packSize} item{item.commercial!.packSize === 1 ? '' : 's'} per pack</p>
+        <div className={`selectedProductMeta ${styles.productMeta}`}><span>W × D × H: {dimensions(item)}</span><span>{item.offer.retailerName}</span><span>{item.offer.availability.replace(/_/g, ' ')} when checked {checked(item.offer.lastCheckedAt)}</span></div>
+        <p>Materials: {item.materials.length ? item.materials.join(', ').replace(/-/g, ' ') : 'Not confirmed'}.</p>
+        <p>Delivery: {item.offer.deliveryPriceMinor === null || item.commercial!.deliveryBasis === 'unknown' ? 'Price to confirm' : `${money(item.offer.deliveryPriceMinor)} ${item.commercial!.deliveryBasis === 'per_order' ? 'per retailer order' : 'per pack'}`}. {item.commercial!.deliveryDetails || 'Timing, postcode eligibility and assembly to confirm.'}</p>
+        <p className="selectedProductWhy">{product.reasons.filter(reason => !reason.includes('stock') && !reason.includes('orderable')).slice(0, 2).join(' ')}</p>
+        <label className={styles.quantity}>Quantity of {item.commercial!.unitLabel}<select aria-label={`Quantity for ${product.slotLabel}`} disabled={disabled} value={product.quantity} onChange={event => onChange(item.variantId, Number(event.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>
+        <div className={`selectedProductActions ${styles.actions}`}><button type="button" className="textButton" disabled={disabled} aria-expanded={open} aria-controls={`alternatives-${product.slot}`} onClick={() => setOpen(!open)}>{open ? 'Hide alternatives' : 'Swap this item'}</button><button type="button" className="textButton" disabled={disabled} onClick={onBrowse}>Browse cleared inventory</button><a className="textButton" href={retailerHref(item.offer.id)} target="_blank" rel="noopener noreferrer">View exact variant at retailer ↗</a></div>
+        {open && <div id={`alternatives-${product.slot}`} className={styles.alternatives}>
+          {!product.alternatives.length && <p>No other cleared variants match this brief yet.</p>}
+          {product.alternatives.map((alternative: ProductAlternative) => <div className={styles.alternative} key={alternative.candidate.variantId}>
+            <ProductPhoto item={alternative.candidate} /><div><strong>{name(alternative.candidate)}</strong><p>{money(alternative.candidate.offer.priceMinor)} per {alternative.candidate.commercial!.unitLabel} · {alternative.candidate.commercial!.packSize} item(s) per pack</p><p>W × D × H: {dimensions(alternative.candidate)}</p><button type="button" disabled={disabled} className="textButton" onClick={() => { onChange(alternative.candidate.variantId, product.quantity); setOpen(false); }}>Use this variant</button></div>
+          </div>)}
+        </div>}
+      </details>
     </div>
-  </article>;
+  </article>
 }
