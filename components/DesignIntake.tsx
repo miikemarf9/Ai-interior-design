@@ -212,6 +212,7 @@ export function DesignIntake() {
 
     const params = new URLSearchParams({ roomType: state.roomType || 'living_room', budget: String(state.budget) });
     if (state.styles.length) params.set('styles', state.styles.join(','));
+    if (state.change.length) params.set('items', state.change.join(','));
     if (state.measurements.width) params.set('roomWidthCm', state.measurements.width);
     if (state.measurements.length) params.set('roomLengthCm', state.measurements.length);
     if (state.measurements.height) params.set('ceilingCm', state.measurements.height);
@@ -275,12 +276,12 @@ export function DesignIntake() {
 
   const canContinue = useMemo(() => {
     if (step === 0) return state.roomType === 'living_room';
-    if (step === 1) return !catalogueLoading && !catalogueError;
+    if (step === 1) return !catalogueLoading && !catalogueError && state.change.some(label => catalogueItems.some(item => item.label === label && item.available));
     if (step === 2) return Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto);
     if (step === 9) return validMeasurements;
     if (step === 4) return !catalogueLoading && !catalogueError && state.styles.some(style => catalogueStyles.some(option => option.name === style && option.available));
     return true;
-  }, [step, state.roomType, photoUrl, designId, roomAssetId, uploadingPhoto, state.styles, validMeasurements, catalogueLoading, catalogueError, catalogueStyles]);
+  }, [step, state.roomType, photoUrl, designId, roomAssetId, uploadingPhoto, state.styles, state.change, validMeasurements, catalogueLoading, catalogueError, catalogueStyles, catalogueItems]);
 
   function saveRuntime(next: { ownerKey: string; designId: string; roomAssetId: string; photoName: string }) {
     window.localStorage.setItem('roomfound-design-runtime-v1', JSON.stringify(next));
@@ -523,11 +524,19 @@ export function DesignIntake() {
                   onChange={(value) => { setUnavailableLabels([]); setState((current) => ({ ...current, change: toggle(current.change, value) })); }}
                 />
               ) : !catalogueLoading && !catalogueError ? (
-                <p className="choiceHint">There are no reviewed {roomName} products to tick yet. You can still save your room plan.</p>
+                <p className="choiceHint">There are no reviewed {roomName} products matching these choices yet. Adjust your budget or filters before continuing with a shoppable room.</p>
               ) : null}
-              {!catalogueLoading && !catalogueError && noMatchItems.length ? <p className="choiceHint">No reviewed item matches your current choices for: {noMatchItems.join(' · ')}. They cannot be selected unless the style, budget, room measurements or exclusions change.</p> : null}
+              {!catalogueLoading && !catalogueError && noMatchItems.length ? (
+                <p className="choiceHint" role="status">
+                  No reviewed item matches your current choices for: {noMatchItems.join(' · ')}. They cannot be selected unless the style, budget, room measurements or exclusions change.{' '}
+                  <button className="textButton" type="button" onClick={() => setState(current => ({ ...current, styles: [], budget: 10000, dislikes: '', measurements: { ...current.measurements, width: '', length: '', height: '' } }))}>Show all reviewed options</button>
+                </p>
+              ) : null}
               {!catalogueLoading && !catalogueError && comingSoonItems.length ? <p className="choiceHint">Not in the reviewed catalogue yet: {comingSoonItems.join(' · ')}.</p> : null}
               {state.roomType === 'bedroom' ? <p className={ui.note}>Bedroom products and image generation are not available yet; this list is for planning only.</p> : null}
+              {!catalogueLoading && !catalogueError && availableItemChoices.length > 0 && !state.change.some(label => availableItemChoices.some(item => item.label === label)) ? (
+                <p className="choiceHint" role="status">Choose at least one reviewed furniture type to continue. This keeps your room plan tied to products you can shop.</p>
+              ) : null}
               {availableRecommendedItems.length ? (
                 <button className="selectAllButton" type="button" onClick={() => setState((current) => ({ ...current, change: availableRecommendedItems.filter(item => !current.keep.includes(item)) }))}>
                   Use suggested items
@@ -608,7 +617,7 @@ export function DesignIntake() {
               {catalogueLoading ? <p aria-live="polite">Checking which styles have matching furniture…</p> : null}
               {catalogueError ? <p className={ui.error} role="alert">{catalogueError} <button className="textButton" type="button" onClick={() => setCatalogueRetry(value => value + 1)}>Try again</button></p> : null}
               {!catalogueLoading && !catalogueError && !catalogueStyles.some(style => style.available) ? (
-                <p className={ui.note} role="status">No reviewed furniture matches these styles with your current budget and filters. <button className="textButton" type="button" onClick={() => setStep(8)}>Adjust my budget</button></p>
+                <p className={ui.note} role="status">No reviewed furniture matches these styles for your chosen item types and filters. <button className="textButton" type="button" onClick={() => setStep(1)}>Change item types</button></p>
               ) : null}
             </>
           ) : null}
