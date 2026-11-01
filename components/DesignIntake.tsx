@@ -805,7 +805,7 @@ export function DesignIntake() {
               <section className="changeSection">
                 <div className="choiceSectionHeading">
                   <div><h2>Replace or add</h2><p>We have preselected a useful starting collection. Change it to suit your plans.</p></div>
-                  <span>Choose at least one</span>
+                  <span>Optional</span>
                 </div>
                 <div className="choiceHint">
                   <span className="microLabel">Suggested for your {roomName}</span>
