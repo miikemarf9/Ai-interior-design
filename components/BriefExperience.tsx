@@ -195,7 +195,7 @@ export function BriefExperience() {
     <div className="briefExperience shell">
       <section className="briefHero">
         <div className="briefHeroMain">
-          <p className="eyebrow">Your written proposal</p>
+          <p className="eyebrow">Your design direction</p>
           <h1>{brief.title}</h1>
           <p>Check the direction we have created from your choices. Edit anything that does not feel right before choosing real products.</p>
         </div>
@@ -273,8 +273,8 @@ export function BriefExperience() {
       <section className="askDesigner">
         <div className="askDesignerIntro">
           <p className="eyebrow">Refine the direction</p>
-          <h2>Ask to change something.</h2>
-          <p>You should not need to rewrite a prompt. Say what feels wrong or what you want more of, like you would to a designer.</p>
+          <h2>Make a small adjustment.</h2>
+          <p>If something does not feel quite right, tell us what you would like changed. This is optional and does not use a design credit.</p>
         </div>
         <div className="askDesignerControl">
           <textarea
