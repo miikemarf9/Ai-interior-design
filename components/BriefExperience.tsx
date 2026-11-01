@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { buildFallbackBrief, type DesignBrief, type IntakeForBrief } from '@/lib/brief';
 import { trackRoomfound } from '@/components/PrivacyAnalytics';
 import ui from './RoomBrief.module.css';
@@ -168,11 +168,6 @@ export function BriefExperience() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 
-  const measured = useMemo(() => {
-    if (!intake) return false;
-    return Boolean(intake.measurements.width || intake.measurements.length || intake.measurements.height);
-  }, [intake]);
-
   if (loading) {
     return (
       <section className="briefLoading shell">
@@ -202,7 +197,7 @@ export function BriefExperience() {
         <div className="briefHeroMain">
           <p className="eyebrow">Your written proposal</p>
           <h1>{brief.title}</h1>
-          <p>Read it like a designer’s proposal. Change anything that does not feel right before we select products or spend a design credit.</p>
+          <p>Check the direction we have created from your choices. Edit anything that does not feel right before choosing real products.</p>
         </div>
 
         <aside className="creditStatus">
@@ -217,7 +212,7 @@ export function BriefExperience() {
       <div className={ui.summary}>
         <strong>{intake.roomType === 'bedroom' ? 'Bedroom' : 'Living room'} · {intake.projectGoal === 'furnish' ? 'Furnish' : 'Refresh'}</strong>
         <span>Furniture allowance: £{intake.budget.toLocaleString('en-GB')}</span>
-        <Link href="/design">Edit room answers, measurements or photo markers</Link>
+        <Link href="/design">Edit room, photo or advanced settings</Link>
       </div>
       {error && <p role="alert" className={ui.error}>{error}</p>}
       <section className="briefSections">
@@ -269,6 +264,12 @@ export function BriefExperience() {
           </article>
         ))}
       </details>
+      <details className="briefRefineDetails">
+        <summary>
+          <span>Want to refine the direction?</span>
+          <small>Optional · make a change before approving</small>
+          <i>＋</i>
+        </summary>
       <section className="askDesigner">
         <div className="askDesignerIntro">
           <p className="eyebrow">Refine the direction</p>
@@ -294,20 +295,9 @@ export function BriefExperience() {
         </div>
         <div className="freeRevisionNote"><span>Free</span><p>Changing the written brief does not use image-generation credits.</p></div>
       </section>
+      </details>
 
-      <section className="briefConfidence">
-        <div>
-          <p className="eyebrow">Before products are selected</p>
-          <h2>Does this sound like your room?</h2>
-        </div>
-        <div className="confidenceRows">
-          <div><span>Budget defined</span><strong>Yes</strong></div>
-          <div><span>Existing items considered</span><strong>{(intake.keep.length || intake.retainedFurniture?.length) ? 'Yes' : 'Open'}</strong></div>
-          <div><span>Lifestyle requirements</span><strong>{intake.uses.length ? 'Included' : 'Open'}</strong></div>
-          <div><span>Room measurements</span><strong className={measured ? '' : 'needsData'}>{measured ? (intake.measurements.accuracy === 'measured' ? 'Customer measured · fit unverified' : 'Approximate / unconfirmed') : 'Unknown · fit unverified'}</strong></div>
-          <div><span>Image credit used</span><strong>None</strong></div>
-        </div>
-      </section>
+
 
       <section className={`approveBrief ${approved ? 'isApproved' : ''}`}>
         <div>
