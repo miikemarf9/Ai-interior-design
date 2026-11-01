@@ -18,6 +18,14 @@ function consentValue(){
     ?.split("=")[1] || "";
 }
 
+function awinConsentValue(){
+  if(typeof document==="undefined") return "";
+  return document.cookie
+    .split("; ")
+    .find((row)=>row.startsWith("roomfound_awin_consent="))
+    ?.split("=")[1] || "";
+}
+
 async function send(eventName:string,properties:Record<string,unknown>={}){
   if(consentValue()!=="analytics") return;
   let referrerHost="";
@@ -76,38 +84,56 @@ export function AnalyticsClient(){
 
 export function CookieConsent(){
   const [visible,setVisible]=useState(false);
+  const [analytics,setAnalytics]=useState(false);
+  const [awinTracking,setAwinTracking]=useState(false);
 
   useEffect(()=>{
-    setVisible(!consentValue());
+    setAnalytics(consentValue()==="analytics");
+    setAwinTracking(awinConsentValue()==="1");
+    setVisible(!consentValue() || !awinConsentValue());
+    const openSettings=()=>setVisible(true);
+    window.addEventListener("roomfound:open-cookie-settings",openSettings);
+    return ()=>window.removeEventListener("roomfound:open-cookie-settings",openSettings);
   },[]);
 
-  function choose(value:"essential"|"analytics"){
+  function saveChoices(allowAnalytics:boolean,allowAwinTracking:boolean){
     const secure=window.location.protocol==="https:" ? "; Secure" : "";
-    document.cookie=`roomfound_consent=${value}; Max-Age=15552000; Path=/; SameSite=Lax${secure}`;
+    const cookieOptions=`Max-Age=15552000; Path=/; SameSite=Lax${secure}`;
+    document.cookie=`roomfound_consent=${allowAnalytics ? "analytics" : "essential"}; ${cookieOptions}`;
+    document.cookie=`roomfound_awin_consent=${allowAwinTracking ? "1" : "0"}; ${cookieOptions}`;
     setVisible(false);
     void fetch("/api/account/preferences",{
       method:"PATCH",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({analytics:value==="analytics"}),
+      body:JSON.stringify({analytics:allowAnalytics}),
     }).catch(()=>undefined);
-    if(value==="analytics") void send("page_view",{consent:"just_granted"});
+    window.dispatchEvent(new Event("roomfound:consent-updated"));
+    if(allowAnalytics) void send("page_view",{consent:"just_granted"});
   }
 
   if(!visible) return null;
 
   return (
     <aside className="cookieConsent" aria-label="Cookie preferences">
-      <div>
-        <strong>Privacy first.</strong>
-        <p>Transform My Room uses essential storage to keep the service working. Optional first-party analytics help us understand the beta. We do not run behavioural analytics unless you choose it.</p>
+      <div className="cookieConsentIntro">
+        <strong>Your choices, simply.</strong>
+        <p>Essential storage keeps your room plans working. Optional product analytics help us improve. Awin partner-link tracking lets us know when a retailer purchase came from our recommendations, helping fund our product research and design tools at no extra cost to you.</p>
+      </div>
+      <div className="cookieConsentChoices">
+        <label><input type="checkbox" checked={awinTracking} onChange={event=>setAwinTracking(event.target.checked)} /><span><strong>Awin partner-link tracking</strong><small>Allow Awin to attribute a purchase to our link.</small></span></label>
+        <label><input type="checkbox" checked={analytics} onChange={event=>setAnalytics(event.target.checked)} /><span><strong>Product analytics</strong><small>Allow anonymous usage analytics to improve the beta.</small></span></label>
       </div>
       <div className="cookieConsentActions">
-        <button type="button" onClick={()=>choose("essential")}>Essential only</button>
-        <button className="button buttonPrimary buttonCompact" type="button" onClick={()=>choose("analytics")}>Allow analytics</button>
+        <button type="button" onClick={()=>saveChoices(false,false)}>Essential only</button>
+        <button className="button buttonPrimary buttonCompact" type="button" onClick={()=>saveChoices(analytics,awinTracking)}>Save choices</button>
       </div>
       <a href="/cookies">Cookie details</a>
     </aside>
   );
+}
+
+export function CookieSettingsButton(){
+  return <button type="button" className="textButton" onClick={()=>window.dispatchEvent(new Event("roomfound:open-cookie-settings"))}>Manage cookie choices</button>;
 }
 
 export function trackRoomfound(eventName:string,properties?:Record<string,unknown>){

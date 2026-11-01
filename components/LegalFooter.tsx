@@ -10,7 +10,7 @@ export function LegalFooter(){
           <Link href="/cookies">Cookies</Link>
           <Link href="/terms">Terms</Link>
         </nav>
-        <span>Affiliate links may earn Transform My Room a commission.</span>
+        <span>Partner links help fund our product research on qualifying purchases, at no extra cost to you.</span>
       </div>
     </footer>
   );

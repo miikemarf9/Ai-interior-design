@@ -13,6 +13,12 @@ function validSession(value: string) {
   return /^[a-zA-Z0-9_-]{16,100}$/.test(value);
 }
 
+function hasAwinTrackingConsent(request: Request) {
+  const cookie = request.headers.get("cookie") || "";
+  const value = cookie.match(/(?:^|;\s*)roomfound_awin_consent=([^;]*)/)?.[1];
+  return value === "1";
+}
+
 export async function GET(
   request: Request,
   context: { params: Promise<{ offerId: string }> },
@@ -30,6 +36,7 @@ export async function GET(
   const generationId = validUuid(url.searchParams.get("generationId") || "") ? url.searchParams.get("generationId")! : "";
   const shareToken = validUuid(url.searchParams.get("shareToken") || "") ? url.searchParams.get("shareToken")! : "";
   const surface = (url.searchParams.get("surface") || "product_drawer").slice(0, 80);
+  const allowAwinTracking = hasAwinTrackingConsent(request);
 
   const sql = getCatalogDb();
   const rows = await sql.query(
@@ -88,16 +95,16 @@ export async function GET(
   const offer = rows[0];
   if (!offer) return NextResponse.redirect(new URL("/", request.url), 302);
 
-  const clickRef = `rf_${randomUUID().replaceAll("-", "")}`;
+  const clickRef = allowAwinTracking ? `rf_${randomUUID().replaceAll("-", "")}` : null;
   const publisherId = offer.publisher_id || process.env.AWIN_PUBLISHER_ID || null;
   const baseDestination = offer.affiliate_url || offer.product_url;
 
   let trackingUrl = baseDestination;
   if (offer.network === "awin" && offer.affiliate_url) {
     try {
-      trackingUrl = addAwinClickRef(offer.affiliate_url, clickRef);
+      trackingUrl = addAwinClickRef(offer.affiliate_url, clickRef, allowAwinTracking);
     } catch {
-      trackingUrl = offer.affiliate_url;
+      trackingUrl = allowAwinTracking ? offer.affiliate_url : offer.product_url;
     }
   }
 
@@ -130,7 +137,7 @@ export async function GET(
           )
         : null;
 
-  try {
+  if (allowAwinTracking && clickRef) try {
     await sql.query(
       `with context as (
         select

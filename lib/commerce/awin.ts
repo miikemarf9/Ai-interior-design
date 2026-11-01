@@ -34,12 +34,14 @@ export function percentageEstimate(range: AwinProgramDetails["commissionRange"])
   return (Math.min(...percentage) + Math.max(...percentage)) / 2;
 }
 
-export function addAwinClickRef(url: string, clickRef: string) {
+export function addAwinClickRef(url: string, clickRef: string | null, consentGiven: boolean) {
   const parsed = new URL(url);
   if (!["http:", "https:"].includes(parsed.protocol)) {
     throw new Error("Unsupported affiliate URL protocol.");
   }
-  parsed.searchParams.set("clickref", clickRef);
+  parsed.searchParams.set("cons", consentGiven ? "1" : "0");
+  if (consentGiven && clickRef) parsed.searchParams.set("clickref", clickRef);
+  else parsed.searchParams.delete("clickref");
   return parsed.toString();
 }
 

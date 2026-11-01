@@ -36,6 +36,11 @@ export default function PrivacyPage(){
         </section>
 
         <section>
+          <h2>Retailer links and commissions</h2>
+          <p>Some retailer links use Awin to record referrals. With your permission, Awin can use tracking to attribute an eligible purchase to a Transform My Room recommendation. If you do not allow this, we pass that choice to Awin and do not send a click reference. We earn commission on qualifying purchases through these partner links, at no extra cost to you; this helps fund product research and room-planning tools.</p>
+        </section>
+
+        <section>
           <h2>Retention</h2>
           <p>Your account and saved-room content are retained while the account remains active and while needed to provide the service, unless a deletion request is completed earlier. Optional analytics events are scheduled for deletion after 13 months. Expired authentication and abuse-prevention records are periodically cleaned up. Financial and affiliate records may need to be kept longer for accounting, tax, fraud-prevention or partner-dispute requirements.</p>
         </section>
