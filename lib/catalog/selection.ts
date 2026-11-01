@@ -368,10 +368,13 @@ export function buildProductSelection(
   const slots = allocateSlotBudgets(eligibleSlots, candidates, intake.budget * 100);
   const usedProducts = new Set<string>();
   const products: ProposedProduct[] = [];
+  let selectedProductSpendMinor = 0;
 
   for (const slot of slots) {
+    const remainingRoomBudgetMinor = Math.max(0, intake.budget * 100 - selectedProductSpendMinor);
     const ranked = candidates
       .filter((candidate) => eligibleForSlot(candidate, slot.category))
+      .filter(candidate => candidate.offer.priceMinor <= remainingRoomBudgetMinor)
       .map((candidate) => {
         const result = scoreCandidate(candidate, intake, slot.budgetMinor);
         return result ? { candidate, ...result } : null;
@@ -399,6 +402,7 @@ export function buildProductSelection(
       reasons: selected.reasons,
       alternatives,
     });
+    selectedProductSpendMinor += selected.candidate.offer.priceMinor;
   }
 
   const budgetMinor = intake.budget * 100;
