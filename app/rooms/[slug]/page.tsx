@@ -92,7 +92,7 @@ export default async function PublicRoomPage({
         <div className="publicRoomProductsHeading">
           <p className="eyebrow">Shop this room</p>
           <h2>The actual products.</h2>
-          <p className="affiliateDisclosure">Retailer links may be affiliate links. Transform My Room may earn a commission if you buy after following one.</p>
+          <p className="affiliateDisclosure"><strong>Partner links · Ad.</strong> These links take you to the retailers behind this room. We earn commission on qualifying purchases, at no extra cost to you. It helps support the product research and room-planning tools we provide.</p>
         </div>
 
         <div className="publicProductGrid">
@@ -107,7 +107,7 @@ export default async function PublicRoomPage({
                 <strong>{money(product.priceMinor)}</strong>
                 {product.offerId ? (
                   <a href={`/go/${product.offerId}?designId=${room.designId}&generationId=${room.generationId}&surface=seo_room`} rel="sponsored">
-                    View at retailer
+                    Ad · View at retailer
                   </a>
                 ) : <span>Live retailer unavailable</span>}
               </div>

@@ -72,6 +72,11 @@ function deliveryLabel(offer: LiveOffer) {
 }
 
 function getCommerceSession() {
+  const analyticsConsent = document.cookie.split("; ").some(row=>row==="roomfound_consent=analytics");
+  if(!analyticsConsent){
+    window.localStorage.removeItem("roomfound-commerce-session-v1");
+    return "";
+  }
   const existing = window.localStorage.getItem("roomfound-commerce-session-v1");
   if (existing && /^[a-zA-Z0-9_-]{16,100}$/.test(existing)) return existing;
   const created = crypto.randomUUID();
@@ -110,7 +115,10 @@ export function DesignedRoomExperience({
   const [verificationLoading, setVerificationLoading] = useState(false);
 
   useEffect(() => {
-    setCommerceSession(getCommerceSession());
+    const updateSession=()=>setCommerceSession(getCommerceSession());
+    updateSession();
+    window.addEventListener("roomfound:consent-updated",updateSession);
+    return ()=>window.removeEventListener("roomfound:consent-updated",updateSession);
   }, []);
 
   useEffect(() => {
@@ -660,7 +668,7 @@ function ProductDrawer({
         <div className="liveRetailerOffers">
           <div className="liveRetailerHeading">
             <span>Where to buy</span>
-            <small>Recorded offers · affiliate links may earn Transform My Room a commission</small>
+            <small>Partner links · Ad. We earn commission on qualifying purchases, at no extra cost to you. This helps fund our product research and room-planning tools.</small>
           </div>
 
           {offersLoading ? <p className="offerLoading">Checking current price and availability…</p> : null}
@@ -675,9 +683,9 @@ function ProductDrawer({
               <a
                 href={retailerHref(offer.id)}
                 target="_blank"
-                rel="sponsored noopener"
+                rel="sponsored noopener noreferrer"
               >
-                View at retailer
+                Ad · View at retailer
               </a>
             </div>
           ))}

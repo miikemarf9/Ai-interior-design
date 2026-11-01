@@ -19,6 +19,11 @@ function checked(value: string) { const date = new Date(value); return Number.is
 const choices = (selection: ProductSelection) => selection.products.map(product => ({ slot: product.slot, variantId: product.selected.variantId, quantity: product.quantity }));
 
 function getCommerceSession() {
+  const analyticsConsent = document.cookie.split("; ").some(row=>row==="roomfound_consent=analytics");
+  if(!analyticsConsent){
+    window.localStorage.removeItem("roomfound-commerce-session-v1");
+    return "";
+  }
   const existing = window.localStorage.getItem('roomfound-commerce-session-v1');
   if (existing && /^[a-zA-Z0-9_-]{16,100}$/.test(existing)) return existing;
   const created = crypto.randomUUID();
@@ -41,7 +46,9 @@ export function ProductSelectionExperience() {
   const fingerprint = useRef('');
 
   function retailerHref(offerId: string) {
-    const params = new URLSearchParams({ session: getCommerceSession(), surface: 'product_selection' });
+    const params = new URLSearchParams({ surface: 'product_selection' });
+    const session=getCommerceSession();
+    if(session) params.set("session",session);
     try {
       const runtime = JSON.parse(localStorage.getItem('roomfound-design-runtime-v1') || '{}');
       if (runtime.designId) params.set('designId', runtime.designId);
@@ -129,6 +136,7 @@ export function ProductSelectionExperience() {
       {selection.unknownDelivery && <p><strong>Delivery is incomplete.</strong> Fees, postcode restrictions, lead times and assembly must be confirmed with the retailer.</p>}
       {selection.notes.map(note => <p key={note}>{note}</p>)}
     </section>
+    <p className="affiliateDisclosure"><strong>Partner links · Ad.</strong> We connect you with products selected for your room. We earn commission on qualifying purchases through retailer links, at no extra cost to you. This helps fund the product research and room-planning tools behind your recommendations.</p>
     <section className="selectedProducts" aria-label="Recommended furniture">
       {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onBrowse={() => setBrowseProduct(product)} retailerHref={retailerHref} />)}
     </section>
@@ -165,7 +173,7 @@ function ProductCard({ product, index, disabled, onChange, onBrowse, retailerHre
       <p>Delivery: {item.offer.deliveryPriceMinor === null || item.commercial!.deliveryBasis === 'unknown' ? 'Price to confirm' : `${money(item.offer.deliveryPriceMinor)} ${item.commercial!.deliveryBasis === 'per_order' ? 'per retailer order' : 'per pack'}`}. {item.commercial!.deliveryDetails || 'Timing, postcode eligibility and assembly to confirm.'}</p>
       <p className="selectedProductWhy">{product.reasons.filter(reason => !reason.includes('stock') && !reason.includes('orderable')).slice(0, 2).join(' ')}</p>
       <label className={styles.quantity}>Quantity of {item.commercial!.unitLabel}<select aria-label={`Quantity for ${product.slotLabel}`} disabled={disabled} value={product.quantity} onChange={event => onChange(item.variantId, Number(event.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>
-      <div className={`selectedProductActions ${styles.actions}`}><button type="button" className="textButton" disabled={disabled} aria-expanded={open} aria-controls={`alternatives-${product.slot}`} onClick={() => setOpen(!open)}>{open ? 'Hide alternatives' : 'Swap this item'}</button><button type="button" className="textButton" disabled={disabled} onClick={onBrowse}>Browse cleared inventory</button><a className="textButton" href={retailerHref(item.offer.id)} target="_blank" rel="noopener noreferrer">View exact variant at retailer ↗</a></div>
+      <div className={`selectedProductActions ${styles.actions}`}><button type="button" className="textButton" disabled={disabled} aria-expanded={open} aria-controls={`alternatives-${product.slot}`} onClick={() => setOpen(!open)}>{open ? 'Hide alternatives' : 'Swap this item'}</button><button type="button" className="textButton" disabled={disabled} onClick={onBrowse}>Browse cleared inventory</button><a className="textButton" href={retailerHref(item.offer.id)} target="_blank" rel="sponsored noopener noreferrer">Ad · View exact variant at retailer ↗</a></div>
       {open && <div id={`alternatives-${product.slot}`} className={styles.alternatives}>
         {!product.alternatives.length && <p>No other cleared variants match this brief yet.</p>}
         {product.alternatives.map((alternative: ProductAlternative) => <div className={styles.alternative} key={alternative.candidate.variantId}>

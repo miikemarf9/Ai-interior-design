@@ -15,6 +15,10 @@ function validSession(value: string) {
 }
 
 export async function POST(request: Request) {
+  const consentCookie=request.headers.get("cookie") || "";
+  if(!/(?:^|;\s*)roomfound_consent=analytics(?:;|$)/.test(consentCookie)){
+    return NextResponse.json({ok:true,tracked:false});
+  }
   const body = await request.json() as {
     eventType?: string;
     sessionKey?: string;

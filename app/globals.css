@@ -2859,3 +2859,21 @@ p { line-height: 1.58; }
   .siteHeader .transformBrandMark { width:21px; }
   .siteHeader .transformBrandText { font-size:14px; }
 }
+
+/* Clear, compact partner and privacy controls */
+.cookieConsentIntro { grid-column: 1 / -1; }
+.cookieConsentIntro > strong { font-size: 22px; }
+.cookieConsentChoices { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cookieConsentChoices label { display: grid; grid-template-columns: 14px 1fr; align-items: start; gap: 9px; cursor: pointer; }
+.cookieConsentChoices input { margin: 2px 0 0; accent-color: var(--ink); }
+.cookieConsentChoices span { display: block; }
+.cookieConsentChoices strong { display: block; margin: 0 0 3px; font-family: var(--sans); font-size: 10px; font-weight: 800; }
+.cookieConsentChoices small { display: block; color: var(--muted); font-size: 9px; line-height: 1.45; }
+.cookieConsentActions { grid-column: 1 / -1; justify-content: flex-end; flex-wrap: wrap; }
+.affiliateDisclosure { font-size: 10px; line-height: 1.55; }
+.affiliateDisclosure strong { color: var(--ink); }
+@media (max-width: 620px) {
+  .cookieConsent { right: 12px; bottom: 12px; width: calc(100% - 24px); padding: 17px; }
+  .cookieConsentChoices { grid-template-columns: 1fr; gap: 9px; }
+  .cookieConsentActions { justify-content: space-between; }
+}
