@@ -180,7 +180,7 @@ export function DesignIntake() {
           savedAnswers.current = JSON.stringify(restored);
           setState(restored);
         }
-        setStep(0);
+        setStep(typeof parsed.step === 'number' && Number.isInteger(parsed.step) ? Math.min(2, Math.max(0, parsed.step)) : 0);
       }
 
       const runtimeRaw = window.localStorage.getItem('roomfound-design-runtime-v1');
