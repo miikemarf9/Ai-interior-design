@@ -7,7 +7,7 @@ export default function DesignPage() {
     <main className="designPage">
       <header className="designHeader shellWide">
         <Brand />
-        <span className="designHeaderNote">Your answers are saved on this device</span>
+        <span className="designHeaderNote">About 2 minutes · no design credit used</span>
         <Link className="textLink" href="/">Save &amp; close</Link>
       </header>
       <DesignIntake />
