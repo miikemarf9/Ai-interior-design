@@ -14,6 +14,7 @@ import { trackRoomfound } from "@/components/PrivacyAnalytics";
 import { GrowthShareCards } from "@/components/GrowthShareCards";
 import { CommunityPublishPanel } from "@/components/CommunityPublishPanel";
 import { BetaFeedback } from "@/components/BetaFeedback";
+import { JourneyAssistant } from "@/components/JourneyAssistant";
 
 type ExperiencePayload = DesignedRoomPayload & {
   intake?: IntakeForBrief;
