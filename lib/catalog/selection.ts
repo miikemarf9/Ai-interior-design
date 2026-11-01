@@ -160,7 +160,7 @@ function mapped(values: string[], aliases: Record<string, string>) {
 }
 
 function retainedText(intake: IntakeForBrief, brief: DesignBrief) {
-  return [...intake.keep, ...(intake.retainedFurniture || []).map(item => item.label), brief.keep].join(" ").toLowerCase();
+  return [...intake.keep, ...(intake.retainedFurniture || []).filter(item => item.intent !== 'place').map(item => item.label), brief.keep].join(" ").toLowerCase();
 }
 
 function shouldSkipForRetention(slot: SlotDefinition, retained: string) {
@@ -419,7 +419,7 @@ export function buildProductSelection(
     createdAt: new Date().toISOString(),
     budgetMinor,
     catalogueCandidates: candidates.length,
-    retainedItems: [...new Set([...intake.keep, ...(intake.retainedFurniture || []).map(item => item.label)])],
+    retainedItems: [...new Set([...intake.keep, ...(intake.retainedFurniture || []).filter(item => item.intent !== 'place').map(item => item.label)])],
     requirements: intake.uses,
     products,
     notes: [
