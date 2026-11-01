@@ -83,6 +83,7 @@ export function JourneyAssistant({
   const [intakeSummary, setIntakeSummary] = useState<JourneyIntake | null>(null);
   const [photoName, setPhotoName] = useState('');
   const [productSummary, setProductSummary] = useState('');
+  const [furniturePrice, setFurniturePrice] = useState<{ totalMinor: number; budgetMinor: number; unknownDelivery: boolean } | null>(null);
 
   useEffect(() => {
     if (!visible) return;
@@ -108,12 +109,18 @@ export function JourneyAssistant({
             [item.selected?.productName, item.selected?.variantName].filter(Boolean).join(' · ') + (item.quantity && item.quantity > 1 ? ' × ' + item.quantity : ''))
         : [];
       setProductSummary(products.filter(Boolean).join(', '));
+      const totalMinor = savedProducts?.selection?.totalMinor;
+      const budgetMinor = savedProducts?.selection?.budgetMinor;
+      setFurniturePrice(Number.isFinite(totalMinor) && Number.isFinite(budgetMinor)
+        ? { totalMinor, budgetMinor, unknownDelivery: Boolean(savedProducts.selection.unknownDelivery) }
+        : null);
     } catch {
       setIntakeSummary(null);
       setPhotoName('');
       setProductSummary('');
+      setFurniturePrice(null);
     }
-  }, [visible, currentStep]);
+  }, [visible, currentStep, refreshKey]);
 
   useEffect(() => {
     if (!visible) return;
@@ -222,6 +229,14 @@ export function JourneyAssistant({
                 );
               })}
             </ol>
+
+            {currentStep === 3 && furniturePrice ? (
+              <section className="journeyAssistantFurnitureTotal" aria-label="Furniture estimate">
+                <div><span>Furniture estimate</span><strong>{new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(furniturePrice.totalMinor / 100)}</strong></div>
+                <small>{furniturePrice.unknownDelivery ? 'Known product and delivery costs; some delivery costs are still to confirm.' : 'Estimated product and listed delivery total.'} Allowance: {new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(furniturePrice.budgetMinor / 100)}.</small>
+                <p>No furniture payment before you see your room design. Buying from a retailer is optional.</p>
+              </section>
+            ) : null}
 
             {decisionRows.length ? (
               <section className="journeyAssistantDecisions" aria-label="Your choices">

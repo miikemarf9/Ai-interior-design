@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
 import { getLiveSelectionCandidates } from "@/lib/catalog/repository";
-import { applySelectionChoices, approvalSnapshot, buildProductSelection, type SelectionChoice } from "@/lib/catalog/selection";
+import { applySelectionChoices, approvalSnapshot, buildProductSelection, selectionTotals, type SelectionChoice } from "@/lib/catalog/selection";
 
 export const runtime = "nodejs";
 
@@ -14,6 +14,7 @@ export async function POST(request: Request) {
       approve?: boolean;
       acknowledgeLimitations?: boolean;
       expectedSnapshot?: string;
+      includedSlots?: string[];
     };
 
     if (body.intake?.roomType === 'bedroom') return NextResponse.json({ error: 'Bedroom briefs can be saved, but bedroom product selection is not available yet.' }, { status: 409 });
@@ -28,6 +29,13 @@ export async function POST(request: Request) {
     let selection = buildProductSelection(body.intake, body.brief, candidates);
     try {
       if (body.choices) selection = applySelectionChoices(selection, body.choices, candidates);
+      if (body.includedSlots) {
+        if (!Array.isArray(body.includedSlots) || body.includedSlots.length > 15 || new Set(body.includedSlots).size !== body.includedSlots.length || body.includedSlots.some(slot => typeof slot !== 'string')) {
+          return NextResponse.json({ error: 'Please review which products you want to include.' }, { status: 400 });
+        }
+        selection.products = selection.products.filter(product => body.includedSlots!.includes(product.slot));
+        Object.assign(selection, selectionTotals(selection.products, selection.budgetMinor));
+      }
     } catch (error) {
       return NextResponse.json({ selection, approved: false, warning: error instanceof Error ? error.message : 'Please review the refreshed collection.' });
     }
