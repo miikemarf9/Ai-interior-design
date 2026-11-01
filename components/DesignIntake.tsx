@@ -547,7 +547,7 @@ export function DesignIntake() {
               </div>
 
               <div className="photoStepGrid">
-                <div className="photoUploadColumn">
+                <div className={'photoUploadColumn' + (photoUrl && annotationMode ? ' photoUploadColumnExpanded' : '')}>
                   {photoUrl ? (
                     <RetainedFurniture
                       photoUrl={photoUrl}
