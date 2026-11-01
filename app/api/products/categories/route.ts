@@ -26,7 +26,8 @@ const bedroomItems: ItemDefinition[] = [
 ];
 
 export async function GET(request: Request) {
-  const roomType = new URL(request.url).searchParams.get("roomType") || "living_room";
+  const params = new URL(request.url).searchParams;
+  const roomType = params.get("roomType") || "living_room";
   if (roomType !== "living_room" && roomType !== "bedroom") {
     return NextResponse.json({ error: "Choose a living room or bedroom." }, { status: 400 });
   }
@@ -44,14 +45,52 @@ export async function GET(request: Request) {
       && now - Date.parse(item.offer.lastCheckedAt) >= 0
       && now - Date.parse(item.offer.lastCheckedAt) <= 7 * 86400000);
 
+    const styleSlugs: Record<string, string> = {
+      "Modern Organic": "warm-minimal",
+      "Modern Country": "modern-british",
+      Japandi: "scandi",
+      "Mid-Century Modern": "mid-century",
+      "Bold & Colourful": "colourful",
+      "Contemporary Classic": "classic",
+    };
+    const wantedStyles = (params.get("styles") || "").split(",").map(value => styleSlugs[value.trim()]).filter(Boolean);
+    const budget = Number(params.get("budget"));
+    const maxPriceMinor = Number.isFinite(budget) && budget > 0 ? Math.round(budget * 100) : null;
+    const roomWidth = positiveCm(params.get("roomWidthCm"));
+    const roomLength = positiveCm(params.get("roomLengthCm"));
+    const ceiling = positiveCm(params.get("ceilingCm"));
+    const dislikes = (params.get("dislikes") || "").trim().toLowerCase();
+    const filtered = current.filter(item => {
+      if (wantedStyles.length && !item.styles.some(style => wantedStyles.includes(style))) return false;
+      if (maxPriceMinor !== null && item.offer.priceMinor > maxPriceMinor) return false;
+      if (roomWidth !== null && roomLength !== null) {
+        const shortest = Math.min(roomWidth, roomLength) * 10;
+        const longest = Math.max(roomWidth, roomLength) * 10;
+        if (item.dimensions.widthMm && item.dimensions.widthMm > longest) return false;
+        if (item.dimensions.depthMm && item.dimensions.depthMm > shortest) return false;
+      }
+      if (ceiling !== null && item.dimensions.heightMm && item.dimensions.heightMm > ceiling * 10) return false;
+      if (dislikes) {
+        const tags = [...item.materials, ...item.colours, item.brandName || "", item.offer.retailerName].map(value => value.toLowerCase());
+        if (tags.some(tag => tag && dislikes.includes(tag.replace(/-/g, " ")))) return false;
+      }
+      return true;
+    });
+
     const definitions = roomType === "living_room" ? livingRoomItems : bedroomItems;
     const items = definitions.map(definition => {
-      const count = current.filter(candidate => definition.categories.includes(candidate.category)).length;
-      return { label: definition.label, recommended: definition.recommended, available: count > 0, count };
+      const catalogueCount = current.filter(candidate => definition.categories.includes(candidate.category)).length;
+      const count = filtered.filter(candidate => definition.categories.includes(candidate.category)).length;
+      return { label: definition.label, recommended: definition.recommended, available: count > 0, count, catalogueCount };
     });
     return NextResponse.json({ roomType, items });
   } catch (error) {
     console.error("Room product categories failed", error);
     return NextResponse.json({ error: "We could not check the reviewed product list." }, { status: 500 });
   }
+}
+
+function positiveCm(value: string | null) {
+  const number = Number(value);
+  return value && Number.isFinite(number) && number > 0 && number <= 5000 ? number : null;
 }
