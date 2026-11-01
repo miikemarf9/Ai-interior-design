@@ -47,7 +47,7 @@ export function RetainedFurniture({ photoUrl, items, projectGoal, active, onActi
         <p>{items.length ? items.length + ' photo note' + (items.length === 1 ? '' : 's') : 'Photo saved'}</p>
       </div>
       <div className={styles.photoActions}>
-        {active ? <button type="button" onClick={() => { onActiveChange(false); setMessage(''); }}>Done</button> : <button type="button" onClick={() => onActiveChange(true)}>Annotate photo</button>}
+        {active ? <button type="button" onClick={() => { onActiveChange(false); setMessage(''); }}>Done</button> : null}
         <button type="button" disabled={photoChangeDisabled} onClick={onChangePhoto}>Change photo</button>
       </div>
     </div>
