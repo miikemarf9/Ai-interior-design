@@ -152,10 +152,9 @@ export function ProductSelectionExperience() {
     <Link className="textButton" href="/brief">Review my brief</Link>
     <button className="textButton" disabled={busy} onClick={() => loadSelection(intake, brief)}>Check collection again</button>
   </section>;
-  const over = selection.remainingMinor < 0;
   return <div className="productSelectionExperience shell" aria-busy={busy}>
-    <section className="selectionHero"><div><p className="eyebrow">Real products for your room</p><h1>Choose the products you want in your room</h1><p>Select the real furniture you’d like to see in your room design. Review your choices and estimated total in Your progress; you can decide whether to buy from a retailer after you see the design.</p><Link href="/design?step=1">Edit room and style choices</Link></div></section>
-    <p className="affiliateDisclosure"><strong>Partner links · Ad.</strong> We connect you with products selected for your room. We earn commission on qualifying purchases through retailer links, at no extra cost to you. This helps fund the product research and room-planning tools behind your recommendations.</p>
+    <section className="selectionHero"><div><p className="eyebrow">Real products for your room</p><h1>Choose the products you want in your room</h1><p>Select the real furniture you’d like to see in your room design. Review your choices and estimated total in Your progress; you can decide whether to buy from a retailer after you see the design.</p></div></section>
+    {selection.remainingMinor < 0 ? <p className="productBudgetNotice" role="status">This collection is {money(Math.abs(selection.remainingMinor))} over your furniture budget. You can still continue if these are the products you want to see in your room design.</p> : null}
     <div className={styles.notice} role="status">{notice || 'Review each item before approving. No purchase is made here.'}</div>
     <section className="selectedProducts" aria-label="Recommended furniture">
       {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onToggle={() => toggleProduct(product, false)} onBrowse={() => setBrowseProduct(product)} retailerHref={retailerHref} />)}
@@ -221,9 +220,10 @@ export function ProductSelectionExperience() {
       nextLabel={approved ? 'Continue to room visual' : 'Review my collection · ' + money(selection.totalMinor)}
       nextHref={approved ? '/render' : undefined}
       onNext={!approved ? () => loadSelection(intake, brief, selection, true) : undefined}
-      nextDisabled={!approved && (busy || over || !acknowledged || !selection.products.length)}
+      nextDisabled={!approved && (busy || !acknowledged || !selection.products.length)}
       refreshKey={`${selection.totalMinor}:${selection.products.map(product => product.slot + ':' + product.quantity).join(',')}`} 
     />
+    <p className="affiliateDisclosure"><strong>Partner links · Ad.</strong> We connect you with products selected for your room. We earn commission on qualifying purchases through retailer links, at no extra cost to you. This helps fund the product research and room-planning tools behind your recommendations.</p>
   </div>;
 }
 
@@ -240,7 +240,7 @@ function ProductCard({ product, index, disabled, onChange, onToggle, onBrowse, r
     <div className="selectedProductMain">
       <div className="selectedProductHeading"><div><small>{item.brandName || item.offer.retailerName}</small><h2>{item.productName}</h2></div><strong>{money(item.offer.priceMinor * product.quantity)}</strong></div>
       <p className={styles.productShortDescription}>{[item.variantName, item.materials[0]?.replace(/-/g, ' '), dimensions(item)].filter(Boolean).join(' · ')}</p>
-      <button type="button" className="textButton productIncludeToggle" disabled={disabled} onClick={onToggle}>Remove from room</button>
+      <button type="button" className="textButton productIncludeToggle" aria-label={'Remove ' + product.slotLabel + ' from your room'} disabled={disabled} onClick={onToggle}><span aria-hidden="true">×</span> Remove from room</button>
       <details className={styles.productDetails}>
         <summary>Product details and options</summary>
         <p>{money(item.offer.priceMinor)} per {item.commercial!.unitLabel} · {item.commercial!.packSize} item{item.commercial!.packSize === 1 ? '' : 's'} per pack</p>
