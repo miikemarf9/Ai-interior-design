@@ -526,6 +526,10 @@ p { line-height: 1.65; }
 .styleChoice { min-height: 365px; position: relative; overflow: hidden; border: 0; background: var(--bone); padding: 0; color: white; text-align: left; }
 .styleChoice img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
 .styleChoice:hover img { transform: scale(1.025); }
+.styleChoice:disabled { cursor: not-allowed; }
+.styleChoice:disabled img { filter: grayscale(.85); }
+.styleChoice:disabled:hover img { transform: none; }
+.styleChoice:disabled .styleChoiceShade { background: linear-gradient(0deg, rgba(20,22,19,.84), rgba(20,22,19,.35) 64%); }
 .styleChoiceShade { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(20,22,19,.68), rgba(20,22,19,.03) 64%); }
 .styleChoiceCopy { position: absolute; z-index: 2; left: 20px; right: 56px; bottom: 20px; display: grid; gap: 6px; }
 .styleChoiceCopy strong { font-family: var(--display); font-size: 25px; font-weight: 400; letter-spacing: -.03em; }
