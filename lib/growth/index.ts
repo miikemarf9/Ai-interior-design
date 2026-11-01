@@ -60,7 +60,7 @@ export async function listGrowthCollections():Promise<GrowthCollection[]>{
         select gp2.slug
         from public.growth_collection_publications gcp2
         join public.growth_publications gp2
-          on gp2.id=gcp2.publication_id and gp2.status='published'
+          on gp2.id=gcp2.publication_id and gp2.status='published' and gp2.product_count>0
         where gcp2.collection_id=c.id
         order by gcp2.is_featured desc,gcp2.relevance_score desc,gp2.published_at desc
         limit 1
@@ -68,7 +68,7 @@ export async function listGrowthCollections():Promise<GrowthCollection[]>{
      from public.growth_collections c
      left join public.growth_collection_publications gcp on gcp.collection_id=c.id
      left join public.growth_publications gp
-       on gp.id=gcp.publication_id and gp.status='published'
+       on gp.id=gcp.publication_id and gp.status='published' and gp.product_count>0
      where c.status='active'
      group by c.id
      order by c.sort_order,c.title`,
@@ -100,7 +100,7 @@ export async function getGrowthCollection(slug:string):Promise<GrowthCollection|
     `select
       c.id::text as id,c.slug,c.title,c.eyebrow,c.intro,c.meta_title,c.meta_description,
       c.tag_slug,c.min_rooms_for_index,
-      count(gp.id) filter (where gp.status='published')::int as room_count
+      count(gp.id) filter (where gp.status='published' and gp.product_count>0)::int as room_count
      from public.growth_collections c
      left join public.growth_collection_publications gcp on gcp.collection_id=c.id
      left join public.growth_publications gp on gp.id=gcp.publication_id
@@ -172,7 +172,7 @@ export async function getGrowthPublication(slug:string):Promise<GrowthPublicatio
      join public.room_shares rs
        on rs.id=gp.share_id and rs.is_active and rs.generation_id=gp.generation_id
      left join public.room_verifications rv on rv.id=gp.verification_id
-     where gp.slug=$1 and gp.status='published'
+     where gp.slug=$1 and gp.status='published' and gp.product_count>0
      limit 1`,
     [slug],
   ) as Array<any>;
@@ -212,7 +212,7 @@ export async function growthSitemapEntries(){
     sql.query(
       `select slug,updated_at::text as updated_at
        from public.growth_publications
-       where status='published'`,
+       where status='published' and product_count>0`,
       [],
     ),
   ]);
