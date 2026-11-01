@@ -878,13 +878,13 @@ export function DesignIntake() {
         nextDisabled={!complete && !canContinue}
         ownerKey={ownerKey}
         onStageClick={(stage) => {
-          if (complete && stage === 3) {
+          if (complete) {
             setComplete(false);
-            setStep(2);
+            setStep(stage - 1);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-          } else {
-            goToStep(stage - 1);
+            return;
           }
+          goToStep(stage - 1);
         }}
       />
     </div>
