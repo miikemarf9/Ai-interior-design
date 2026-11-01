@@ -494,7 +494,7 @@ export function DesignIntake() {
         <div className="intakeProgressMeta">
           <span>Step {complete ? '3' : step + 1} of 3</span>
           <strong>{complete ? 'Ready to review' : stepLabel}</strong>
-          <span>About 2 minutes</span>
+          
         </div>
         <div className="progressTrack"><i style={{ width: progress + '%' }} /></div>
       </div>
@@ -558,7 +558,7 @@ export function DesignIntake() {
         <section className="intakeStep">
           {step === 0 ? (
             <>
-              <StepIntro eyebrow="01 / 03 · Your room" title="Let’s start with your room." copy="Tell us what you’re working with and add one clear photograph." time="About 30 seconds" />
+              <StepIntro eyebrow="01 / 03 · Your room" title="Upload a photo of your current room" copy="See your room reimagined with a fresh new layout." />
               <div className="roomSetupFields">
                 <label className={ui.field}>Room
                   <select value={state.roomType} disabled={uploadingPhoto} onChange={event => changeRoomType(event.target.value as 'living_room' | 'bedroom')}>
@@ -608,7 +608,7 @@ export function DesignIntake() {
 
           {step === 1 ? (
             <>
-              <StepIntro eyebrow="02 / 03 · Style and budget" title="Choose a look, or leave it to us." copy="Pick a style if you have one in mind. Not sure? You can skip this step or let us choose." time="About 30 seconds" />
+              <StepIntro eyebrow="02 / 03 · Style and budget" title="Choose a look, or leave it to us." copy="Pick a style if you have one in mind. Not sure? You can skip this step or let us choose." />
               <div className="styleDiscoveryGrid">
                 {styles.map(style => {
                   const active = state.styles.includes(style.name);
@@ -896,7 +896,7 @@ function StepIntro({ eyebrow, title, copy, time }: { eyebrow: string; title: str
     <div className="intakeIntro">
       <div className="intakeIntroMeta">
         <p className="eyebrow">{eyebrow}</p>
-        <span className="stepTime">{time}</span>
+
       </div>
       <h1>{title}</h1>
       <p>{copy}</p>
