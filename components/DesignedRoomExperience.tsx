@@ -14,6 +14,7 @@ import { trackRoomfound } from "@/components/PrivacyAnalytics";
 import { GrowthShareCards } from "@/components/GrowthShareCards";
 import { CommunityPublishPanel } from "@/components/CommunityPublishPanel";
 import { BetaFeedback } from "@/components/BetaFeedback";
+import { JourneyAssistant } from "@/components/JourneyAssistant";
 
 type ExperiencePayload = DesignedRoomPayload & {
   intake?: IntakeForBrief;
@@ -584,6 +585,19 @@ export function DesignedRoomExperience({
           <button type="button" onClick={prepareUpdatedRender}>Generate updated room · 1 credit</button>
         </div>
       ) : null}
+
+      {!shared ? (
+        <JourneyAssistant
+          visible={true}
+          defaultOpen={false}
+          currentStep={6}
+          ownerKey={data.ownerKey}
+          nextTitle="Your room is ready"
+          nextDescription="Your room, selected furniture and shopping details are saved. Start another room whenever you are ready."
+          nextLabel="Start another room"
+          nextHref="/design"
+        />
+      ) : null}
     </main>
   );
 }
@@ -685,7 +699,7 @@ function ProductDrawer({
                 target="_blank"
                 rel="sponsored noopener noreferrer"
               >
-                Ad · View at retailer
+                View at retailer
               </a>
             </div>
           ))}
