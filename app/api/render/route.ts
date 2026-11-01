@@ -180,6 +180,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "The room design choices are incomplete." }, { status: 400 });
   }
 
+  if (body.selection.products.length === 0) {
+    return NextResponse.json({ error: "Choose and approve at least one reviewed retailer product before creating a room visual.", code: "PRODUCT_SELECTION_REQUIRED" }, { status: 409 });
+  }
+
   if (body.selection.products.length > 6) {
     return NextResponse.json({ error: "The first living-room pilot is limited to six product references." }, { status: 409 });
   }
@@ -202,6 +206,7 @@ export async function POST(request: Request) {
   try {
     const candidates = await getLiveSelectionCandidates();
     const refreshed = applySelectionChoices(buildProductSelection(body.intake, body.brief, candidates), body.selection.products.map(item => ({ slot: item.slot, variantId: item.selected.variantId, quantity: item.quantity })));
+    if (!refreshed.products.length) return NextResponse.json({ error: 'No reviewed retailer products match this room. Adjust your choices before creating a room visual.', code: 'PRODUCT_SELECTION_REQUIRED' }, { status: 409 });
     if (approvalSnapshot(refreshed) !== approvalSnapshot(body.selection)) return NextResponse.json({ error: 'The approved collection has changed. Review the products again before generating.', code: 'SELECTION_CHANGED' }, { status: 409 });
     body.selection = refreshed;
     const roomAsset = await getRoomAsset(designId, ownerKey);
