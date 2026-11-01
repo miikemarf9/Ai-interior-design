@@ -26,8 +26,6 @@ const initialState: IntakeState = {
   freedom: 'Balanced',
 };
 
-const livingKeepItems = ['Sofa', 'Armchairs', 'TV', 'TV unit', 'Flooring', 'Fireplace', 'Artwork', 'Curtains', 'Lighting'];
-
 const styles = [
   {
     name: 'Modern Organic',
@@ -132,7 +130,6 @@ export function DesignIntake() {
   const latestState = useRef(state);
   latestState.current = state;
   const roomName = state.roomType === 'bedroom' ? 'bedroom' : 'living room';
-  const keepItems = state.roomType === 'bedroom' ? ['Bed', 'Bedside tables', 'Wardrobe', 'Chest of drawers', 'Flooring', 'Curtains', 'Lighting', 'Artwork'] : livingKeepItems;
   const availableItemChoices = catalogueItems.filter(item => item.available);
   const recommendedItems = catalogueItems.filter(item => item.recommended && item.available).map(item => item.label);
   const availableRecommendedItems = catalogueItems.filter(item => item.recommended && item.available).map(item => item.label);
@@ -797,18 +794,6 @@ export function DesignIntake() {
           {step === 2 ? (
             <>
               <StepIntro eyebrow="03 / 03 · Furniture" title="What should stay, and what should change?" copy="Keep the pieces you already own, then choose the furniture you would like us to find for your room." />
-
-              <section className="keepSection">
-                <div className="choiceSectionHeading">
-                  <div><h2>Keep</h2><p>Select anything you want the design to work around.</p></div>
-                  <span>Optional</span>
-                </div>
-                <ChoiceGrid
-                  items={keepItems}
-                  selected={state.keep}
-                  onChange={value => setState(current => ({ ...current, keep: toggle(current.keep, value), change: current.change.filter(item => item !== value) }))}
-                />
-              </section>
 
               <section className="changeSection">
                 <div className="choiceSectionHeading">

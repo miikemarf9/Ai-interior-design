@@ -25,7 +25,7 @@ export function RetainedFurniture({ photoUrl, items, onChange }: {
     <label className={styles.field}>Item to keep
       <input value={label} maxLength={80} onChange={event => setLabel(event.target.value)} placeholder="e.g. Mum’s oak sideboard" />
     </label>
-    <p id="marker-help">Keyboard: focus the photograph, use the arrow keys to position the marker, then press Enter. You can also keep items using the choices above.</p>
+    <p id="marker-help">Keyboard: focus the photograph, use the arrow keys to position the marker, then press Enter. Add further details in your design brief.</p>
     <div className={styles.photo}>
       <img src={photoUrl} alt="Your room, ready to mark furniture to keep" />
       <button type="button" className={styles.markSurface} aria-label="Mark furniture position on your photograph" aria-describedby="marker-help"
