@@ -590,7 +590,7 @@ export function DesignedRoomExperience({
         <JourneyAssistant
           visible={true}
           defaultOpen={false}
-          currentStep={6}
+          currentStep={4}
           ownerKey={data.ownerKey}
           nextTitle="Your room is ready"
           nextDescription="Your room, selected furniture and shopping details are saved. Start another room whenever you are ready."
