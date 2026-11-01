@@ -4,6 +4,7 @@ import { getLiveSelectionCandidates } from "@/lib/catalog/repository";
 export const runtime = "nodejs";
 
 type ItemDefinition = { label: string; categories: string[]; recommended: boolean };
+
 type StyleDefinition = { name: string; slug: string };
 
 const livingRoomStyles: StyleDefinition[] = [
@@ -96,8 +97,13 @@ export async function GET(request: Request) {
       const count = filtered.filter(candidate => definition.categories.includes(candidate.category)).length;
       return { label: definition.label, recommended: definition.recommended, available: count > 0, count, catalogueCount };
     });
+    // Style availability should still be checked when the customer skips item choices.
+    // In that case, consider the full room catalogue rather than returning every style as unavailable.
+    const styleDefinitions = definitions.filter(definition =>
+      requestedItems.size === 0 || requestedItems.has(definition.label)
+    );
     const styleCandidates = hardFiltered.filter(candidate =>
-      definitions.some(definition => requestedItems.has(definition.label) && definition.categories.includes(candidate.category))
+      styleDefinitions.some(definition => definition.categories.includes(candidate.category))
     );
     const styles = (roomType === "living_room" ? livingRoomStyles : []).map(style => ({
       name: style.name,
