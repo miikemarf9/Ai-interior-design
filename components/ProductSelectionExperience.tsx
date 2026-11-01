@@ -67,7 +67,8 @@ export function ProductSelectionExperience() {
       try { saved = JSON.parse(localStorage.getItem('roomfound-product-selection-v1') || 'null'); } catch { /* Rebuild malformed saved data. */ }
       // Never display cached photographs or restore approval before server clearance/price checks.
       const previous = saved?.selection?.version === 2 && saved.fingerprint === fingerprint.current ? saved.selection : undefined;
-      const omitted = Array.isArray(saved?.excludedProducts) ? saved.excludedProducts : [];
+      const sameBrief = saved?.selection?.version === 2 && saved.fingerprint === fingerprint.current;
+      const omitted = sameBrief && Array.isArray(saved?.excludedProducts) ? saved.excludedProducts : [];
       setExcludedProducts(omitted);
       loadSelection(intakeSaved.state, briefSaved.brief, previous, false, undefined, omitted);
     } catch { setLoading(false); }
