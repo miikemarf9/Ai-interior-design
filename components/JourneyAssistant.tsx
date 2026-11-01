@@ -93,6 +93,11 @@ export function JourneyAssistant({
   }, [visible, defaultOpen]);
 
   useEffect(() => {
+    document.body.classList.toggle('journeyAssistantOpen', visible && open);
+    return () => document.body.classList.remove('journeyAssistantOpen');
+  }, [visible, open]);
+
+  useEffect(() => {
     if (!visible) return;
     let cancelled = false;
 
@@ -151,20 +156,11 @@ export function JourneyAssistant({
   return (
     <>
       {open ? (
-        <>
-          <button
-            type="button"
-            className="journeyAssistantBackdrop"
-            aria-label="Close your progress panel"
-            onClick={closePanel}
-          />
-          <aside
-            id={panelId}
-            className="journeyAssistantPanel"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={panelId + '-title'}
-          >
+        <aside
+          id={panelId}
+          className="journeyAssistantPanel"
+          aria-label="Your progress and next step"
+        >
             <div className="journeyAssistantHeader">
               <div>
                 <p className="eyebrow">Your progress</p>
@@ -228,14 +224,13 @@ export function JourneyAssistant({
                 <Link href="/account" className="journeyAssistantCreditLink">Buy 10 more uses · £2</Link>
               ) : null}
             </section>
-          </aside>
-        </>
+        </aside>
       ) : (
         <button
           type="button"
           className="journeyAssistantToggle"
           aria-controls={panelId}
-          aria-expanded="false"
+          aria-expanded={open}
           onClick={openPanel}
         >
           <span>Your progress</span>
