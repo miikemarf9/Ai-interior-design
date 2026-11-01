@@ -4151,14 +4151,8 @@ p { line-height: 1.58; }
 
 
 /* Customer journey: the assistant floats above the page instead of taking width away from the design. */
-.journeyAssistantBackdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  border: 0;
-  background: rgba(28, 32, 27, .22);
-  backdrop-filter: blur(1px);
-  cursor: default;
+body.journeyAssistantOpen {
+  padding-right: 400px;
 }
 .journeyAssistantPanel {
   position: fixed;
@@ -4395,7 +4389,7 @@ button.journeyAssistantStep:hover strong {
   max-width: none;
 }
 .intakeNav {
-  display: grid;
+  display: none;
 }
 .photoStepGrid {
   grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr);
@@ -4514,6 +4508,11 @@ button.journeyAssistantStep:hover strong {
   .selectionHero {
     grid-template-columns: minmax(0, 1fr);
     gap: 34px;
+  }
+}
+@media (max-width: 900px) {
+  body.journeyAssistantOpen {
+    padding-right: 0;
   }
 }
 @media (max-width: 680px) {
