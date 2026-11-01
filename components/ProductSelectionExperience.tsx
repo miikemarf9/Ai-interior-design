@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { buildFallbackBrief, type DesignBrief, type IntakeForBrief } from '@/lib/brief';
-import { applySelectionChoices, approvalSnapshot, type ProductAlternative, type ProductSelection, type ProposedProduct, type SelectionCandidate, type SelectionChoice } from '@/lib/catalog/selection';
+import { applySelectionChoices, approvalSnapshot, selectionTotals, type ProductAlternative, type ProductSelection, type ProposedProduct, type SelectionCandidate, type SelectionChoice } from '@/lib/catalog/selection';
 import { InventoryPicker } from '@/components/InventoryPicker';
 import { trackRoomfound } from '@/components/PrivacyAnalytics';
 import { JourneyAssistant } from '@/components/JourneyAssistant';
@@ -38,6 +38,7 @@ export function ProductSelectionExperience() {
   const [approved, setApproved] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const [browseProduct, setBrowseProduct] = useState<ProposedProduct | null>(null);
+  const [excludedProducts, setExcludedProducts] = useState<ProposedProduct[]>([]);
   const started = useRef(false);
   const fingerprint = useRef('');
 
@@ -62,25 +63,27 @@ export function ProductSelectionExperience() {
       localStorage.setItem('roomfound-brief-v1', JSON.stringify(briefSaved));
       setIntake(intakeSaved.state); setBrief(brief);
       fingerprint.current = JSON.stringify([intakeSaved.state, brief]);
-      let saved: { selection?: ProductSelection; fingerprint?: string } | null = null;
+      let saved: { selection?: ProductSelection; fingerprint?: string; excludedProducts?: ProposedProduct[] } | null = null;
       try { saved = JSON.parse(localStorage.getItem('roomfound-product-selection-v1') || 'null'); } catch { /* Rebuild malformed saved data. */ }
       // Never display cached photographs or restore approval before server clearance/price checks.
       const previous = saved?.selection?.version === 2 && saved.fingerprint === fingerprint.current ? saved.selection : undefined;
-      loadSelection(intakeSaved.state, briefSaved.brief, previous);
+      const omitted = Array.isArray(saved?.excludedProducts) ? saved.excludedProducts : [];
+      setExcludedProducts(omitted);
+      loadSelection(intakeSaved.state, briefSaved.brief, previous, false, undefined, omitted);
     } catch { setLoading(false); }
   }, []);
 
-  function save(next: ProductSelection, accepted: boolean) {
-    localStorage.setItem('roomfound-product-selection-v1', JSON.stringify({ selection: next, approved: accepted, fingerprint: fingerprint.current, updatedAt: new Date().toISOString() }));
+  function save(next: ProductSelection, accepted: boolean, omitted: ProposedProduct[] = excludedProducts) {
+    localStorage.setItem('roomfound-product-selection-v1', JSON.stringify({ selection: next, excludedProducts: omitted, approved: accepted, fingerprint: fingerprint.current, updatedAt: new Date().toISOString() }));
   }
-  async function loadSelection(room: IntakeForBrief, direction: DesignBrief, previous?: ProductSelection, approve = false, choiceOverride?: SelectionChoice[]) {
+  async function loadSelection(room: IntakeForBrief, direction: DesignBrief, previous?: ProductSelection, approve = false, choiceOverride?: SelectionChoice[], omitted: ProposedProduct[] = excludedProducts) {
     setBusy(true); setError(''); setNotice(''); setApproved(false);
-    if (previous) save(previous, false); else localStorage.removeItem('roomfound-product-selection-v1');
+    if (previous) save(previous, false, omitted); else localStorage.removeItem('roomfound-product-selection-v1');
     try {
-      const response = await fetch('/api/products/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ intake: room, brief: direction, choices: choiceOverride || (previous ? choices(previous) : undefined), approve, acknowledgeLimitations: acknowledged, expectedSnapshot: previous ? approvalSnapshot(previous) : undefined }) });
+      const response = await fetch('/api/products/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ intake: room, brief: direction, choices: choiceOverride || (previous ? choices(previous) : undefined), includedSlots: previous ? previous.products.map(product => product.slot) : undefined, approve, acknowledgeLimitations: acknowledged, expectedSnapshot: previous ? approvalSnapshot(previous) : undefined }) });
       const data = await response.json();
       if (!response.ok || data.selection?.version !== 2) throw new Error(data.error || 'The collection could not be checked. Your brief is still saved.');
-      setSelection(data.selection); setApproved(Boolean(data.approved)); setNotice(data.warning || ''); save(data.selection, Boolean(data.approved));
+      setSelection(data.selection); setApproved(Boolean(data.approved)); setNotice(data.warning || ''); save(data.selection, Boolean(data.approved), omitted);
       if (data.approved) trackRoomfound('products_approved', {
         roomType: room.roomType || 'living_room',
         styles: room.styles,
@@ -94,6 +97,19 @@ export function ProductSelectionExperience() {
     } catch (err) { setError(err instanceof Error ? err.message : 'Please try again.'); }
     finally { setLoading(false); setBusy(false); }
   }
+  function toggleProduct(product: ProposedProduct, include: boolean) {
+    if (!selection) return;
+    const omitted = include
+      ? excludedProducts.filter(item => item.slot !== product.slot)
+      : [...excludedProducts.filter(item => item.slot !== product.slot), product];
+    const products = include
+      ? [...selection.products, product]
+      : selection.products.filter(item => item.slot !== product.slot);
+    const next = { ...selection, products, ...selectionTotals(products, selection.budgetMinor) };
+    setSelection(next); setExcludedProducts(omitted); setApproved(false); setAcknowledged(false);
+    setNotice(include ? 'Item added back. The furniture total has been updated.' : 'Item removed from the room. The furniture total has been updated.');
+    save(next, false, omitted);
+  }
   function change(slot: string, variantId: string, quantity: number) {
     if (!selection) return;
     const next = applySelectionChoices(structuredClone(selection), [{ slot, variantId, quantity }]);
@@ -104,7 +120,7 @@ export function ProductSelectionExperience() {
   if (!intake || !brief) return <section className="selectionMissing shell"><p className="eyebrow">Your furniture collection</p><h1>Agree your room brief first.</h1><p>We use your preferences and the furniture you are keeping to recommend a small collection.</p><Link className="button buttonPrimary" href="/brief">Return to brief</Link></section>;
   if (intake.roomType === 'bedroom') return <section className="selectionMissing shell"><h1>Your bedroom brief is saved.</h1><p>Bedroom furniture selection is not available yet.</p><Link className="button buttonPrimary" href="/brief">Back to my brief</Link></section>;
   if (error) return <section className="selectionMissing shell"><h1>We couldn’t check your collection.</h1><p role="alert">{error}</p><button className="button buttonPrimary" disabled={busy} onClick={() => loadSelection(intake, brief, selection || undefined)}>Try again</button><p><Link href="/brief">Back to my brief</Link></p></section>;
-  if (!selection?.products.length) return <section className="selectionEmpty shell">
+  if (!selection?.products.length && !excludedProducts.length) return <section className="selectionEmpty shell">
     <p className="eyebrow">Your furniture collection</p><h1>No reviewed products match this combination yet.</h1>
     <p>We checked the selected item types against your style, budget and room measurements. A room design is only available when it includes at least one reviewed retailer product.</p>
     <p>Your brief is saved. No image-generation credit has been used. Adjust your choices to see products that are available now.</p>
@@ -116,18 +132,12 @@ export function ProductSelectionExperience() {
   </section>;
   const over = selection.remainingMinor < 0;
   return <div className="productSelectionExperience shell" aria-busy={busy}>
-    <section className="selectionHero"><div><p className="eyebrow">Real products for your room</p><h1>Choose the products you want in your room</h1><p>Review real furniture matched to your style and budget. Pick the pieces you’d like to see in your room design, then visit a retailer if you decide to buy.</p><Link href="/design?step=1">Edit room and style choices</Link></div>
-      <aside className="selectionBudget"><span className="microLabel">Furniture allowance · {money(selection.budgetMinor)}</span>
-        <strong>{money(selection.totalMinor)} <small>{selection.unknownDelivery ? 'known total' : 'collection total'}</small></strong>
-        <dl className={styles.totals}><div><dt>Products</dt><dd>{money(selection.productSubtotalMinor)}</dd></div><div><dt>Known delivery</dt><dd>{money(selection.knownDeliveryMinor)}</dd></div><div><dt>Other delivery</dt><dd>{selection.unknownDelivery ? 'To confirm' : 'None listed'}</dd></div></dl>
-        <p className={over ? 'isOver' : ''}>{over ? `${money(-selection.remainingMinor)} above your allowance. Swap an item or reduce quantity.` : `${money(selection.remainingMinor)} left before any unconfirmed costs or missing items.`}</p>
-        <p>Design-generation charges are separate. Retailer prices and availability can change.</p>
-      </aside>
-    </section>
+    <section className="selectionHero"><div><p className="eyebrow">Real products for your room</p><h1>Choose the products you want in your room</h1><p>Select the real furniture you’d like to see in your room design. Review your choices and estimated total in Your progress; you can decide whether to buy from a retailer after you see the design.</p><Link href="/design?step=1">Edit room and style choices</Link></div></section>
     <div className={styles.notice} role="status">{notice || 'Review each item before approving. No purchase is made here.'}</div>
     <section className="selectedProducts" aria-label="Recommended furniture">
-      {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onBrowse={() => setBrowseProduct(product)} retailerHref={retailerHref} />)}
+      {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onToggle={() => toggleProduct(product, false)} onBrowse={() => setBrowseProduct(product)} retailerHref={retailerHref} />)}
     </section>
+    {excludedProducts.length ? <section className="excludedProducts" aria-label="Products not included"><p className="microLabel">Not included in your room</p><ul>{excludedProducts.map(product => <li key={product.slot}><span>{product.slotLabel}</span><button type="button" className="textButton" disabled={busy} onClick={() => toggleProduct(product, true)}>Add back · {money(product.selected.offer.priceMinor * product.quantity)}</button></li>)}</ul></section> : null}
     {browseProduct && intake && brief && selection ? <InventoryPicker category={browseProduct.slot} categoryLabel={browseProduct.slotLabel} initialStyle={intake.styles[0] || ''} onClose={() => setBrowseProduct(null)} onChoose={(variantId) => {
       const nextChoices = choices(selection).map(choice => choice.slot === browseProduct.slot ? { ...choice, variantId } : choice);
       setBrowseProduct(null);
@@ -138,7 +148,7 @@ export function ProductSelectionExperience() {
         <p>Approval saves these variants and quantities for your design. It does not place an order, reserve stock or confirm that everything fits.</p>
         {!approved && <label className={styles.acknowledge}><input type="checkbox" checked={acknowledged} disabled={busy} onChange={event => setAcknowledged(event.target.checked)} />I understand that fit, retailer availability and any missing costs or products still need checking.</label>}
       </div>
-      {approved ? <Link className="button buttonLight" href="/render">Continue to design</Link> : <button className="button buttonLight" disabled={busy || over || !acknowledged} onClick={() => loadSelection(intake, brief, selection, true)}>{busy ? 'Checking collection…' : 'Accept this collection · Free'}</button>}
+      {approved ? <Link className="button buttonLight" href="/render">Continue to design</Link> : <button className="button buttonLight" disabled={busy || over || !acknowledged || !selection.products.length} onClick={() => loadSelection(intake, brief, selection, true)}>{busy ? 'Checking collection…' : 'Accept this collection · Free'}</button>}
     </section>
     <JourneyAssistant
       visible={Boolean(intake && brief && selection)}
@@ -149,6 +159,7 @@ export function ProductSelectionExperience() {
         : 'Check the selected variants, quantities, prices and delivery notes before approving your collection.'}
       nextLabel={approved ? 'Continue to room visual' : 'Review my collection'}
       nextHref={approved ? '/render' : '#selection-approval'}
+      refreshKey={`${selection.totalMinor}:${selection.products.map(product => product.slot + ':' + product.quantity).join(',')}`} 
     />
   </div>;
 }
@@ -157,7 +168,7 @@ function ProductPhoto({ item }: { item: SelectionCandidate }) {
   const [failed, setFailed] = useState(false);
   return !failed && item.image ? <img src={item.image.url} alt={item.image.altText || name(item)} loading="lazy" decoding="async" onError={() => setFailed(true)} /> : <div className="imagePending">Product photograph unavailable. Check the retailer before deciding.</div>;
 }
-function ProductCard({ product, index, disabled, onChange, onBrowse, retailerHref }: { product: ProposedProduct; index: number; disabled: boolean; onChange: (variantId: string, quantity: number) => void; onBrowse: () => void; retailerHref: (offerId: string) => string }) {
+function ProductCard({ product, index, disabled, onChange, onToggle, onBrowse, retailerHref }: { product: ProposedProduct; index: number; disabled: boolean; onChange: (variantId: string, quantity: number) => void; onToggle: () => void; onBrowse: () => void; retailerHref: (offerId: string) => string }) {
   const [open, setOpen] = useState(false);
   const item = product.selected;
   return <article className="selectedProductCard">
@@ -166,6 +177,7 @@ function ProductCard({ product, index, disabled, onChange, onBrowse, retailerHre
     <div className="selectedProductMain">
       <div className="selectedProductHeading"><div><small>{item.brandName || item.offer.retailerName}</small><h2>{item.productName}</h2></div><strong>{money(item.offer.priceMinor * product.quantity)}</strong></div>
       <p className={styles.productShortDescription}>{[item.variantName, item.materials[0]?.replace(/-/g, ' '), dimensions(item)].filter(Boolean).join(' · ')}</p>
+      <button type="button" className="textButton productIncludeToggle" disabled={disabled} onClick={onToggle}>Remove from room</button>
       <details className={styles.productDetails}>
         <summary>Product details and options</summary>
         <p>{money(item.offer.priceMinor)} per {item.commercial!.unitLabel} · {item.commercial!.packSize} item{item.commercial!.packSize === 1 ? '' : 's'} per pack</p>
