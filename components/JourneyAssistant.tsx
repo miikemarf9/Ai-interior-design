@@ -79,7 +79,10 @@ export function JourneyAssistant({
 }: JourneyAssistantProps) {
   const panelId = useId();
   const [open, setOpen] = useState(false);
-  const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);\n  const [intakeSummary, setIntakeSummary] = useState<JourneyIntake | null>(null);\n  const [photoName, setPhotoName] = useState('');\n  const [productSummary, setProductSummary] = useState('');
+  const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
+  const [intakeSummary, setIntakeSummary] = useState<JourneyIntake | null>(null);
+  const [photoName, setPhotoName] = useState('');
+  const [productSummary, setProductSummary] = useState('');
 
   useEffect(() => {
     if (!visible) return;
