@@ -29,9 +29,9 @@ type JourneyAssistantProps = {
 const DISMISS_KEY = 'transform-my-room-journey-assistant-dismissed-v1';
 
 const stages = [
-  { label: 'Your room', detail: 'Room type and photograph', href: '/design' },
-  { label: 'Style and budget', detail: 'Choose the look and allowance', href: '/design' },
-  { label: 'Furniture choices', detail: 'Keep, add or replace pieces', href: '/design' },
+  { label: 'Your room', detail: 'Room type and photograph', href: '/design?step=0' },
+  { label: 'Style and budget', detail: 'Choose the look and allowance', href: '/design?step=1' },
+  { label: 'Furniture choices', detail: 'Keep, add or replace pieces', href: '/design?step=2' },
   { label: 'Design brief', detail: 'Review and approve the direction', href: '/brief' },
   { label: 'Furniture collection', detail: 'Choose real products', href: '/products' },
   { label: 'Room visual', detail: 'Create your room design', href: '/render' },
@@ -60,7 +60,7 @@ function creditDescription(status: CreditStatus | null) {
   if (status.verifiedRequired) return 'Verify your email to activate your free room image.';
   if (status.freeCreditAvailable) return 'Your first room image is included. Each successful generation uses one credit.';
   if (status.balance > 0) return 'One credit is used for each successful room image. Technical failures are refunded.';
-  return 'You have used your free image. You can buy 10 more for £2.';
+  return 'You have no image uses remaining. You can buy 10 more for £2.';
 }
 
 export function JourneyAssistant({
