@@ -256,8 +256,8 @@ export function normalizeLegacyAwinRow(row: Record<string, unknown>): FeedCandid
 
   const description = first(row.description, row.product_short_description) || null;
   const categoryPath = first(row.merchant_product_category_path, row.merchant_category, row.category_name) || null;
-  const colourText = first(row.colour) || null;
-  const materialText = first(row.material, row.specifications) || null;
+  const colourText = first(row.colour, row.color, row.colour_name, row.color_name) || null;
+  const materialText = first(row.material, row.material_description, row.specifications) || null;
   const dimensionsText = first(row.dimensions, row.specifications) || null;
   const styleText = [title, description, categoryPath, first(row.keywords), first(row.style, row.style_name, row.design_style)].filter(Boolean).join(" ");
   const colourEvidence = [title, colourText].filter(Boolean).join(" ");
