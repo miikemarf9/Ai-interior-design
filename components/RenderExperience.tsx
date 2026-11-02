@@ -102,8 +102,7 @@ export function RenderExperience() {
         }
         const savedSuccessForRoom = history.attempts?.find((item: Attempt) => item.status === 'succeeded'
           && item.resultUrl
-          && item.metadata?.snapshot?.roomAssetId === savedRuntime.roomAssetId
-          && stableJson([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === stableJson([savedRoom, savedBrief.brief]));
+          && item.metadata?.snapshot?.roomAssetId === savedRuntime.roomAssetId);
         if (!nextSelection.products.length) {
           if (savedSuccessForRoom?.metadata.snapshot.selection?.products?.length) {
             // Keep a completed visual accessible even when its retailer prices have since changed.
@@ -141,7 +140,7 @@ export function RenderExperience() {
     clearRetryableRenderRequest(context, data.attempts || []);
     return data;
   }
-  const result = attempts.find(item => item.status === 'succeeded' && item.resultUrl && selection && item.metadata?.snapshot?.roomAssetId === runtime?.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(selection) && stableJson([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === stableJson([room, brief]));
+  const result = attempts.find(item => item.status === 'succeeded' && item.resultUrl && item.metadata?.snapshot?.roomAssetId === runtime?.roomAssetId);
   const processing = attempts.some(item => item.status === 'processing');
   async function addCurrentRoomToMyRooms(generationId: string) {
     if (!runtime) return;
