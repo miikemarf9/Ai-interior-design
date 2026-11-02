@@ -49,7 +49,7 @@ export async function GET(
       order by completed_at desc nulls last,created_at desc
       limit 1
     ) g on true
-    where d.id=$1::uuid and d.account_id=$2::uuid
+    where d.id=$1::uuid and d.account_id=$2::uuid and d.status <> 'archived'
     limit 1`,
     [id, account.id],
   ) as Array<any>;
@@ -101,6 +101,7 @@ export async function POST(
      set status='rendered',updated_at=now()
      where d.id=$1::uuid
        and d.account_id=$2::uuid
+       and d.status <> 'archived'
        and exists (
          select 1 from public.render_generations g
          where g.design_id=d.id
@@ -113,6 +114,29 @@ export async function POST(
 
   if (!rows[0]) return NextResponse.json({ error: "A finished room image is required before saving to My Rooms." }, { status: 409 });
   return NextResponse.json({ saved:true });
+}
+
+export async function DELETE(
+  _request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const account = await getCurrentAccount();
+  if (!account) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+
+  const { id } = await context.params;
+  if (!validUuid(id)) return NextResponse.json({ error: "Room not found." }, { status: 404 });
+
+  const sql = getCatalogDb();
+  const rows = await sql.query(
+    `update public.room_designs
+     set status='archived',updated_at=now()
+     where id=$1::uuid and account_id=$2::uuid and status <> 'archived'
+     returning id::text as id`,
+    [id,account.id],
+  ) as Array<{ id:string }>;
+
+  if (!rows[0]) return NextResponse.json({ error: "Room not found." }, { status: 404 });
+  return NextResponse.json({ deleted:true });
 }
 
 export async function PATCH(
@@ -133,7 +157,7 @@ export async function PATCH(
   const rows = await sql.query(
     `update public.room_designs
      set room_name=$3,updated_at=now()
-     where id=$1::uuid and account_id=$2::uuid
+     where id=$1::uuid and account_id=$2::uuid and status <> 'archived'
      returning id::text as id,room_name`,
     [id,account.id,roomName],
   ) as Array<{ id:string; room_name:string }>;
