@@ -22,6 +22,7 @@ type ExperiencePayload = DesignedRoomPayload & {
   roomName?: string;
   originalAssetId?: string | null;
   verification?: RoomVerification | null;
+  hotspotsPrepared?: boolean;
 };
 
 type LiveOffer = {
@@ -106,6 +107,7 @@ export function DesignedRoomExperience({
   const [error, setError] = useState("");
   const [compare, setCompare] = useState(0);
   const [showPins, setShowPins] = useState(true);
+  const [hotspotStatus, setHotspotStatus] = useState<'idle' | 'locating' | 'unavailable'>('idle');
   const [drawerSlot, setDrawerSlot] = useState<string | null>(null);
   const [pendingChanges, setPendingChanges] = useState<Record<string, ProductAlternative>>({});
   const [shareLabel, setShareLabel] = useState("Share");
@@ -195,6 +197,55 @@ export function DesignedRoomExperience({
     load();
     return () => { cancelled = true; };
   }, [shareToken, designId, shared]);
+
+  useEffect(() => {
+    if (!data || shared || data.hotspotsPrepared || !data.resultAssetId || !data.selection.products.length) return;
+
+    const controller = new AbortController();
+    let ownerKey = data.ownerKey || '';
+    if (!ownerKey) {
+      try {
+        ownerKey = (JSON.parse(localStorage.getItem('roomfound-design-runtime-v1') || '{}') as { ownerKey?: string }).ownerKey || '';
+      } catch { ownerKey = ''; }
+    }
+    if (!ownerKey) return;
+    setHotspotStatus('locating');
+
+    async function locate() {
+      try {
+        for (let attempt = 0; attempt < 7 && !controller.signal.aborted; attempt++) {
+          const response = await fetch('/api/designs/hotspots/auto', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              designId: data!.designId,
+              generationId: data!.generationId,
+              resultAssetId: data!.resultAssetId,
+              ownerKey,
+            }),
+          });
+          if (response.status === 202) {
+            await new Promise(resolve => setTimeout(resolve, 3500));
+            continue;
+          }
+          if (!response.ok) throw new Error('Automatic product dots are unavailable.');
+          const located = await response.json() as { hotspots?: DesignedRoomPayload['hotspots']; prepared?: boolean };
+          if (!controller.signal.aborted && located.prepared) {
+            setData(current => current?.generationId === data!.generationId
+              ? { ...current, hotspots: located.hotspots || [], hotspotsPrepared: true } : current);
+            setHotspotStatus('idle');
+          }
+          return;
+        }
+        if (!controller.signal.aborted) setHotspotStatus('unavailable');
+      } catch {
+        if (!controller.signal.aborted) setHotspotStatus('unavailable');
+      }
+    }
+    void locate();
+    return () => controller.abort();
+  }, [data?.generationId, data?.hotspotsPrepared, shared]);
 
   useEffect(() => {
     if (!data || shared) return;
@@ -431,6 +482,7 @@ export function DesignedRoomExperience({
 
   const title = roomTitle(data.brief.title);
   const originalAvailable = Boolean(data.originalUrl && !shared);
+  const visibleHotspots = (data.hotspots || []).filter(h => h.visibility === 'visible' && h.x !== undefined && h.y !== undefined);
 
   return (
     <main className={`designedRoom ${styles.experience}`}>
@@ -455,12 +507,16 @@ export function DesignedRoomExperience({
           </div>
         ) : null}
 
-        {showPins ? (data.hotspots || []).filter(h => h.visibility === 'visible' && h.x !== undefined && h.y !== undefined && !(originalAvailable && h.x < compare)).map(hotspot => {
+        {showPins ? visibleHotspots.filter(h => !(originalAvailable && h.x! < compare)).map(hotspot => {
           const index = data.selection.products.findIndex(p => p.selected.variantId === hotspot.variantId);
           const product = data.selection.products[index];
           if (!product) return null;
           return <button key={hotspot.variantId} type="button" className={`roomHotspot ${styles.pin}`} style={{left:`${hotspot.x}%`,top:`${hotspot.y}%`}} data-edge={hotspot.x!<25?'left':hotspot.x!>75?'right':'middle'} data-top={hotspot.y!<20} onClick={e=>selectProduct(product.slot,e.currentTarget)} aria-controls="room-product-details" aria-expanded={drawerSlot===product.slot} aria-label={`${product.selected.productName}, ${money(product.selected.offer.priceMinor)}. View product details`}>
-            <span>{index+1}</span><span className={styles.tooltip} aria-hidden="true"><strong>{product.selected.productName}</strong><small>{money(product.selected.offer.priceMinor)}</small></span>
+            <span>{index+1}</span>
+            <span className={styles.tooltip} aria-hidden="true">
+              {product.selected.image ? <img src={product.selected.image.url} alt="" loading="lazy" /> : null}
+              <span><strong>{product.selected.productName}</strong><small>{product.selected.offer.retailerName}</small><small>{money(product.selected.offer.priceMinor)}</small><small>Tap to shop</small></span>
+            </span>
           </button>;
         }) : null}
         {originalAvailable ? <div className={`roomDivider ${styles.divider}`} style={{left:`${compare}%`}} aria-hidden="true"><i /></div> : null}
@@ -480,14 +536,14 @@ export function DesignedRoomExperience({
               <span>After</span>
             </div>
           ) : <span className="sharedRoomLabel">Finished room</span>}
-          {data.selection.products.length > 0 ? <button type="button" onClick={() => setShowPins((value) => !value)}>
+          {visibleHotspots.length ? <button type="button" onClick={() => setShowPins((value) => !value)}>
             {showPins ? "Hide products" : "Show products"}
-          </button> : null}
+          </button> : hotspotStatus === 'locating' ? <span role="status">Finding furniture in your picture…</span> : null}
         </div>
 
       </section>
 
-      <p className={styles.notice}>This AI room image is an illustration, not an exact product photograph or a guarantee of fit. Product cards below show the retailer items and prices available to shop.</p>
+      <p className={styles.notice}>{visibleHotspots.length ? 'Hover over a furniture dot to preview its product, or tap to see prices and buying options. ' : ''}This AI room image is an illustration, not an exact product photograph or a guarantee of fit. Product cards below show the retailer items and prices available to shop.</p>
       {activeProduct ? (
         <ProductDrawer
           key={activeProduct.slot}
@@ -550,7 +606,7 @@ export function DesignedRoomExperience({
                 <small>{money(product.selected.offer.priceMinor)}</small>
                 <small className="roomProductRetailer">Retailer: {product.selected.offer.retailerName}</small>
                 <small className="roomProductShop">View buying options →</small>
-                <small>{({visible:"Position checked in this image",hidden:"Hidden in this image",missing:"Missing from this image",uncertain:"Position not confirmed"})[data.hotspots?.find(h=>h.variantId===product.selected.variantId)?.visibility || "uncertain"]}</small>
+                <small>{({visible:"Find this item using the image dots",hidden:"Not visible in this image",missing:"Not pictured in this image",uncertain:"Browse this product below"})[data.hotspots?.find(h=>h.variantId===product.selected.variantId)?.visibility || "uncertain"]}</small>
                 {pending ? <em>Next: {pending.candidate.productName}</em> : null}
               </button>
             );
