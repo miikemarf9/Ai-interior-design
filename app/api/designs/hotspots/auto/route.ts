@@ -94,7 +94,7 @@ export async function POST(request: Request) {
           { role: 'system', content: 'You locate visible furniture in an interior photograph for approximate shopping hotspots. Return ONLY a JSON object: {"items":[{"variantId":"id","visibility":"visible","x":50,"y":50}]}. Coordinates are percentages of actual image width and height, 0 to 100, pointing to the centre of the item. Only mark a product visible when a plausible item of that type is identifiable; otherwise mark it "uncertain" with no x or y. Do not invent furniture, duplicate a physical item for different products, or place dots in empty space. These are approximate links to suggested retailer items, not exact-match certifications.' },
           { role: 'user', content: [
             { type: 'text', text: `Locate these selected furniture pieces in the resulting room image. Provide one item for every listed variantId: ${JSON.stringify(productList)}` },
-            { type: 'image_url', image_url: { url: `data:${row.mime_type};base64,${row.base64.replace(/\\s/g, '')}`, detail: 'high' } },
+            { type: 'image_url', image_url: { url: `data:${row.mime_type};base64,${row.base64.replace(/\s/g, '')}`, detail: 'high' } },
           ] },
         ],
       }),
