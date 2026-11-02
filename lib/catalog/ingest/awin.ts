@@ -177,14 +177,14 @@ function inferColours(text: string) {
 function inferStyles(text: string) {
   const styles = new Set<string>();
   const matches = (...terms: string[]) => terms.some((term) => containsPhrase(text, term));
-  if (matches("mid century", "midcentury", "retro", "1960", "1970", "tapered leg")) styles.add("mid-century");
-  if (matches("japandi", "scandi", "scandinavian", "nordic", "pale oak", "light oak")) styles.add("scandi");
-  if (matches("industrial", "black steel", "metal frame", "reclaimed")) styles.add("industrial");
-  if (matches("traditional", "classic", "chesterfield", "button back", "wingback", "contemporary classic")) styles.add("classic");
+  if (matches("mid century", "midcentury", "retro", "1960", "1960s", "1970", "1970s", "tapered leg")) styles.add("mid-century");
+  if (matches("japandi", "scandi", "scandinavian", "nordic", "pale oak", "light oak", "minimalist")) styles.add("scandi");
+  if (matches("industrial", "black steel", "metal frame", "reclaimed", "distressed metal")) styles.add("industrial");
+  if (matches("traditional", "classic", "chesterfield", "button back", "wingback", "contemporary classic", "timeless")) styles.add("classic");
   if (matches("contemporary", "modern", "clean line", "sleek")) styles.add("contemporary");
-  if (matches("modern organic", "organic modern", "boucle", "warm neutral", "natural texture", "soft beige", "minimal")) styles.add("warm-minimal");
-  if (matches("colourful", "colorful", "statement colour", "statement color", "bold colour", "bold color", "bold and colourful", "bold and colorful")) styles.add("colourful");
-  if (matches("modern country", "country style", "cottage style", "heritage", "british", "tailored", "turned leg")) styles.add("modern-british");
+  if (matches("modern organic", "organic modern", "boucle", "warm neutral", "natural texture", "natural wood", "soft beige", "minimal", "rattan", "cane", "rounded", "organic shape")) styles.add("warm-minimal");
+  if (matches("colourful", "colorful", "statement colour", "statement color", "bold colour", "bold color", "bold and colourful", "bold and colorful", "vibrant colour", "vibrant color", "jewel tone")) styles.add("colourful");
+  if (matches("modern country", "country style", "cottage style", "farmhouse", "shaker", "heritage", "british", "tailored", "turned leg")) styles.add("modern-british");
   return [...styles];
 }
 
