@@ -249,6 +249,7 @@ export async function refundFailedGeneration(args: {
         cost_gbp_minor = $12,
         cost_fx_usd_gbp = $13
       where id = $1::uuid
+        and status = 'processing'
       returning wallet_id, design_id, metadata
     ),
     refund as (
@@ -288,6 +289,48 @@ export async function refundFailedGeneration(args: {
       args.costGbpMinor ?? null,
       args.costFxUsdGbp ?? null,
     ],
+  );
+}
+
+/** Recover abandoned renders and refund ordinary render credits once. Site-credit
+ * exempt attempts do not spend wallet credits and therefore are not refunded. */
+export async function recoverStaleGenerations(designId: string, ownerKey: string) {
+  const sql = getCatalogDb();
+  await sql.query(
+    `with stale as (
+      update public.render_generations g
+      set status='failed',
+          completed_at=now(),
+          failure_code='RENDER_STALE_RECOVERED',
+          failure_message='The render stopped responding before an image was saved.'
+      from public.room_designs d
+      where g.design_id=d.id
+        and d.id=$1::uuid
+        and d.owner_key=$2
+        and g.status='processing'
+        and g.created_at < now() - interval '5 minutes'
+      returning g.id,g.wallet_id,g.design_id,g.metadata
+    ), refunds as (
+      insert into public.design_credit_ledger (
+        wallet_id,event_type,amount,design_id,generation_id,idempotency_key,metadata
+      )
+      select wallet_id,'render_refund',1,design_id,id,
+        'render-refund:' || id::text,
+        '{"reason":"Render stopped responding; credit restored during recovery."}'::jsonb
+      from stale
+      where coalesce((metadata->>'siteCreditExempt')::boolean,false)=false
+      on conflict (idempotency_key) do nothing
+      returning wallet_id
+    ), refund_totals as (
+      select wallet_id,count(*)::integer as refund_count
+      from refunds
+      group by wallet_id
+    )
+    update public.design_credit_wallets w
+    set balance=w.balance+r.refund_count,updated_at=now()
+    from refund_totals r
+    where w.id=r.wallet_id`,
+    [designId, ownerKey],
   );
 }
 

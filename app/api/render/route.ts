@@ -259,7 +259,13 @@ async function existingGeneration(generationId: string) {
       result_asset_id::text as result_asset_id,
       failure_message,
       cost_usd_micros,
-      duration_ms
+      duration_ms,
+      exists (
+        select 1 from public.design_credit_ledger l
+        where l.generation_id=public.render_generations.id
+          and l.event_type='render_refund'
+      ) as credit_refunded,
+      coalesce((metadata->>'siteCreditExempt')::boolean,false) as site_credit_exempt
      from public.render_generations
      where id=$1::uuid
      limit 1`,
@@ -270,6 +276,8 @@ async function existingGeneration(generationId: string) {
     failure_message: string | null;
     cost_usd_micros: number | null;
     duration_ms: number | null;
+    credit_refunded: boolean;
+    site_credit_exempt: boolean;
   }>;
   return rows[0] ?? null;
 }
@@ -422,11 +430,15 @@ export async function POST(request: Request) {
         });
       }
 
+      const retryable = prior?.status === "failed" && (prior.credit_refunded || prior.site_credit_exempt);
       return NextResponse.json({
         error: prior?.status === "processing"
           ? "This render request is already processing."
-          : "This render attempt has already finished. Start a new render request.",
-        code: "DUPLICATE_RENDER_REQUEST",
+          : retryable
+            ? "The previous attempt failed. Its credit has been returned, or no design credit was used. You can safely try again."
+            : "This render attempt has already finished. Check your balance before trying again.",
+        code: retryable && prior?.credit_refunded ? "RENDER_FAILED_REFUNDED" : "DUPLICATE_RENDER_REQUEST",
+        retryable,
         generationId,
         balance: spend.balance,
       }, { status: 409 });
@@ -461,7 +473,13 @@ export async function POST(request: Request) {
     });
 
     providerRequestId = response.headers.get("x-request-id");
-    const payload = await response.json() as OpenAIImageResponse;
+    const responseText = await response.text();
+    let payload: OpenAIImageResponse;
+    try {
+      payload = JSON.parse(responseText) as OpenAIImageResponse;
+    } catch {
+      throw new Error(`Image service returned an unreadable response (HTTP ${response.status}).`);
+    }
     measuredUsage = calculateImageCost(payload.usage, model);
     gbpCost = snapshotGbpCost(measuredUsage.costUsdMicros);
 

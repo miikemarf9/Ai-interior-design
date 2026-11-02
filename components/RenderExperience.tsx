@@ -17,7 +17,21 @@ function stableJson(value: unknown): string {
   }
   return JSON.stringify(value) ?? 'null';
 }
-type Attempt = { generation_id: string; status: string; resultUrl: string | null; cost_usd_micros: number | null; duration_ms: number | null; metadata: { correctionAttempt: number; parentGenerationId?: string; snapshot: { placements: Placement[]; selection: ProductSelection; intake: IntakeForBrief; brief: DesignBrief; roomAssetId: string }; humanReview?: PilotReview & { outcome: string } } };
+type Attempt = { generation_id: string; status: string; resultUrl: string | null; cost_usd_micros: number | null; duration_ms: number | null; credit_refunded?: boolean; metadata: { requestId?: string; siteCreditExempt?: boolean; correctionAttempt: number; parentGenerationId?: string; snapshot: { placements: Placement[]; selection: ProductSelection; intake: IntakeForBrief; brief: DesignBrief; roomAssetId: string }; humanReview?: PilotReview & { outcome: string } } };
+
+function clearRetryableRenderRequest(context: Runtime, attempts: Attempt[]) {
+  const requestKey = `roomfound-pilot-request:${context.designId}`;
+  try {
+    const saved = JSON.parse(localStorage.getItem(requestKey) || 'null') as { id?: string } | null;
+    if (saved?.id && attempts.some(item =>
+      item.status === 'failed'
+      && item.metadata?.requestId === saved.id
+      && (item.credit_refunded || item.metadata.siteCreditExempt)
+    )) localStorage.removeItem(requestKey);
+  } catch {
+    localStorage.removeItem(requestKey);
+  }
+}
 
 async function parseRenderResponse(response: Response) {
   const body = await response.text();
@@ -109,7 +123,9 @@ export function RenderExperience() {
     const response = await fetch(`/api/render/pilot?designId=${context.designId}&ownerKey=${encodeURIComponent(context.ownerKey)}`, { cache: 'no-store' });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Pilot history unavailable.');
-    setAttempts(data.attempts || []); setSummary(data.summary || null); return data;
+    setAttempts(data.attempts || []); setSummary(data.summary || null);
+    clearRetryableRenderRequest(context, data.attempts || []);
+    return data;
   }
   const result = attempts.find(item => item.status === 'succeeded' && item.resultUrl && selection && item.metadata?.snapshot?.roomAssetId === runtime?.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(selection) && stableJson([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === stableJson([room, brief]));
   const processing = attempts.some(item => item.status === 'processing');
@@ -129,7 +145,10 @@ export function RenderExperience() {
       try {
         const response = await fetch(`/api/render/pilot?designId=${runtime.designId}&ownerKey=${encodeURIComponent(runtime.ownerKey)}`, { cache: 'no-store' });
         const data = await response.json();
-        if (response.ok && !stopped) { setAttempts(data.attempts || []); setSummary(data.summary || null); }
+        if (response.ok && !stopped) {
+          setAttempts(data.attempts || []); setSummary(data.summary || null);
+          clearRetryableRenderRequest(runtime, data.attempts || []);
+        }
       } catch { /* Keep the in-progress state and try again. */ }
       if (!stopped) timer = window.setTimeout(refresh, 4000);
     };
@@ -157,7 +176,7 @@ export function RenderExperience() {
       const response = await fetch('/api/render', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...runtime, requestId, intake: room, brief, selection, placements, parentGenerationId: result?.generation_id, correction: result ? correction : undefined }) });
       const data = await parseRenderResponse(response);
       if (!response.ok) {
-        if (data.code?.endsWith('_REFUNDED')) localStorage.removeItem(key);
+        if (data.code?.endsWith('_REFUNDED') || data.retryable) localStorage.removeItem(key);
         throw new Error(data.error || 'Generation could not be confirmed. Reload the saved attempt before retrying.');
       }
       localStorage.removeItem(key); setCorrection('');
