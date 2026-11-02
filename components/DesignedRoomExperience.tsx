@@ -109,6 +109,7 @@ export function DesignedRoomExperience({
   const [showPins, setShowPins] = useState(true);
   const [hotspotStatus, setHotspotStatus] = useState<'idle' | 'locating' | 'unavailable'>('idle');
   const [drawerSlot, setDrawerSlot] = useState<string | null>(null);
+  const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
   const [pendingChanges, setPendingChanges] = useState<Record<string, ProductAlternative>>({});
   const [shareLabel, setShareLabel] = useState("Share");
   const [commerceSession, setCommerceSession] = useState("");
@@ -288,13 +289,16 @@ export function DesignedRoomExperience({
   }, [data, shared]);
 
   useEffect(() => {
-    if (!drawerSlot) return;
+    if (!drawerSlot && !activeHotspot) return;
     const close = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeProduct();
+      if (event.key === "Escape") {
+        if (drawerSlot) closeProduct();
+        setActiveHotspot(null);
+      }
     };
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
-  }, [drawerSlot]);
+  }, [drawerSlot, activeHotspot]);
 
   const activeProduct = useMemo(
     () => data?.selection.products.find((product) => product.slot === drawerSlot) ?? null,
@@ -323,7 +327,9 @@ export function DesignedRoomExperience({
         productId: selected.productId,
         variantId: selected.variantId,
         offerId: selected.offer.id,
-        surface: shared ? "shared_room_drawer" : "designed_room_drawer",
+        surface: shared
+        ? (placement === 'hotspot' ? 'shared_room_hotspot' : 'shared_room_drawer')
+        : (placement === 'hotspot' ? 'designed_room_hotspot' : 'designed_room_drawer'),
       }),
     }).catch(() => undefined);
 
@@ -391,7 +397,7 @@ export function DesignedRoomExperience({
     });
   }
 
-  function retailerHref(offerId: string) {
+  function retailerHref(offerId: string, placement: 'drawer' | 'hotspot' = 'drawer') {
     if (!data) return "#";
     const params = new URLSearchParams({
       session: commerceSession || crypto.randomUUID(),
@@ -511,13 +517,68 @@ export function DesignedRoomExperience({
           const index = data.selection.products.findIndex(p => p.selected.variantId === hotspot.variantId);
           const product = data.selection.products[index];
           if (!product) return null;
-          return <button key={hotspot.variantId} type="button" className={`roomHotspot ${styles.pin}`} style={{left:`${hotspot.x}%`,top:`${hotspot.y}%`}} data-edge={hotspot.x!<25?'left':hotspot.x!>75?'right':'middle'} data-top={hotspot.y!<20} onClick={e=>selectProduct(product.slot,e.currentTarget)} aria-controls="room-product-details" aria-expanded={drawerSlot===product.slot} aria-label={`${product.selected.productName}, ${money(product.selected.offer.priceMinor)}. View product details`}>
-            <span>{index+1}</span>
-            <span className={styles.tooltip} aria-hidden="true">
-              {product.selected.image ? <img src={product.selected.image.url} alt="" loading="lazy" /> : null}
-              <span><strong>{product.selected.productName}</strong><small>{product.selected.offer.retailerName}</small><small>{money(product.selected.offer.priceMinor)}</small><small>Tap to shop</small></span>
-            </span>
-          </button>;
+          const selected = product.selected;
+          const isOpen = activeHotspot === hotspot.variantId;
+          const retailer = selected.offer.retailerName;
+          const checkedDate = selected.offer.lastCheckedAt
+            ? new Date(selected.offer.lastCheckedAt).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})
+            : null;
+          return (
+            <div
+              key={hotspot.variantId}
+              className={styles.hotspotAnchor}
+              data-edge={hotspot.x! < 28 ? 'left' : hotspot.x! > 72 ? 'right' : 'middle'}
+              data-top={hotspot.y! < 42 ? 'true' : 'false'}
+              data-open={isOpen ? 'true' : 'false'}
+              style={{left:`${hotspot.x}%`,top:`${hotspot.y}%`}}
+            >
+              <button
+                type="button"
+                className={`roomHotspot ${styles.pin}`}
+                onClick={() => setActiveHotspot(current => current === hotspot.variantId ? null : hotspot.variantId)}
+                aria-expanded={isOpen}
+                aria-controls={`hotspot-card-${hotspot.variantId}`}
+                aria-label={`Explore ${selected.productName}, ${money(selected.offer.priceMinor)}`}
+              >
+                <span>{index + 1}</span>
+              </button>
+              <div id={`hotspot-card-${hotspot.variantId}`} className={styles.productPopover} role="group" aria-label={`Shop ${selected.productName}`}>
+                <button className={styles.popoverClose} type="button" onClick={() => setActiveHotspot(null)} aria-label="Close product preview">×</button>
+                <div className={styles.productSummary}>
+                  <div className={styles.productPhoto}>
+                    {selected.image
+                      ? <img src={selected.image.url} alt={selected.image.altText || selected.productName} loading="lazy" decoding="async" />
+                      : <span>Product photo unavailable</span>}
+                  </div>
+                  <div className={styles.productCopy}>
+                    <span className={styles.productEyebrow}>{product.slotLabel} · Selected product</span>
+                    <strong className={styles.productName}>{candidateName(selected)}</strong>
+                    <span className={styles.productPrice}>{money(selected.offer.priceMinor)}</span>
+                    <span className={styles.productRetailer}>{retailer}</span>
+                  </div>
+                </div>
+                <a
+                  className={styles.popoverCta}
+                  href={retailerHref(selected.offer.id, 'hotspot')}
+                  target="_blank"
+                  rel="sponsored noopener noreferrer"
+                >
+                  <span>Shop at {retailer}</span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+                <button
+                  type="button"
+                  className={styles.popoverDetails}
+                  onClick={event => selectProduct(product.slot, event.currentTarget)}
+                >
+                  View product details and delivery
+                </button>
+                <p className={styles.popoverFootnote}>
+                  Ad · We may earn a commission. {checkedDate ? `Price recorded ${checkedDate}.` : 'Recorded price.'} Confirm price and availability with the retailer.
+                </p>
+              </div>
+            </div>
+          );
         }) : null}
         {originalAvailable ? <div className={`roomDivider ${styles.divider}`} style={{left:`${compare}%`}} aria-hidden="true"><i /></div> : null}
         </div>
@@ -543,7 +604,7 @@ export function DesignedRoomExperience({
 
       </section>
 
-      <p className={styles.notice}>{visibleHotspots.length ? 'Hover over a furniture dot to preview its product, or tap to see prices and buying options. ' : ''}This AI room image is an illustration, not an exact product photograph or a guarantee of fit. Product cards below show the retailer items and prices available to shop.</p>
+      <p className={styles.notice}>{visibleHotspots.length ? 'Hover over a furniture dot to shop, or tap a dot on your phone. ' : ''}This AI room image is an illustration, not an exact product photograph or a guarantee of fit. Product cards below show the retailer items and prices available to shop.</p>
       {activeProduct ? (
         <ProductDrawer
           key={activeProduct.slot}
