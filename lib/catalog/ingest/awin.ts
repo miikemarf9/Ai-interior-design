@@ -146,20 +146,22 @@ function mapCategory(text: string, categoryPath: string | null) {
   return (categoryPath ? matchIn(categoryPath) : null) ?? matchIn(text);
 }
 function normalizedAttributeText(text: string) {
-  return text.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 }
 
 function containsPhrase(haystack: string, phrase: string) {
-  const text = ` ${normalizedAttributeText(haystack)} `;
-  const needle = ` ${normalizedAttributeText(phrase)} `;
+  const text = \` \${normalizedAttributeText(haystack)} \`;
+  const needle = \` \${normalizedAttributeText(phrase)} \`;
   return text.includes(needle);
 }
 
 function isImitationMaterial(haystack: string, term: string) {
-  const text = normalizedAttributeText(haystack);
-  const material = normalizedAttributeText(term).replace(/ /g, "\\s+");
-  return new RegExp(`(?:^| )(?:faux|vegan|imitation|artificial) ${material}(?: |$)`).test(text)
-    || new RegExp(`(?:^| )${material} (?:effect|look|lookalike)(?: |$)`).test(text);
+  const text = \` \${normalizedAttributeText(haystack)} \`;
+  const material = \` \${normalizedAttributeText(term)} \`;
+  const prefixes = ["faux", "vegan", "imitation", "artificial", "pu", "bonded"];
+  const suffixes = ["effect", "look", "lookalike"];
+  return prefixes.some((prefix) => text.includes(\` \${prefix}\${material}\`))
+    || suffixes.some((suffix) => text.includes(\`\${material}\${suffix} \`));
 }
 
 function inferMaterials(text: string) {
