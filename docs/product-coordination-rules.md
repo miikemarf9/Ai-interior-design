@@ -7,7 +7,7 @@ The catalogue already records a selected product's style, colour, material, reta
 - Map explicit styles to the site's supported directions: Modern Organic to warm-minimal, Modern Country to modern-british, Japandi to scandi, Mid-century Modern to mid-century, Bold & Colourful to colourful, and Contemporary Classic to classic.
 - Infer colour only from the product title and feed's colour field. Use whole-word terms so words that merely contain a colour do not become colour tags.
 - Infer material only from the title and feed's material/specification field. Do not tag faux, imitation, effect or lookalike materials as the real material.
-- Keep the source text and confidence available for review. Missing supplier data must stay unknown instead of being invented.
+- Keep original feed values available for review. Missing supplier data must stay unknown instead of being invented.
 
 ## Room selection
 
