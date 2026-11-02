@@ -257,6 +257,28 @@ export function AccountExperience() {
     }
   }
 
+  async function deleteRoom(room: AccountPayload["rooms"][number]) {
+    if (!window.confirm(`Delete “${room.roomName}” from My Rooms?`)) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+
+    try {
+      const response = await fetch(`/api/account/rooms/${room.id}`, { method: "DELETE" });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Room could not be deleted.");
+
+      setPayload((current) => current
+        ? { ...current, rooms: current.rooms.filter((savedRoom) => savedRoom.id !== room.id) }
+        : current);
+      setNotice(`“${room.roomName}” has been removed from My Rooms.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Room could not be deleted.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading) {
     return (
       <main className="accountPage">
@@ -430,6 +452,9 @@ export function AccountExperience() {
                   </div>
                   <button className="savedRoomOpen" type="button" onClick={() => openRoom(room.id)} disabled={busy}>
                     {room.currentDesignUrl ? "Open designed room" : "Continue this room"} <span>→</span>
+                  </button>
+                  <button className="savedRoomDelete" type="button" onClick={() => deleteRoom(room)} disabled={busy}>
+                    Delete room
                   </button>
                 </div>
               </article>
