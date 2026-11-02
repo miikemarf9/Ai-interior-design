@@ -368,11 +368,11 @@ function scoreCandidate(
 
   const reasons = [
     styleMatches ? `Matches ${styleMatches} selected style signal${styleMatches === 1 ? "" : "s"}.` : "Chosen for overall catalogue fit rather than an exact style tag.",
+    ...(coordination.reason ? [coordination.reason] : []),
     colourMatches ? "Works with the selected colour direction." : "Check the colour against your preferred palette.",
     materialMatches ? "Uses one or more preferred materials." : "Check the material against your practical needs.",
     fit.reason,
     candidate.offer.availability === "in_stock" ? "Listed in stock when last checked; confirm your postcode with the retailer." : "Listed as orderable when last checked; confirm delivery with the retailer.",
-    ...(coordination.reason ? [coordination.reason] : []),
   ];
 
   return {
