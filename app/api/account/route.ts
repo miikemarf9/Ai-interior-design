@@ -27,7 +27,7 @@ export async function GET() {
         latest.result_asset_id::text as result_asset_id,
         latest.completed_at::text as rendered_at
       from public.room_designs d
-      left join lateral (
+      join lateral (
         select result_asset_id,completed_at
         from public.render_generations
         where design_id=d.id
@@ -62,7 +62,7 @@ export async function GET() {
     status: room.status,
     updatedAt: room.updated_at,
     originalUrl: room.original_asset_id ? `/api/assets/${room.original_asset_id}` : null,
-    currentDesignUrl: room.result_asset_id ? `/api/assets/${room.result_asset_id}` : null,
+    currentDesignUrl: `/api/assets/${room.result_asset_id}`,
     renderedAt: room.rendered_at,
     briefTitle: room.brief?.title ?? null,
     briefDirection: room.brief?.direction ?? null,
