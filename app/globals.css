@@ -1181,7 +1181,7 @@ p { line-height: 1.65; }
 .savedRoomsHeading h2 { margin-bottom:0; }
 .savedRoomGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
 .savedRoomCard { background:#f4efe7; border:1px solid var(--line); overflow:hidden; }
-.savedRoomVisual { width:100%; aspect-ratio:16/10; position:relative; display:grid; place-items:center; overflow:hidden; border:0; background:#ddd6cc; color:var(--muted); }
+.savedRoomVisual { width:100%; aspect-ratio:16/10; position:relative; display:block; overflow:hidden; border:0; background:transparent; }
 .savedRoomVisual img { width:100%; height:100%; object-fit:cover; transition:transform .4s ease; }
 .savedRoomVisual:hover img { transform:scale(1.015); }
 .savedRoomVisual i { position:absolute; left:13px; bottom:13px; padding:6px 8px; background:rgba(250,248,244,.9); color:var(--ink); font-size:8px; font-style:normal; font-weight:700; text-transform:uppercase; }
