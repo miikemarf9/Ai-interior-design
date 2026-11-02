@@ -108,7 +108,8 @@ ${task}`;
 
     const data = await response.json();
     const parsed = parseBrief(extractOutputText(data));
-    return NextResponse.json({ source: parsed ? 'ai' : 'preview', brief: parsed ? { ...parsed, budget: buildFallbackBrief(body.intake).budget, measurements: buildFallbackBrief(body.intake).measurements } : fallback, ...(parsed ? {} : { warning: 'Automatic writing unavailable. Edit the saved brief directly.' }) });
+    const deterministic = buildFallbackBrief(body.intake);
+    return NextResponse.json({ source: parsed ? 'ai' : 'preview', brief: parsed ? { ...parsed, ...(body.intake.furniturePair ? { direction: deterministic.direction } : {}), budget: deterministic.budget, measurements: deterministic.measurements } : fallback, ...(parsed ? {} : { warning: 'Automatic writing unavailable. Edit the saved brief directly.' }) });
   } catch {
     return NextResponse.json({ source: 'preview', brief: fallback, warning: 'AI brief service unavailable.' });
   }

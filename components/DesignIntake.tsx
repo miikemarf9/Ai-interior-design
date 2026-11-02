@@ -11,6 +11,7 @@ type CreativeFreedom = 'Safe' | 'Balanced' | 'Surprise me';
 type IntakeState = IntakeForBrief;
 type CatalogueItemChoice = { label: string; recommended: boolean; available: boolean; count: number; catalogueCount: number };
 type CatalogueStyleChoice = { name: string; available: boolean };
+type FurniturePair = { id: string; title: string; note: string; itemCategories: string[]; styles: string[]; colours: string[]; materials: string[]; totalMinor: number; items: Array<{ variantId: string; category: string; name: string; variantName: string | null; retailerName: string; priceMinor: number; availability: string; lastCheckedAt: string; imageUrl: string; imageAlt: string }> };
 
 const initialState: IntakeState = {
   roomType: 'living_room', projectGoal: 'refresh', retainedFurniture: [],
@@ -137,6 +138,10 @@ function formatBudget(value: number) {
   return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(value);
 }
 
+function formatProductPrice(minor: number) {
+  return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: minor % 100 ? 2 : 0, maximumFractionDigits: 2 }).format(minor / 100);
+}
+
 export function DesignIntake() {
   const [step, setStep] = useState(0);
   const [state, setState] = useState<IntakeState>(initialState);
@@ -154,9 +159,14 @@ export function DesignIntake() {
   const [catalogueLoading, setCatalogueLoading] = useState(false);
   const [catalogueError, setCatalogueError] = useState('');
   const [catalogueRetry, setCatalogueRetry] = useState(0);
+  const [furniturePairs, setFurniturePairs] = useState<FurniturePair[]>([]);
+  const [pairLoading, setPairLoading] = useState(false);
+  const [pairError, setPairError] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
   const savedAnswers = useRef('');
   const roomName = state.roomType === 'bedroom' ? 'bedroom' : 'living room';
+  const eligibleFurniturePairs = furniturePairs.filter(pair => pair.totalMinor <= state.budget * 100 && !pair.itemCategories.some(label => state.keep.includes(label)));
+  const selectedFurniturePair = eligibleFurniturePairs.find(pair => pair.id === state.furniturePair?.id);
   const uses = state.roomType === 'bedroom' ? [
     { name: 'Sleeping', detail: 'A calm, comfortable place to rest' },
     { name: 'Storage', detail: 'Clothes, bedding and everyday belongings' },
@@ -270,6 +280,29 @@ export function DesignIntake() {
   }, [hydrated, state.roomType, state.styles, state.budget, state.measurements.width, state.measurements.length, state.measurements.height, state.dislikes, catalogueRetry]);
 
   useEffect(() => {
+    if (!hydrated || state.roomType !== 'living_room') {
+      setFurniturePairs([]);
+      setPairLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setPairLoading(true);
+    setPairError('');
+    fetch('/api/products/pairs', { cache: 'no-store', signal: controller.signal })
+      .then(async response => {
+        const payload = await response.json() as { pairs?: FurniturePair[]; error?: string };
+        if (!response.ok || !Array.isArray(payload.pairs)) throw new Error(payload.error || 'Furniture matches could not be checked.');
+        if (!controller.signal.aborted) setFurniturePairs(payload.pairs);
+      })
+      .catch(error => {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        if (!controller.signal.aborted) setPairError(error instanceof Error ? error.message : 'Furniture matches could not be checked.');
+      })
+      .finally(() => { if (!controller.signal.aborted) setPairLoading(false); });
+    return () => controller.abort();
+  }, [hydrated, state.roomType]);
+
+  useEffect(() => {
     if (!hydrated) return;
     const snapshot = JSON.stringify(state);
     if (savedAnswers.current && savedAnswers.current !== snapshot) {
@@ -285,13 +318,13 @@ export function DesignIntake() {
   }, [photoUrl]);
 
   const progress = complete ? 100 : ((step + 1) / 2) * 100;
-  const stepLabels = ['Your room', 'Choose your style'];
+  const stepLabels = ['Your room', 'Choose a furniture group'];
   const stepLabel = stepLabels[step] || 'Your room';
   // Only the room photograph is required. Style, budget refinements, measurements,
   // retained-item markers and product-category choices are all optional.
   const canContinue = step === 0
     ? state.roomType === 'living_room' && Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto)
-    : step === 1;
+    : step === 1 && (!state.furniturePair || Boolean(selectedFurniturePair));
 
   function goToStep(target: number) {
     if (target >= step || target < 0 || target > 2) return;
@@ -300,7 +333,7 @@ export function DesignIntake() {
   }
 
   function skipStyle() {
-    setState(current => ({ ...current, styles: [] }));
+    setState(current => ({ ...current, styles: selectedFurniturePair ? current.furniturePair?.styles || [] : [], furniturePair: selectedFurniturePair ? current.furniturePair : undefined }));
     setComplete(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -416,10 +449,14 @@ export function DesignIntake() {
         'Mid-Century Modern':'mid-century-modern','Bold & Colourful':'bold-colourful',
         'Contemporary Classic':'contemporary-classic',
       };
-      trackRoomfound('style_choices_submitted', {
-        roomType: state.roomType || 'living_room',
-        styles: state.styles.map(style => styleMap[style]).filter(Boolean),
-      });
+      if (state.furniturePair) {
+        trackRoomfound('furniture_pair_selected', { roomType: state.roomType || 'living_room', pair: state.furniturePair.id });
+      } else {
+        trackRoomfound('style_choices_submitted', {
+          roomType: state.roomType || 'living_room',
+          styles: state.styles.map(style => styleMap[style]).filter(Boolean),
+        });
+      }
     }
 
     if (step === 1) {
@@ -485,7 +522,7 @@ export function DesignIntake() {
             </div>
             <div className="reviewFacts">
               <ReviewRow label="Room" value={roomName + ' · ' + (state.projectGoal === 'furnish' ? 'Furnishing' : 'Refreshing')} />
-              <ReviewRow label="Style" value={state.styles.join(', ') || 'Open to recommendations'} />
+              {state.furniturePair ? <ReviewRow label="Furniture group" value={state.furniturePair.title} /> : <ReviewRow label="Style" value={state.styles.join(', ') || 'Open to recommendations'} />}
               {state.keep.length ? <ReviewRow label="Keeping" value={state.keep.join(', ')} /> : null}
               {state.retainedFurniture?.some(item => item.intent !== 'place') ? <ReviewRow label="Photo · keep" value={state.retainedFurniture.filter(item => item.intent !== 'place').map(item => item.label).join(', ')} /> : null}
               {state.retainedFurniture?.some(item => item.intent === 'place') ? <ReviewRow label="Photo · place" value={state.retainedFurniture.filter(item => item.intent === 'place').map(item => item.label).join(', ')} /> : null}
@@ -602,33 +639,62 @@ export function DesignIntake() {
 
           {step === 1 ? (
             <>
-              <StepIntro eyebrow="02 / 03 · Style and budget" title="Choose a look, or leave it to us." copy="Pick a style if you have one in mind. Not sure? You can skip this step or let us choose." />
-              <div className="styleDiscoveryGrid">
-                {styles.map(style => {
-                  const active = state.styles.includes(style.name);
-                  const styleAvailable = !catalogueLoading && !catalogueError && catalogueStyles.some(option => option.name === style.name && option.available);
-                  return (
-                    <button
-                      className={'styleChoice ' + (active ? 'isSelected' : '')}
-                      type="button"
-                      aria-pressed={active}
-                      aria-disabled={!styleAvailable && !active && !catalogueLoading}
-                      key={style.name}
-                      disabled={!catalogueLoading && !styleAvailable && !active}
-                      onClick={() => setState(current => ({ ...current, styles: current.styles.includes(style.name) ? [] : [style.name] }))}
-                    >
-                      <img src={style.image} alt="" aria-hidden="true" />
-                      <span className="styleChoiceShade" />
-                      <span className="styleChoiceCopy">
-                        <strong>{style.name}</strong>
-                        <small>{style.note}</small>
-                        <small>{active ? 'Selected' : catalogueLoading ? 'Checking availability…' : styleAvailable ? 'Products available' : 'Not available yet'}</small>
-                      </span>
-                      <i>{active ? '✓' : '+'}</i>
-                    </button>
-                  );
-                })}
+              <div className={ui.pairSection}>
+                <StepIntro eyebrow="02 / 03 · Furniture pairing" title={pairLoading ? "Finding furniture pairs…" : eligibleFurniturePairs.length ? "Choose a group of furniture that works together." : "No current furniture pairs fit this budget yet."} copy={pairLoading ? "Checking the current approved catalogue for coordinated pairs." : eligibleFurniturePairs.length ? "Pick a small, ready-matched pair from the approved catalogue. We’ll use its colours and materials to coordinate the rest." : "You can still choose a style below, and we’ll use the reviewed products available."} />
+                {pairLoading ? <p aria-live="polite">Checking current furniture matches…</p> : null}
+                {pairError ? <p className={ui.error} role="alert">{pairError}</p> : null}
+                {!pairLoading && eligibleFurniturePairs.length ? (
+                  <div className={ui.pairGrid}>
+                    {eligibleFurniturePairs.map(pair => {
+                      const active = state.furniturePair?.id === pair.id;
+                      return <button key={pair.id} type="button" className={ui.pairCard + (active ? ' ' + ui.pairSelected : '')} aria-pressed={active} onClick={() => setState(current => ({
+                        ...current,
+                        furniturePair: { id: pair.id, title: pair.title, variantIds: pair.items.map(item => item.variantId), styles: pair.styles, colours: pair.colours, materials: pair.materials },
+                        styles: pair.styles,
+                        colours: pair.colours,
+                        materials: pair.materials,
+                        change: [...new Set([...current.change, ...pair.itemCategories])],
+                      }))}>
+                        <span className={ui.pairPhotos}>{pair.items.map(item => <img key={item.variantId} src={item.imageUrl} alt={item.imageAlt} loading="lazy" />)}</span>
+                        <span className={ui.pairText}><strong>{pair.title}</strong><small>{pair.note}</small></span>
+                        <span className={ui.pairProducts}>{pair.items.map(item => <span key={item.variantId}><b>{item.name}</b><small>{formatProductPrice(item.priceMinor)} · {item.retailerName}</small><small>{item.availability.replaceAll('_', ' ')} · checked {new Date(item.lastCheckedAt).toLocaleDateString('en-GB')}</small></span>)}</span>
+                        <span className={ui.pairTotal}>Pair total {formatProductPrice(pair.totalMinor)}</span>
+                        <span className={ui.pairSelect}>{active ? '✓ Selected' : 'Choose this pair'}</span>
+                      </button>;
+                    })}
+                  </div>
+                ) : null}
               </div>
+              {state.furniturePair && !pairLoading && !selectedFurniturePair ? <p className={ui.error} role="status">That group is above the current budget or no longer available. Please choose another group.</p> : null}
+              <details className={ui.styleOptions} open={!pairLoading && !eligibleFurniturePairs.length}>
+                <summary>Prefer choosing a style? Browse style options</summary>
+                                <div className="styleDiscoveryGrid">
+                  {styles.map(style => {
+                    const active = state.styles.includes(style.name);
+                    const styleAvailable = !catalogueLoading && !catalogueError && catalogueStyles.some(option => option.name === style.name && option.available);
+                    return (
+                      <button
+                        className={'styleChoice ' + (active ? 'isSelected' : '')}
+                        type="button"
+                        aria-pressed={active}
+                        aria-disabled={!styleAvailable && !active && !catalogueLoading}
+                        key={style.name}
+                        disabled={!catalogueLoading && !styleAvailable && !active}
+                        onClick={() => setState(current => ({ ...current, furniturePair: undefined, colours: current.furniturePair ? [] : current.colours, materials: current.furniturePair ? [] : current.materials, styles: current.furniturePair ? [style.name] : current.styles.includes(style.name) ? [] : [style.name] }))}
+                      >
+                        <img src={style.image} alt="" aria-hidden="true" />
+                        <span className="styleChoiceShade" />
+                        <span className="styleChoiceCopy">
+                          <strong>{style.name}</strong>
+                          <small>{style.note}</small>
+                          <small>{active ? 'Selected' : catalogueLoading ? 'Checking availability…' : styleAvailable ? 'Products available' : 'Not available yet'}</small>
+                        </span>
+                        <i>{active ? '✓' : '+'}</i>
+                      </button>
+                    );
+                  })}
+                </div>
+              </details>
               {catalogueLoading ? <p aria-live="polite" className="choiceHint">Checking styles against the reviewed furniture collection…</p> : null}
               {catalogueError ? <p className={ui.error} role="alert">{catalogueError} <button className="textButton" type="button" onClick={() => setCatalogueRetry(value => value + 1)}>Try again</button></p> : null}
               {!catalogueLoading && !catalogueError && !catalogueStyles.some(style => style.available) ? (
@@ -665,7 +731,7 @@ export function DesignIntake() {
               </section>
 
               <div className="styleQuickActions">
-                <p><strong>Not sure about style?</strong> It is optional. Your budget choice will be kept if you skip.</p>
+                <p><strong>{state.furniturePair ? 'Your furniture group is the starting point.' : 'Not sure about style?'}</strong> Style is optional. Your budget choice will be kept if you skip.</p>
                 <div>
                   <button className="textButton" type="button" onClick={skipStyle}>Continue without a style →</button>
                   <button className="textButton" type="button" onClick={surpriseMe} disabled={!catalogueStyles.some(option => option.available)}>Surprise me</button>
@@ -787,7 +853,7 @@ export function DesignIntake() {
             <button className="textButton" type="button" onClick={back} disabled={step === 0}>← Back</button>
             <span>Step {step + 1} of 3</span>
             <button className="button buttonPrimary" type="button" onClick={next} disabled={!canContinue}>
-              {step === 0 ? 'Choose your style' : step === 1 ? (state.styles.length ? 'Choose furniture' : 'Continue without a style') : 'Review my room'}
+              {step === 0 ? 'Choose a furniture group' : step === 1 ? (state.furniturePair ? 'Continue with this group' : state.styles.length ? 'Choose furniture' : 'Continue without a style') : 'Review my room'}
             </button>
           </div>
         </section>
@@ -798,15 +864,15 @@ export function DesignIntake() {
         visible={true}
         defaultOpen={Boolean(roomAssetId)}
         currentStep={complete ? 3 : step + 1}
-        nextTitle={complete ? 'Choose real furniture' : step === 0 ? 'Choose your style' : 'Review your room'}
+        nextTitle={complete ? 'Choose real furniture' : step === 0 ? 'Choose a furniture group' : 'Review your room'}
         nextDescription={complete
           ? 'Your room and style choices are saved. Next, choose real furniture.'
           : step === 0
             ? 'Your room photograph is the starting point. Continue when it has been saved.'
             : step === 1
-              ? state.styles.length ? 'We will use your ' + state.styles[0] + ' direction and budget to prepare your design brief.' : 'A style is optional. Continue with your budget and we will create a balanced direction.'
+              ? state.furniturePair ? 'We will keep your chosen furniture group and coordinate the room around it.' : state.styles.length ? 'We will use your ' + state.styles[0] + ' direction and budget to prepare your design brief.' : 'A style is optional. Continue with your budget and we will create a balanced direction.'
               : 'Your room, style and furniture preferences are ready to review.'}
-        nextLabel={complete ? 'Choose real furniture' : step === 0 ? 'Continue to style' : step === 1 ? 'Review my room' : 'Review my room'}
+        nextLabel={complete ? 'Choose real furniture' : step === 0 ? 'Continue to furniture groups' : step === 1 ? 'Review my room' : 'Review my room'}
         nextHref={complete ? '/products' : undefined}
         onNext={complete ? undefined : next}
         nextDisabled={!complete && !canContinue}
