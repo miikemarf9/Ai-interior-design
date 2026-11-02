@@ -7,8 +7,11 @@
 .experience .pin { width:44px; height:44px; z-index:4; border:0; background:transparent; box-shadow:none; backdrop-filter:none; }
 .pin > span:first-child { width:26px; height:26px; display:grid; place-items:center; border:1px solid white; border-radius:50%; background:var(--forest); color:white; box-shadow:0 2px 8px #0005; }
 .pin:focus-visible { outline:2px solid #fff; outline-offset:2px; }
-.tooltip { position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%); min-width:135px; max-width:190px; padding:10px; border-radius:6px; color:white; background:#26372d; opacity:0; visibility:hidden; pointer-events:none; text-align:left; }
-.tooltip strong,.tooltip small { display:block; line-height:1.4; font-size:12px; }
+.tooltip { position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:10px; width:max-content; min-width:185px; max-width:min(290px, 82vw); padding:12px; border-radius:10px; color:white; background:#26372d; box-shadow:0 8px 28px #0004; opacity:0; visibility:hidden; pointer-events:none; text-align:left; }
+.tooltip img { width:64px; height:64px; flex:none; object-fit:contain; background:white; border-radius:6px; }
+.tooltip > span { min-width:0; }
+.tooltip strong,.tooltip small { display:block; line-height:1.4; font-size:12px; overflow-wrap:anywhere; }
+.tooltip small:last-child { margin-top:4px; font-weight:600; color:#d8e5c8; }
 .pin:hover .tooltip,.pin:focus-visible .tooltip { opacity:1; visibility:visible; }
 .pin[data-edge="left"] .tooltip { left:0; transform:none; }
 .pin[data-edge="right"] .tooltip { left:auto; right:0; transform:none; }
@@ -25,7 +28,7 @@
 .positionImage img { width:100%; height:auto; display:block; }
 .positionImage i { position:absolute; transform:translate(-50%,-50%); width:28px; height:28px; border-radius:50%; background:var(--forest); color:white; text-align:center; font-size:22px; pointer-events:none; }
 .coordinates { display:flex; gap:16px; flex-wrap:wrap; }
-@media(max-width:700px){.experience .panelWrap{padding:12px}.editor{margin:12px}.tooltip{max-width:145px}.experience .imageControls{padding:12px}.experience .panel{padding:18px}.notice{padding:12px}}
+@media(max-width:700px){.experience .panelWrap{padding:12px}.editor{margin:12px}.tooltip{max-width:min(240px,82vw);padding:9px}.tooltip img{width:52px;height:52px}.experience .imageControls{padding:12px}.experience .panel{padding:18px}.notice{padding:12px}}
 @media(prefers-reduced-motion:reduce){.experience .pin{transition:none}}
 
 .experience :global(.roomProductCard[aria-expanded="true"]) { outline:2px solid var(--forest); outline-offset:3px; }
