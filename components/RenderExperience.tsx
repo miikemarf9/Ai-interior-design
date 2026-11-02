@@ -5,6 +5,7 @@ import type { DesignBrief, IntakeForBrief } from '@/lib/brief';
 import { approvalSnapshot, buildProductSelection, type ProductSelection } from '@/lib/catalog/selection';
 import { MAX_CORRECTIONS, reviewPassed, type Placement, type PilotReview, type Check } from '@/lib/render/pilot';
 import styles from './RenderPilot.module.css';
+import { RENDER_PROMPT_VERSION } from '@/lib/render/prompt';
 import { trackRoomfound } from '@/components/PrivacyAnalytics';
 import { JourneyAssistant } from '@/components/JourneyAssistant';
 
@@ -17,7 +18,7 @@ function stableJson(value: unknown): string {
   }
   return JSON.stringify(value) ?? 'null';
 }
-type Attempt = { generation_id: string; status: string; resultUrl: string | null; cost_usd_micros: number | null; duration_ms: number | null; credit_refunded?: boolean; metadata: { requestId?: string; siteCreditExempt?: boolean; correctionAttempt: number; parentGenerationId?: string; snapshot: { placements: Placement[]; selection: ProductSelection; intake: IntakeForBrief; brief: DesignBrief; roomAssetId: string }; humanReview?: PilotReview & { outcome: string } } };
+type Attempt = { prompt_version: string; generation_id: string; status: string; resultUrl: string | null; cost_usd_micros: number | null; duration_ms: number | null; credit_refunded?: boolean; metadata: { requestId?: string; siteCreditExempt?: boolean; correctionAttempt: number; parentGenerationId?: string; snapshot: { placements: Placement[]; selection: ProductSelection; intake: IntakeForBrief; brief: DesignBrief; roomAssetId: string }; humanReview?: PilotReview & { outcome: string } } };
 
 function clearRetryableRenderRequest(context: Runtime, attempts: Attempt[]) {
   const requestKey = `roomfound-pilot-request:${context.designId}`;
@@ -140,9 +141,20 @@ export function RenderExperience() {
     clearRetryableRenderRequest(context, data.attempts || []);
     return data;
   }
-  // History is already scoped to this saved design, so a changed browser upload reference
-  // must not hide a result that belongs to the design.
-  const result = attempts.find(item => item.status === 'succeeded' && item.resultUrl && item.metadata?.snapshot?.roomAssetId);
+  const collectionKey = (value: ProductSelection) => stableJson(value.products.map(product => ({
+    variantId: product.selected.variantId,
+    quantity: product.quantity,
+  })).sort((a, b) => a.variantId.localeCompare(b.variantId)));
+  const previousResult = attempts.find(item => item.status === 'succeeded' && item.resultUrl && item.metadata?.snapshot?.roomAssetId);
+  const result = attempts.find(item => {
+    const snapshot = item.metadata?.snapshot;
+    return item.status === 'succeeded' && item.resultUrl
+      && item.prompt_version === RENDER_PROMPT_VERSION
+      && snapshot && selection && runtime
+      && snapshot.roomAssetId === runtime.roomAssetId
+      && collectionKey(snapshot.selection) === collectionKey(selection)
+      && stableJson([snapshot.intake, snapshot.brief, snapshot.placements]) === stableJson([room, brief, placements]);
+  });
   const processing = attempts.some(item => item.status === 'processing');
   async function addCurrentRoomToMyRooms(generationId: string) {
     if (!runtime) return;
@@ -217,19 +229,19 @@ export function RenderExperience() {
     return () => { stopped = true; if (timer) window.clearTimeout(timer); };
   }, [processing, runtime, busy]);
   useEffect(() => {
-    if (!ready || blocked || !selection?.products.length || !runtime || !room || !brief || !verified || busy || processing || result || autoStarted.current) return;
+    if (!ready || blocked || !selection?.products.length || !runtime || !room || !brief || !verified || busy || processing || result || previousResult || autoStarted.current) return;
     if (!siteCreditExempt && (balance === null || balance < 1)) return;
     if (placements.some(item => item.instruction.trim().length < 5)) return;
     autoStarted.current = true;
     void generate();
     // Start only once for this page load; a failure is shown for the user to review before retrying.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, blocked, selection, runtime, room, brief, verified, busy, processing, result, siteCreditExempt, balance, placements]);
+  }, [ready, blocked, selection, runtime, room, brief, verified, busy, processing, result, previousResult, siteCreditExempt, balance, placements]);
   async function generate() {
     if (!runtime || !room || !brief || !selection) return;
     setBusy(true); setGenerationStartedAt(Date.now()); setError('');
     const key = `roomfound-pilot-request:${runtime.designId}`;
-    const requestState = JSON.stringify([approvalSnapshot(selection), placements, result?.generation_id, correction]);
+    const requestState = stableJson([RENDER_PROMPT_VERSION, runtime.roomAssetId, room, brief, approvalSnapshot(selection), placements, result?.generation_id, correction]);
     try {
       const old = JSON.parse(localStorage.getItem(key) || 'null');
       const requestId = old?.state === requestState ? old.id : crypto.randomUUID();
@@ -266,6 +278,7 @@ export function RenderExperience() {
   const correctionReady = !!result && reviewed?.outcome === 'needs_correction' && result.metadata.correctionAttempt < MAX_CORRECTIONS && !failedCorrection;
   return <div className="renderExperience shell">
     <section className="renderHero"><div className="renderHeroCopy"><p className="eyebrow">Living-room pilot</p><h1>See your room. Check the details.</h1><p>The photograph and approved brief guide an illustrative design. Furniture shown is a concept, not an exact product match or a guarantee of physical fit. Any retailer products are shown separately with their own photos and links.</p></div></section>
+    {!result && previousResult && !busy && !processing && <section className={styles.panel} role="status"><h2>Your saved image needs updating</h2><p>Your photo, furniture choices, design instructions or product-reference method have changed since that image was created. Generate an updated image below to use the current collection and product photos.</p><p>A new generation uses {siteCreditExempt ? 'your image API allowance' : 'one image use'}. Your previous image remains in My Rooms.</p></section>}
     {result && <section className={styles.generationComplete} role="status" aria-live="polite"><p><strong>Your room visual is ready.</strong><span>{myRoomsSaveState === 'saving' ? 'Adding it to My Rooms…' : myRoomsSaveState === 'saved' ? 'Saved to My Rooms.' : myRoomsSaveState === 'sign-in' ? 'Sign in to add this room to My Rooms.' : myRoomsSaveState === 'error' ? 'Could not add it to My Rooms yet.' : 'The finished image is shown below.'}</span></p>{myRoomsSaveState === 'sign-in' ? <Link href="/account">Sign in</Link> : myRoomsSaveState === 'error' ? <button type="button" className="button buttonSecondary" onClick={() => result && addCurrentRoomToMyRooms(result.generation_id)}>Try again</button> : <a href="#generated-room-image">View finished image ↓</a>}</section>}
     <div className={styles.comparison}><figure><img src={originalUrl} alt="Original room photograph used as the architectural reference" /><figcaption>Original room</figcaption></figure>{result && <figure ref={resultFigureRef} id="generated-room-image"><img src={result.resultUrl!} alt="Generated living-room pilot awaiting or undergoing human review" onLoad={() => { void addCurrentRoomToMyRooms(result.generation_id); }} /><figcaption>Generated attempt · correction {result.metadata.correctionAttempt || 0} of {MAX_CORRECTIONS}</figcaption></figure>}</div>
     <section className={styles.panel}><h2>Your room-design cues</h2><p>Optional guidance for selected products. The generated room is illustrative and does not promise an exact match to retailer products.</p>
@@ -285,7 +298,7 @@ export function RenderExperience() {
       </div>
     </section>}
     {processing && <div className={styles.panel}><p>Your image is still in progress. The page will update when it is ready.</p><button className="button buttonSecondary" onClick={() => readHistory(runtime).catch(error => setError(error.message))}>Check now</button></div>}
-    {!result && !processing && !busy && <button className="button buttonPrimary" disabled={!verified || (!siteCreditExempt && (balance === null || balance < 1)) || placements.some(item => item.instruction.trim().length < 5)} onClick={generate}>{`Generate illustrative room design · ${siteCreditExempt ? 'API allowance' : '1 credit'}`}</button>}
+    {!result && !processing && !busy && <button className="button buttonPrimary" disabled={!verified || (!siteCreditExempt && (balance === null || balance < 1)) || placements.some(item => item.instruction.trim().length < 5)} onClick={generate}>{`${previousResult ? 'Generate updated room design' : 'Generate room design'} · ${siteCreditExempt ? 'API allowance' : '1 credit'}`}</button>}
     {!siteCreditExempt && verified && balance === 0 && <p>You’ve used your free image. <Link href="/account">Buy 10 more for £2</Link>.</p>}
     {!verified && <p>A verified account and available credit balance are required before generating.</p>}
     {correctionReady && <section className={styles.panel}><h2>Make a controlled correction</h2><p>Describe the specific failed checks. We reuse the original room, approved references and previous result. A correction costs one credit and must be checked again.</p><label>What needs correcting?<textarea rows={3} maxLength={2000} value={correction} onChange={event => setCorrection(event.target.value)} /></label><button className="button buttonPrimary" disabled={busy || processing || !verified || (!siteCreditExempt && !balance) || correction.trim().length < 10} onClick={generate}>{busy ? 'Correcting…' : `Generate correction · ${siteCreditExempt ? 'API allowance' : '1 credit'}`}</button></section>}
