@@ -327,9 +327,7 @@ export function DesignedRoomExperience({
         productId: selected.productId,
         variantId: selected.variantId,
         offerId: selected.offer.id,
-        surface: shared
-        ? (placement === 'hotspot' ? 'shared_room_hotspot' : 'shared_room_drawer')
-        : (placement === 'hotspot' ? 'designed_room_hotspot' : 'designed_room_drawer'),
+        surface: shared ? "shared_room_drawer" : "designed_room_drawer",
       }),
     }).catch(() => undefined);
 
@@ -403,7 +401,9 @@ export function DesignedRoomExperience({
       session: commerceSession || crypto.randomUUID(),
       designId: data.designId,
       generationId: data.generationId,
-      surface: shared ? "shared_room_drawer" : "designed_room_drawer",
+      surface: shared
+        ? (placement === 'hotspot' ? 'shared_room_hotspot' : 'shared_room_drawer')
+        : (placement === 'hotspot' ? 'designed_room_hotspot' : 'designed_room_drawer'),
     });
     if (shareToken) params.set("shareToken", shareToken);
     return `/go/${offerId}?${params.toString()}`;
