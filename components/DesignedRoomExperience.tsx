@@ -530,7 +530,8 @@ export function DesignedRoomExperience({
         <div className="roomProductsIntro">
           <p className="eyebrow">Shop the room</p>
           <h2>Every new piece in one place.</h2>
-          <p>Open any product for its retailer, dimensions and the alternatives already considered for this room.</p>
+          <p>Choose a piece to see its retailer, current offers, dimensions and buying links.</p>
+          <p className="roomPurchaseNote">Purchases happen on retailer websites. If you choose products from different stores, you’ll check out with each store separately; there is no shared basket or single checkout.</p>
         </div>
 
         <div className="roomProductRail">
@@ -547,6 +548,8 @@ export function DesignedRoomExperience({
                 <span>{product.slotLabel}</span>
                 <strong>{candidateName(product.selected)}</strong>
                 <small>{money(product.selected.offer.priceMinor)}</small>
+                <small className="roomProductRetailer">Retailer: {product.selected.offer.retailerName}</small>
+                <small className="roomProductShop">View buying options →</small>
                 <small>{({visible:"Position checked in this image",hidden:"Hidden in this image",missing:"Missing from this image",uncertain:"Position not confirmed"})[data.hotspots?.find(h=>h.variantId===product.selected.variantId)?.visibility || "uncertain"]}</small>
                 {pending ? <em>Next: {pending.candidate.productName}</em> : null}
               </button>
