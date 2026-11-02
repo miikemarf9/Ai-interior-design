@@ -65,6 +65,8 @@ export function RenderExperience() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [correction, setCorrection] = useState('');
   const [summary, setSummary] = useState<any>(null);
+  const [myRoomsSaveState, setMyRoomsSaveState] = useState<'idle' | 'saving' | 'saved' | 'sign-in' | 'error'>('idle');
+  const myRoomsSavesInFlight = useRef(new Set<string>());
   const started = useRef(false);
   const autoStarted = useRef(false);
   const resultFigureRef = useRef<HTMLElement | null>(null);
@@ -131,6 +133,40 @@ export function RenderExperience() {
   }
   const result = attempts.find(item => item.status === 'succeeded' && item.resultUrl && selection && item.metadata?.snapshot?.roomAssetId === runtime?.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(selection) && stableJson([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === stableJson([room, brief]));
   const processing = attempts.some(item => item.status === 'processing');
+  async function addCurrentRoomToMyRooms(generationId: string) {
+    if (!runtime) return;
+    const attemptKey = `${runtime.designId}:${generationId}`;
+    const savedKey = `roomfound-my-rooms-saved:${attemptKey}`;
+    try {
+      if (localStorage.getItem(savedKey)) { setMyRoomsSaveState('saved'); return; }
+    } catch { /* The server save can still succeed if browser storage is unavailable. */ }
+    if (myRoomsSavesInFlight.current.has(attemptKey)) return;
+    myRoomsSavesInFlight.current.add(attemptKey);
+    setMyRoomsSaveState('saving');
+    try {
+      const response = await fetch(`/api/account/rooms/${runtime.designId}`, { method: 'POST' });
+      const data = await response.json();
+      if (response.status === 401) { setMyRoomsSaveState('sign-in'); return; }
+      if (!response.ok) throw new Error(data.error || 'The room could not be saved.');
+      try { localStorage.setItem(savedKey, '1'); } catch { /* Do not hide a successful server save. */ }
+      setMyRoomsSaveState('saved');
+      const analyticsKey = `roomfound-saved-analytics:${runtime.designId}:${generationId}`;
+      try {
+        if (!localStorage.getItem(analyticsKey)) {
+          trackRoomfound('room_saved', {
+            roomType: room?.roomType || 'living_room',
+            styles: room?.styles || [],
+            selectedProducts: selection?.products.map(product => ({ productId: product.selected.productId, category: product.slot })) || [],
+          });
+          localStorage.setItem(analyticsKey, '1');
+        }
+      } catch { /* The room is saved even if analytics storage is unavailable. */ }
+    } catch {
+      setMyRoomsSaveState('error');
+    } finally {
+      myRoomsSavesInFlight.current.delete(attemptKey);
+    }
+  }
   const failedCorrection = attempts.some(item => item.status === 'failed' && item.metadata?.parentGenerationId === result?.generation_id);
   useEffect(() => {
     if (busy || processing) {
@@ -196,18 +232,7 @@ export function RenderExperience() {
       localStorage.removeItem(key); setCorrection('');
       const history = await readHistory(runtime);
       const savedAttempt = history.attempts?.[0] as Attempt | undefined;
-      if (savedAttempt?.status === 'succeeded' && savedAttempt.generation_id) {
-        const saveKey = `roomfound-saved-analytics:${runtime.designId}:${savedAttempt.generation_id}`;
-        if (!localStorage.getItem(saveKey)) {
-          trackRoomfound('room_saved', {
-            roomType: room.roomType || 'living_room',
-            styles: room.styles,
-            selectedProducts: selection.products.map(product => ({ productId: product.selected.productId, category: product.slot })),
-          });
-          localStorage.setItem(saveKey, '1');
-        }
-      }
-      await loadCredits(runtime);
+        await loadCredits(runtime);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Generation unavailable.');
       try { await readHistory(runtime); await loadCredits(runtime); } catch { /* Keep the original error and stable request ID. */ }
@@ -230,8 +255,8 @@ export function RenderExperience() {
   const correctionReady = !!result && reviewed?.outcome === 'needs_correction' && result.metadata.correctionAttempt < MAX_CORRECTIONS && !failedCorrection;
   return <div className="renderExperience shell">
     <section className="renderHero"><div className="renderHeroCopy"><p className="eyebrow">Living-room pilot</p><h1>See your room. Check the details.</h1><p>The photograph and approved brief guide an illustrative design. Furniture shown is a concept, not an exact product match or a guarantee of physical fit. Any retailer products are shown separately with their own photos and links.</p></div></section>
-    {result && <section className={styles.generationComplete} role="status" aria-live="polite"><p><strong>Your room visual is ready.</strong><span>The finished image is shown below.</span></p><a href="#generated-room-image">View finished image ↓</a></section>}
-    <div className={styles.comparison}><figure><img src={originalUrl} alt="Original room photograph used as the architectural reference" /><figcaption>Original room</figcaption></figure>{result && <figure ref={resultFigureRef} id="generated-room-image"><img src={result.resultUrl!} alt="Generated living-room pilot awaiting or undergoing human review" /><figcaption>Generated attempt · correction {result.metadata.correctionAttempt || 0} of {MAX_CORRECTIONS}</figcaption></figure>}</div>
+    {result && <section className={styles.generationComplete} role="status" aria-live="polite"><p><strong>Your room visual is ready.</strong><span>{myRoomsSaveState === 'saving' ? 'Adding it to My Rooms…' : myRoomsSaveState === 'saved' ? 'Saved to My Rooms.' : myRoomsSaveState === 'sign-in' ? 'Sign in to add this room to My Rooms.' : myRoomsSaveState === 'error' ? 'Could not add it to My Rooms yet.' : 'The finished image is shown below.'}</span></p>{myRoomsSaveState === 'sign-in' ? <Link href="/account">Sign in</Link> : myRoomsSaveState === 'error' ? <button type="button" className="button buttonSecondary" onClick={() => result && addCurrentRoomToMyRooms(result.generation_id)}>Try again</button> : <a href="#generated-room-image">View finished image ↓</a>}</section>}
+    <div className={styles.comparison}><figure><img src={originalUrl} alt="Original room photograph used as the architectural reference" /><figcaption>Original room</figcaption></figure>{result && <figure ref={resultFigureRef} id="generated-room-image"><img src={result.resultUrl!} alt="Generated living-room pilot awaiting or undergoing human review" onLoad={() => { void addCurrentRoomToMyRooms(result.generation_id); }} /><figcaption>Generated attempt · correction {result.metadata.correctionAttempt || 0} of {MAX_CORRECTIONS}</figcaption></figure>}</div>
     <section className={styles.panel}><h2>Your room-design cues</h2><p>Optional guidance for selected products. The generated room is illustrative and does not promise an exact match to retailer products.</p>
       <div className={styles.products}>{selection.products.map(product => <article key={product.selected.variantId}>
         {product.selected.image && <img src={product.selected.image.url} alt={`${product.selected.productName} — ${product.selected.variantName}`} />}
