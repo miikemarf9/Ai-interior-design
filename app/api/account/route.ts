@@ -37,7 +37,7 @@ export async function GET() {
         limit 1
       ) latest on true
       where d.account_id=$1::uuid
-        and d.status='rendered'
+        and d.status <> 'archived'
       order by d.updated_at desc`,
       [account.id],
     ),
