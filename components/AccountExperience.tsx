@@ -32,7 +32,7 @@ type AccountPayload = {
     status: string;
     updatedAt: string;
     originalUrl: string | null;
-    currentDesignUrl: string | null;
+    currentDesignUrl: string;
     renderedAt: string | null;
     briefTitle: string | null;
     briefDirection: string | null;
@@ -428,14 +428,8 @@ export function AccountExperience() {
             {payload.rooms.map((room) => (
               <article className="savedRoomCard" key={room.id}>
                 <button className="savedRoomVisual" type="button" onClick={() => openRoom(room.id)} disabled={busy}>
-                  {room.currentDesignUrl ? (
-                    <img src={room.currentDesignUrl} alt={room.roomName} />
-                  ) : room.originalUrl ? (
-                    <img src={room.originalUrl} alt={room.roomName} />
-                  ) : (
-                    <span>No room image yet</span>
-                  )}
-                  <i>{room.currentDesignUrl ? "Current design" : "Original room"}</i>
+                  <img src={room.currentDesignUrl} alt={room.roomName} />
+                  <i>Current design</i>
                 </button>
                 <div className="savedRoomBody">
                   <div className="savedRoomTitle">
@@ -464,7 +458,7 @@ export function AccountExperience() {
           <div className="emptySavedRooms">
             <span className="microLabel">Nothing to organise yet</span>
             <h3>Your first room will appear here automatically.</h3>
-            <p>Start with one room. Multiple homes and projects can sit on this same account structure later.</p>
+            <p>Create a design to see it here.</p>
             <Link className="button buttonPrimary" href="/design">Design my first room</Link>
           </div>
         )}
