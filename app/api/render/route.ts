@@ -446,6 +446,7 @@ export async function POST(request: Request) {
 
     const images = [
       { image_url: roomAsset.imageUrl },
+      ...products.map((product) => ({ image_url: product.imageUrl })),
       ...(previousResultUrl ? [{ image_url: previousResultUrl }] : []),
     ];
 
