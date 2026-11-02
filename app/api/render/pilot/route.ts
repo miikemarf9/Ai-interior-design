@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     if (!uuid(designId) || !ownerKey) return NextResponse.json({ error: 'Room access required.' }, { status: 400 });
     await recoverStaleGenerations(designId, ownerKey);
     const rows = await getCatalogDb().query(
-      `select g.id::text as generation_id,g.status,g.result_asset_id::text as result_asset_id,
+      `select g.id::text as generation_id,g.prompt_version,g.status,g.result_asset_id::text as result_asset_id,
        g.cost_usd_micros,g.cost_gbp_minor,g.duration_ms,g.created_at::text,g.failure_message,g.metadata,
        exists (select 1 from public.design_credit_ledger l where l.generation_id=g.id and l.event_type='render_refund') as credit_refunded
        from public.render_generations g join public.room_designs d on d.id=g.design_id
