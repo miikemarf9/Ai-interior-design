@@ -323,7 +323,7 @@ function roomCoordinationFit(
   const score = colourScore + materialScore;
   const reason = missingDetails
     ? "Supplier colour or material details are incomplete; check the finish before buying."
-    : colourScore <= -2
+    : colourScore < 0
       ? "Its colour is less connected to the room palette; review it before keeping this choice."
       : "Its colour and material sit well with the pieces already selected.";
   return { score, reason };
