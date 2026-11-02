@@ -39,7 +39,7 @@ export function buildRoomRenderPrompt(
     const materials = selected?.materials.length ? selected.materials.join(", ") : "not confirmed in the feed";
 
     return [
-      `Product reference image ${index + 2} is the exact selected retailer item: ${product.brandName ? `${product.brandName} ` : ""}${product.name}${product.variantName ? ` / ${product.variantName}` : ""} (${product.categoryName}). Match its visible silhouette, proportions, upholstery or finish, colour, legs, cushions and distinctive details as closely as the reference photo allows. Do not replace it with a generic item or change its defining shape or material.`
+      `Product reference image ${index + 2} is the exact selected retailer item: ${product.brandName ? `${product.brandName} ` : ""}${product.name}${product.variantName ? ` / ${product.variantName}` : ""} (${product.categoryName}). Match its visible silhouette, proportions, upholstery or finish, colour, legs, cushions and distinctive details as closely as the reference photo allows. Do not replace it with a generic item or change its defining shape or material.`,
       `Supplier colour tags: ${colours}. Supplier material tags: ${materials}. Treat tags as supporting information; use the product photo as the primary appearance reference.`
       `Intended placement: ${placements.find(item => item.variantId === product.variantId)?.instruction || "Not supplied — place naturally without inventing a specific requested position"}. Quantity: ${product.quantity ?? 1}. Dimensions W × D × H: ${dimensions}. Integrate this selected item naturally into the room; do not reproduce the reference photo background, crop, labels or watermark.`
     ].join(" ");
