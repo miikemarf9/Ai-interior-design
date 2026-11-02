@@ -247,7 +247,8 @@ const COLOUR_FAMILIES: Record<string, string> = {
   burgundy: "rose", "dusty-pink": "rose",
 };
 const COMPATIBLE_COLOUR_FAMILIES = new Set([
-  "earth|green", "earth|rose", "blue|earth", "blue|green", "green|warm-neutral",
+  "earth|green", "earth|rose", "blue|earth", "blue|green", "blue|warm-neutral",
+  "cool-neutral|earth", "cool-neutral|rose", "green|rose", "green|warm-neutral",
   "rose|warm-neutral", "earth|warm-neutral",
 ]);
 
