@@ -3,7 +3,7 @@ import type { ProductSelection } from "@/lib/catalog/selection";
 
 import type { Placement } from "@/lib/render/pilot";
 
-export const RENDER_PROMPT_VERSION = "living-room-illustrative-v3";
+export const RENDER_PROMPT_VERSION = "living-room-residential-v4";
 
 export type RenderProductReference = {
   quantity?: number;
@@ -41,7 +41,7 @@ export function buildRoomRenderPrompt(
     ].join(" ");
   });
 
-  return `Edit reference image 1, which is the customer's real living room, into a photorealistic illustrative interior design concept.
+  return `Edit reference image 1, which is the customer's real living room, into a photorealistic image of that room furnished as a comfortable, welcoming home.
 
 NON-NEGOTIABLE ROOM RULES
 - Preserve the exact camera viewpoint, perspective, room geometry, ceiling height, windows, doors, openings, fireplace/chimney structure, radiators and fixed architectural features visible in reference image 1.
@@ -51,6 +51,14 @@ NON-NEGOTIABLE ROOM RULES
 - Respect all supplied measurements and restrictions. Do not imply exact fit where dimensions are incomplete.
 - Keep the result plausible as a real UK home and natural interior photograph.
 - No people, logos, labels, product callouts, text overlays or watermarks.
+
+THE FEEL OF THE ROOM
+- Make this feel like a real home the customer could relax in every day, not a furniture showroom, catalogue set, product demonstration or empty display suite.
+- Show a coherent, usable living room: arrange seating for the stated activities, keep practical circulation space, and make tables and storage feel naturally reachable.
+- Use comfortable residential details where they suit the brief: tactile fabrics, soft furnishings, warm layered lighting, and a small amount of personal-scale styling. Keep the room tidy and believable; do not add clutter or decorative props just to fill space.
+- Integrate selected furniture into the overall room composition. Do not isolate products, line them up like a catalogue, give every item its own spotlight, or make any one product dominate the room.
+- Prefer relaxed, natural placement over rigid symmetry or showroom staging. Keep lighting inviting and photographic rather than dramatic or commercial.
+- The room should feel settled and welcoming while remaining faithful to the customer's actual room, approved brief, practical needs and dislikes. Do not invent people, personal photographs, pets, or possessions.
 
 APPROVED DESIGN BRIEF
 ${JSON.stringify(visualBrief)}
@@ -71,13 +79,14 @@ ${productLines.length ? "The selected products, if any, are broad style cues onl
 ${productLines.join("\n") || "No exact retailer-product likeness is requested."}
 
 COMPOSITION
-- Place illustrative furniture naturally and at believable scale.
+- Compose the image as a lived-in residential room photograph, with the whole layout reading comfortably and naturally rather than as a collection of featured products.
+- Place illustrative furniture naturally and at believable scale, leaving sensible open routes through the room and enough breathing space around seating.
 - Preserve retained furniture and integrate it with the concept.
 - Follow the approved palette, materials, style and practical requirements.
 - Do not imply that furniture in the render is an exact retailer item.
 - If a selected product cannot be placed plausibly, prioritise room geometry and realism rather than distorting the room or product.
 - Lighting should look natural and photographic, with coherent shadows and reflections.
-- The final image should feel premium and editorial but still recognisably be the customer's original room.
+- Make comfort and everyday usability more important than dramatic styling or product visibility. The finished room must still be recognisably the customer's original room.
 
 ${correction ? `CONTROLLED CORRECTION
 Reference image 2 is the previous failed result, not an architectural reference. Reference image 1 remains the source of truth for the room. Correct only these identified issues: ${correction}
