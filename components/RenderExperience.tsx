@@ -102,7 +102,7 @@ export function RenderExperience() {
         }
         const savedSuccessForRoom = history.attempts?.find((item: Attempt) => item.status === 'succeeded'
           && item.resultUrl
-          && item.metadata?.snapshot?.roomAssetId === savedRuntime.roomAssetId);
+          && item.metadata?.snapshot?.roomAssetId);
         if (!nextSelection.products.length) {
           if (savedSuccessForRoom?.metadata.snapshot.selection?.products?.length) {
             // Keep a completed visual accessible even when its retailer prices have since changed.
@@ -140,7 +140,9 @@ export function RenderExperience() {
     clearRetryableRenderRequest(context, data.attempts || []);
     return data;
   }
-  const result = attempts.find(item => item.status === 'succeeded' && item.resultUrl && item.metadata?.snapshot?.roomAssetId === runtime?.roomAssetId);
+  // History is already scoped to this saved design, so a changed browser upload reference
+  // must not hide a result that belongs to the design.
+  const result = attempts.find(item => item.status === 'succeeded' && item.resultUrl && item.metadata?.snapshot?.roomAssetId);
   const processing = attempts.some(item => item.status === 'processing');
   async function addCurrentRoomToMyRooms(generationId: string) {
     if (!runtime) return;
@@ -259,7 +261,7 @@ export function RenderExperience() {
   }
   if (!ready) return <section className="renderLoading shell"><h1>Preparing your room visualisation.</h1><p>Checking your room photograph and approved brief.</p></section>;
   if (blocked || !selection || !runtime) return <section className="renderMissing shell"><p className="eyebrow">Living-room pilot</p><h1>Your room visual can’t start yet.</h1><p>{blocked || 'The pilot is not ready.'}</p><Link className="button buttonPrimary" href="/products">Review furniture and prices</Link></section>;
-  const originalUrl = `/api/assets/${runtime.roomAssetId}?ownerKey=${encodeURIComponent(runtime.ownerKey)}`;
+  const originalUrl = `/api/assets/${result?.metadata?.snapshot?.roomAssetId || runtime.roomAssetId}?ownerKey=${encodeURIComponent(runtime.ownerKey)}`;
   const reviewed = result?.metadata.humanReview;
   const correctionReady = !!result && reviewed?.outcome === 'needs_correction' && result.metadata.correctionAttempt < MAX_CORRECTIONS && !failedCorrection;
   return <div className="renderExperience shell">
