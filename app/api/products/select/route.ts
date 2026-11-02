@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
 import { getLiveSelectionCandidates } from "@/lib/catalog/repository";
-import { applySelectionChoices, approvalSnapshot, buildProductSelection, selectionTotals, type SelectionChoice } from "@/lib/catalog/selection";
+import { applySelectionChoices, approvalSnapshot, buildProductSelection, selectionTotals, type SelectionCandidate, type SelectionChoice } from "@/lib/catalog/selection";
 
 export const runtime = "nodejs";
 
@@ -26,8 +26,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Please review your room answers before selecting furniture.' }, { status: 400 });
     }
     const candidates = await getLiveSelectionCandidates();
-    let selection = buildProductSelection(body.intake, body.brief, candidates);
+    const pairIds = body.intake.furniturePair?.variantIds;
+    const pairCandidates = Array.isArray(pairIds) && pairIds.length === 2 && pairIds.every(id => typeof id === 'string') && new Set(pairIds).size === 2
+      ? pairIds.map(id => candidates.find(candidate => candidate.variantId === id))
+      : [];
+    const selectedPairCandidates = pairCandidates.filter((candidate): candidate is SelectionCandidate => Boolean(candidate));
+    const pairIsValid = pairCandidates.length === 2 && selectedPairCandidates.length === 2
+      && selectedPairCandidates[0].category === 'sofas'
+      && ['coffee-tables', 'armchairs', 'tv-units'].includes(selectedPairCandidates[1].category);
+    if (body.intake.furniturePair && !pairIsValid) {
+      return NextResponse.json({ error: 'That furniture group is no longer available. Refresh the catalogue and choose a current group.' }, { status: 409 });
+    }
+    const categoryLabels: Record<string, string> = { 'coffee-tables': 'Coffee table', armchairs: 'Armchairs', 'tv-units': 'TV unit' };
+    const selectionIntake = pairIsValid
+      ? { ...body.intake, change: [...new Set([...body.intake.change, 'Sofa', categoryLabels[selectedPairCandidates[1].category]])] }
+      : body.intake;
+    let selection = buildProductSelection(selectionIntake, body.brief, candidates);
     try {
+      if (pairIsValid) selection = applySelectionChoices(selection, selectedPairCandidates.map(candidate => ({ slot: candidate.category, variantId: candidate.variantId, quantity: 1 })), candidates);
       if (body.choices) selection = applySelectionChoices(selection, body.choices, candidates);
       if (body.includedSlots) {
         if (!Array.isArray(body.includedSlots) || body.includedSlots.length > 15 || new Set(body.includedSlots).size !== body.includedSlots.length || body.includedSlots.some(slot => typeof slot !== 'string')) {

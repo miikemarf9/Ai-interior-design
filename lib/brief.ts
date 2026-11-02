@@ -5,6 +5,7 @@ export type IntakeForBrief = {
   keep: string[];
   change: string[];
   styles: string[];
+  furniturePair?: { id: string; title: string; variantIds: string[]; styles: string[]; colours: string[]; materials: string[] };
   colours: string[];
   materials: string[];
   dislikes: string;
@@ -63,7 +64,9 @@ export function buildFallbackBrief(intake: IntakeForBrief): DesignBrief {
 
   return {
     title: `Your ${room} brief`,
-    direction: `${intake.projectGoal === 'furnish' ? 'Furnish' : 'Refresh'} your ${room} in ${style.toLowerCase()} style, with ${colour.toLowerCase()}.`,
+    direction: intake.furniturePair
+      ? `${intake.projectGoal === 'furnish' ? 'Furnish' : 'Refresh'} your ${room} around the selected furniture pairing: ${intake.furniturePair.title}. Use ${colour.toLowerCase()} as the wider palette.`
+      : `${intake.projectGoal === 'furnish' ? 'Furnish' : 'Refresh'} your ${room} in ${style.toLowerCase()} style, with ${colour.toLowerCase()}.`,
     keep: `Retain ${keeps.toLowerCase()}.${keepNotes}`,
     change: `Focus on ${changes.toLowerCase()}.${placeNotes}`,
     palette: colour,
