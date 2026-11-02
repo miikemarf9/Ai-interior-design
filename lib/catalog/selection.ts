@@ -236,10 +236,104 @@ function freshnessScore(lastCheckedAt: string) {
   return 0;
 }
 
+const WARM_NEUTRAL_COLOURS = new Set(["warm-white", "cream", "beige", "taupe", "brown"]);
+const COOL_NEUTRAL_COLOURS = new Set(["charcoal", "grey"]);
+const COLOUR_FAMILIES: Record<string, string> = {
+  "warm-white": "warm-neutral", cream: "warm-neutral", beige: "warm-neutral", taupe: "warm-neutral", brown: "warm-neutral",
+  charcoal: "cool-neutral", grey: "cool-neutral", black: "black",
+  olive: "green", "forest-green": "green", sage: "green",
+  navy: "blue", "dusty-blue": "blue",
+  terracotta: "earth", ochre: "earth",
+  burgundy: "rose", "dusty-pink": "rose",
+};
+const COMPATIBLE_COLOUR_FAMILIES = new Set([
+  "earth|green", "earth|rose", "blue|earth", "blue|green", "green|warm-neutral",
+  "rose|warm-neutral", "earth|warm-neutral",
+]);
+
+function colourCompatibility(left: string, right: string) {
+  if (left === right) return 4;
+  if (left === "black" || right === "black") return 2;
+  const leftFamily = COLOUR_FAMILIES[left];
+  const rightFamily = COLOUR_FAMILIES[right];
+  if (!leftFamily || !rightFamily) return -1;
+  if (leftFamily === rightFamily) return 3;
+  if (
+    (WARM_NEUTRAL_COLOURS.has(left) && COOL_NEUTRAL_COLOURS.has(right))
+    || (WARM_NEUTRAL_COLOURS.has(right) && COOL_NEUTRAL_COLOURS.has(left))
+  ) return 0;
+  const pair = [leftFamily, rightFamily].sort().join("|");
+  return COMPATIBLE_COLOUR_FAMILIES.has(pair) ? 1 : -2;
+}
+
+const MATERIAL_FAMILIES: Record<string, string> = {
+  oak: "wood", walnut: "wood", ash: "wood", pine: "wood",
+  linen: "textile", cotton: "textile", velvet: "textile", boucle: "textile", wool: "textile",
+  leather: "leather", rattan: "natural-fibre", cane: "natural-fibre",
+  stone: "mineral", marble: "mineral", glass: "glass", steel: "metal", brass: "metal",
+};
+const COMPATIBLE_MATERIAL_FAMILIES = new Set([
+  "natural-fibre|textile", "natural-fibre|wood", "leather|textile",
+  "glass|metal", "leather|wood", "metal|mineral", "metal|wood",
+  "mineral|wood", "textile|wood",
+]);
+
+function materialCompatibility(left: string, right: string) {
+  if (left === right) return 3;
+  const leftFamily = MATERIAL_FAMILIES[left];
+  const rightFamily = MATERIAL_FAMILIES[right];
+  if (!leftFamily || !rightFamily) return 0;
+  if (leftFamily === rightFamily) return 2;
+  const pair = [leftFamily, rightFamily].sort().join("|");
+  return COMPATIBLE_MATERIAL_FAMILIES.has(pair) ? 1 : 0;
+}
+
+function roomCoordinationFit(
+  candidate: SelectionCandidate,
+  intake: IntakeForBrief,
+  selectedProducts: ProposedProduct[],
+) {
+  if (!selectedProducts.length) return { score: 0, reason: null as string | null };
+
+  const existingColours = selectedProducts.flatMap((product) => product.selected.colours);
+  let colourScore = 0;
+  let colourMissing = candidate.colours.length === 0 || existingColours.length === 0;
+  if (!colourMissing) {
+    const bestColourFit = Math.max(...candidate.colours.flatMap((colour) =>
+      existingColours.map((existing) => colourCompatibility(colour, existing))));
+    const wantedColours = mapped(intake.colours, COLOUR_ALIASES);
+    const explicitlyRequested = candidate.colours.some((colour) => wantedColours.includes(colour));
+    colourScore = bestColourFit >= 3 ? 6 : bestColourFit >= 1 ? 3 : bestColourFit === 0 ? -1 : explicitlyRequested ? -2 : -9;
+  } else {
+    colourScore = -2;
+  }
+
+  const existingMaterials = selectedProducts.flatMap((product) => product.selected.materials);
+  let materialScore = 0;
+  const materialMissing = candidate.materials.length === 0 || existingMaterials.length === 0;
+  if (!materialMissing) {
+    const bestMaterialFit = Math.max(...candidate.materials.flatMap((material) =>
+      existingMaterials.map((existing) => materialCompatibility(material, existing))));
+    materialScore = bestMaterialFit >= 3 ? 3 : bestMaterialFit >= 1 ? 2 : 0;
+  } else {
+    materialScore = -1;
+  }
+
+  const missingDetails = colourMissing || materialMissing;
+  const score = colourScore + materialScore;
+  const reason = missingDetails
+    ? "Supplier colour or material details are incomplete; check the finish before buying."
+    : colourScore <= -2
+      ? "Its colour is less connected to the room palette; review it before keeping this choice."
+      : "Its colour and material sit well with the pieces already selected.";
+  return { score, reason };
+}
+
 function scoreCandidate(
   candidate: SelectionCandidate,
   intake: IntakeForBrief,
   slotBudgetMinor: number,
+  selectedProducts: ProposedProduct[],
 ) {
   if (!Number.isSafeInteger(candidate.offer.priceMinor) || candidate.offer.priceMinor <= 0 || candidate.offer.priceMinor > slotBudgetMinor) return null;
   const terms = intake.dislikes.toLowerCase();
@@ -269,6 +363,7 @@ function scoreCandidate(
   const curationScore = (candidate.curationScore / 100) * 8;
   const freshScore = freshnessScore(candidate.offer.lastCheckedAt);
   const availabilityScore = candidate.offer.availability === "in_stock" ? 3 : candidate.offer.availability === "low_stock" ? 2 : 1;
+  const coordination = roomCoordinationFit(candidate, intake, selectedProducts);
 
   const reasons = [
     styleMatches ? `Matches ${styleMatches} selected style signal${styleMatches === 1 ? "" : "s"}.` : "Chosen for overall catalogue fit rather than an exact style tag.",
@@ -276,10 +371,11 @@ function scoreCandidate(
     materialMatches ? "Uses one or more preferred materials." : "Check the material against your practical needs.",
     fit.reason,
     candidate.offer.availability === "in_stock" ? "Listed in stock when last checked; confirm your postcode with the retailer." : "Listed as orderable when last checked; confirm delivery with the retailer.",
+    ...(coordination.reason ? [coordination.reason] : []),
   ];
 
   return {
-    score: Math.round(styleScore + colourScore + materialScore + budgetScore + fit.score + qualityScore + curationScore + freshScore + availabilityScore),
+    score: Math.max(0, Math.min(100, Math.round(styleScore + colourScore + materialScore + budgetScore + fit.score + qualityScore + curationScore + freshScore + availabilityScore + coordination.score))),
     reasons,
   };
 }
@@ -381,7 +477,7 @@ export function buildProductSelection(
       .filter((candidate) => eligibleForSlot(candidate, slot.category))
       .filter(candidate => candidate.offer.priceMinor <= remainingRoomBudgetMinor)
       .map((candidate) => {
-        const result = scoreCandidate(candidate, intake, slot.budgetMinor);
+        const result = scoreCandidate(candidate, intake, slot.budgetMinor, products);
         return result ? { candidate, ...result } : null;
       })
       .filter((item): item is { candidate: SelectionCandidate; score: number; reasons: string[] } => Boolean(item))
