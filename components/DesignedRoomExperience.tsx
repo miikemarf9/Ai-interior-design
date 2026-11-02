@@ -560,7 +560,7 @@ export function DesignedRoomExperience({
         />
       ) : null}
 
-      {!shared && data.resultAssetId ? <RoomHotspotEditor key={data.generationId} generationId={data.generationId} designId={data.designId} resultAssetId={data.resultAssetId} resultUrl={data.resultUrl} ownerKey={data.ownerKey || JSON.parse(localStorage.getItem('roomfound-design-runtime-v1') || '{}').ownerKey || ''} selection={data.selection} hotspots={data.hotspots || []} onSave={hotspots=>setData({...data,hotspots})} /> : null}
+      {!shared && data.resultAssetId ? <RoomHotspotEditor key={`${data.generationId}-${data.hotspotsPrepared ? 'located' : 'pending'}`} generationId={data.generationId} designId={data.designId} resultAssetId={data.resultAssetId} resultUrl={data.resultUrl} ownerKey={data.ownerKey || JSON.parse(localStorage.getItem('roomfound-design-runtime-v1') || '{}').ownerKey || ''} selection={data.selection} hotspots={data.hotspots || []} onSave={hotspots=>setData(current => current ? {...current, hotspots, hotspotsPrepared: true} : current)} /> : null}
 
       <section className="roomStory">
         <div>
