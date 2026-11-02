@@ -21,7 +21,7 @@ export type CatalogueClearance = {
 };
 
 // Six unique Aosom living-room pilot products reviewed against their exact feed photos and listings on 31 October 2026.
-// The photos appear in the affiliate product picker; product photos are not sent to the image model.
+// Product photos may be sent to the image model as visual references under site-owner-reported Aosom/Awin approval.
 export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
 {
     productId: 'cbbeafca-74f8-45a0-9bff-5657d837408f',
@@ -32,7 +32,7 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     packSize: 1,
     unitLabel: 'coffee table',
     displayEvidence: 'Aosom UK Awin feed photo and exact retailer listing reviewed 2026-10-31. Display is limited to the affiliate product picker with the retailer destination.',
-    aiReferenceEvidence: 'The product photo is not sent to the image model. The written brief may use broad material and style cues; exact product replication is not promised.',
+    aiReferenceEvidence: 'Site owner confirmed explicit Aosom/Awin approval on 2026-11-02 for approved Awin feed product photos to be sent to OpenAI as visual references. Generated rooms remain illustrative; exact replication is not guaranteed.',
     customerOutputEvidence: 'Generated rooms are labelled illustrative. The retailer item is shown separately with its current affiliate offer; no exact-match or fit guarantee is made.',
     dataEvidence: 'Aosom UK feed candidate F-AFU-B2743P403489; listing and photo checked 2026-10-31. Listing states solid mango wood, 55 × 85 × 45 cm, and free UK mainland delivery. Feed price was £423.99; the retailer page showed £404.99 at review. Confirm current price, stock, dimensions, and delivery on the retailer page. Demand on Transform My Room is untested.',
     reviewedAt: '2026-10-31T23:00:00.000Z',
@@ -49,7 +49,7 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     packSize: 1,
     unitLabel: 'TV unit',
     displayEvidence: 'Aosom UK Awin feed photo and exact retailer listing reviewed 2026-10-31. Display is limited to the affiliate product picker with the retailer destination.',
-    aiReferenceEvidence: 'The product photo is not sent to the image model. The written brief may use broad material and style cues; exact product replication is not promised.',
+    aiReferenceEvidence: 'Site owner confirmed explicit Aosom/Awin approval on 2026-11-02 for approved Awin feed product photos to be sent to OpenAI as visual references. Generated rooms remain illustrative; exact replication is not guaranteed.',
     customerOutputEvidence: 'Generated rooms are labelled illustrative. The retailer item is shown separately with its current affiliate offer; no exact-match or fit guarantee is made.',
     dataEvidence: 'Aosom UK feed candidate F-AFU-B2743P403490; listing and photo checked 2026-10-31. Listing states solid mango wood, 35 × 110 × 47 cm, and free UK mainland delivery. Feed price was £549.99; the retailer page showed £585.99 at review. Confirm current price, stock, dimensions, and delivery on the retailer page. Demand on Transform My Room is untested.',
     reviewedAt: '2026-10-31T23:00:00.000Z',
@@ -66,7 +66,7 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     packSize: 1,
     unitLabel: 'chair set',
     displayEvidence: 'Aosom UK Awin feed photo and exact retailer listing reviewed 2026-10-31. Display is limited to the affiliate product picker with the retailer destination.',
-    aiReferenceEvidence: 'The product photo is not sent to the image model. The written brief may use broad upholstery, colour, and style cues; exact product replication is not promised.',
+    aiReferenceEvidence: 'Site owner confirmed explicit Aosom/Awin approval on 2026-11-02 for approved Awin feed product photos to be sent to OpenAI as visual references. Generated rooms remain illustrative; exact replication is not guaranteed.',
     customerOutputEvidence: 'Generated rooms are labelled illustrative. The retailer item is shown separately with its current affiliate offer; no exact-match or fit guarantee is made.',
     dataEvidence: 'Aosom UK Awin feed candidate F-DEK-W1397P154376; listing and photo checked 2026-10-31. Listing states forest-green chenille upholstery, a 360° swivel armchair, matching crescent ottoman, 107 × 105 × 82 cm, and free UK mainland delivery. Feed price was £533.99; the retailer page showed £544.99 at review. Confirm current price, stock, dimensions, and delivery on the retailer page. Demand on Transform My Room is untested.',
     reviewedAt: '2026-10-31T23:00:00.000Z',
@@ -83,7 +83,7 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     packSize: 1,
     unitLabel: 'sofa',
     displayEvidence: 'Aosom UK Awin feed photo and exact listing reviewed 2026-10-31; display is limited to the affiliate product picker with the retailer destination.',
-    aiReferenceEvidence: 'Product photo is not sent to OpenAI. The written brief may use broad material and style cues only; exact product replication is not promised.',
+    aiReferenceEvidence: 'Site owner confirmed explicit Aosom/Awin approval on 2026-11-02 for approved Awin feed product photos to be sent to OpenAI as visual references. Generated rooms remain illustrative; exact replication is not guaranteed.',
     customerOutputEvidence: 'The generated room is labelled illustrative. The real retailer product remains separately shown with its live offer link; no exact-match or fit guarantee is made.',
     dataEvidence: 'Aosom UK feed candidate F-GOM-W2678S00017; price checked against Aosom UK at £575.99 on 2026-10-31; product page lists beige chenille, modular two-piece sectional, 250 × 158 × 60 cm, 4.6/5 from 21 ratings. Transform My Room demand is untested.',
     reviewedAt: '2026-10-31T16:00:00.000Z',
@@ -100,7 +100,7 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     packSize: 1,
     unitLabel: 'three-seat sofa',
     displayEvidence: 'Aosom UK Awin feed photo and exact product listing verified 2026-10-31; display is limited to the affiliate product picker with the retailer destination.',
-    aiReferenceEvidence: 'Product photo is not sent to OpenAI. The written brief may use broad upholstery, colour and style cues only; exact product replication is not promised.',
+    aiReferenceEvidence: 'Site owner confirmed explicit Aosom/Awin approval on 2026-11-02 for approved Awin feed product photos to be sent to OpenAI as visual references. Generated rooms remain illustrative; exact replication is not guaranteed.',
     customerOutputEvidence: 'Generated rooms are labelled illustrative. The real retailer product is shown separately with its current offer link; no exact-match or fit guarantee is made.',
     dataEvidence: 'Aosom UK feed candidate 839-499V71BN; listing verified 2026-10-31 at £369.99 and in stock. Aosom identifies a 3-seat brown polyester-fabric sofa with rubberwood legs, 196 × 80.5 × 89 cm, and 4.2/5 from 6 ratings. It fits Contemporary Classic and Modern Country.',
     reviewedAt: '2026-10-31T00:00:00.000Z',
@@ -117,7 +117,7 @@ export const CLEARED_CATALOGUE: readonly CatalogueClearance[] = [
     packSize: 1,
     unitLabel: 'two-seat sofa',
     displayEvidence: 'Aosom UK Awin feed photo and exact product listing verified 2026-10-31; display is limited to the affiliate product picker with the retailer destination.',
-    aiReferenceEvidence: 'Product photo is not sent to OpenAI. The written brief may use broad upholstery, colour and style cues only; exact product replication is not promised.',
+    aiReferenceEvidence: 'Site owner confirmed explicit Aosom/Awin approval on 2026-11-02 for approved Awin feed product photos to be sent to OpenAI as visual references. Generated rooms remain illustrative; exact replication is not guaranteed.',
     customerOutputEvidence: 'Generated rooms are labelled illustrative. The real retailer product is shown separately with its current offer link; no exact-match or fit guarantee is made.',
     dataEvidence: 'Aosom UK feed candidate F-GOM-W2678S00031; listing verified 2026-10-31 at £359.99 and in stock. Aosom identifies a beige two-seat corduroy sofa with solid-wood/plywood frame, 224 × 81 × 81 cm, and 4.5/5 from 38 ratings. It fits Modern Organic.',
     reviewedAt: '2026-10-31T00:00:00.000Z',
