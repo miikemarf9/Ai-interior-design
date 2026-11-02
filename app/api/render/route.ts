@@ -235,7 +235,7 @@ async function persistApprovedState(
        product_selection=$5::jsonb,
        approved_brief_at=coalesce(approved_brief_at, now()),
        approved_products_at=now(),
-       status=case when status='rendered' then 'rendered' else 'render_ready' end,
+       status=case when status in ('rendered','archived') then status else 'render_ready' end,
        updated_at=now()
      where id=$1::uuid and owner_key=$2
      returning id::text as id`,
