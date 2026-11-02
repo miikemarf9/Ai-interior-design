@@ -316,7 +316,7 @@ export async function recoverStaleGenerations(designId: string, ownerKey: string
       )
       select wallet_id,'render_refund',1,design_id,id,
         'render-refund:' || id::text,
-        '{\"reason\":\"Render stopped responding; credit restored during recovery.\"}'::jsonb
+        '{"reason":"Render stopped responding; credit restored during recovery."}'::jsonb
       from stale
       where coalesce((metadata->>'siteCreditExempt')::boolean,false)=false
       on conflict (idempotency_key) do nothing
