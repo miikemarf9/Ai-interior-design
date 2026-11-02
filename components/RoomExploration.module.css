@@ -67,12 +67,10 @@
 .hotspotAnchor[data-edge="left"][data-open="true"] .productPopover,
 .hotspotAnchor[data-edge="right"][data-open="true"] .productPopover { transform:translateY(0); }
 @media(hover:hover) and (pointer:fine) {
-  .hotspotAnchor:hover .productPopover, .hotspotAnchor:focus-within .productPopover { opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0); }
-  .hotspotAnchor:hover,.hotspotAnchor:focus-within { z-index:25; }
+  .hotspotAnchor:hover .productPopover { opacity:1; visibility:visible; pointer-events:auto; transform:translate(-50%,0); }
+  .hotspotAnchor:hover { z-index:25; }
   .hotspotAnchor[data-edge="left"]:hover .productPopover,
-  .hotspotAnchor[data-edge="right"]:hover .productPopover,
-  .hotspotAnchor[data-edge="left"]:focus-within .productPopover,
-  .hotspotAnchor[data-edge="right"]:focus-within .productPopover { transform:translateY(0); }
+  .hotspotAnchor[data-edge="right"]:hover .productPopover { transform:translateY(0); }
 }
 
 
@@ -91,7 +89,7 @@
 .popoverCta > span:last-child { font-size:18px; font-weight:400; line-height:1; }
 .popoverDetails { display:block; width:100%; margin-top:8px; padding:8px; border:0; background:none; color:#26372d; text-decoration:underline; text-underline-offset:3px; font-size:12px; font-weight:600; cursor:pointer; }
 .popoverFootnote { margin:8px 0 0; color:#697268; font-size:10.5px; line-height:1.45; text-align:center; }
-.popoverClose { position:absolute; top:5px; right:7px; display:grid; place-items:center; width:29px; height:29px; border:0; border-radius:50%; background:transparent; color:#56645a; font-size:22px; cursor:pointer; }
+.popoverClose { position:absolute; top:5px; right:7px; display:none; place-items:center; width:29px; height:29px; border:0; border-radius:50%; background:transparent; color:#56645a; font-size:22px; cursor:pointer; }
 .popoverClose:hover { background:#f2f4ef; }
 
 @media(max-width:700px) {
@@ -113,6 +111,7 @@
   .productName { font-size:13px; }
   .productPrice { font-size:25px; }
   .popoverCta { min-height:48px; }
+  .popoverClose { display:grid; }
 }
 @media(prefers-reduced-motion:reduce) {
   .productPopover,.popoverCta { transition:none; }
