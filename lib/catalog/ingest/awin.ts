@@ -54,21 +54,39 @@ const CATEGORY_RULES: Array<{ slug: string; terms: string[] }> = [
   { slug: "artwork", terms: ["wall art", "art print", "canvas"] },
 ];
 
-const MATERIALS = ["oak", "walnut", "ash", "pine", "linen", "cotton", "velvet", "boucle", "wool", "leather", "rattan", "cane", "stone", "marble", "glass", "steel", "brass"];
+const MATERIAL_TERMS: Array<[string, string[]]> = [
+  ["oak", ["oak"]],
+  ["walnut", ["walnut"]],
+  ["ash", ["ash"]],
+  ["pine", ["pine"]],
+  ["linen", ["linen"]],
+  ["cotton", ["cotton"]],
+  ["velvet", ["velvet"]],
+  ["boucle", ["boucle"]],
+  ["wool", ["wool"]],
+  ["leather", ["leather"]],
+  ["rattan", ["rattan"]],
+  ["cane", ["cane"]],
+  ["stone", ["stone"]],
+  ["marble", ["marble"]],
+  ["glass", ["glass"]],
+  ["steel", ["steel", "stainless steel"]],
+  ["brass", ["brass"]],
+];
 const COLOURS: Array<[string, string[]]> = [
-  ["warm-white", ["warm white", "ivory"]],
-  ["cream", ["cream"]],
-  ["beige", ["beige", "natural"]],
+  ["warm-white", ["warm white", "ivory", "off white"]],
+  ["cream", ["cream", "oatmeal"]],
+  ["beige", ["beige", "sand"]],
   ["taupe", ["taupe", "greige"]],
-  ["brown", ["brown", "chocolate"]],
+  ["brown", ["brown", "chocolate", "chestnut", "caramel"]],
   ["black", ["black"]],
   ["charcoal", ["charcoal", "anthracite"]],
   ["grey", ["grey", "gray"]],
   ["olive", ["olive"]],
-  ["forest-green", ["forest green", "dark green"]],
+  ["forest-green", ["forest green", "dark green", "emerald"]],
   ["sage", ["sage", "grey green", "gray green"]],
-  ["navy", ["navy", "dark blue"]],
-  ["dusty-blue", ["dusty blue", "pale blue"]],
+  ["navy", ["navy", "dark blue", "midnight blue"]],
+  ["dusty-blue", ["dusty blue", "pale blue", "light blue"]],
   ["terracotta", ["terracotta", "rust"]],
   ["ochre", ["ochre", "mustard"]],
   ["burgundy", ["burgundy", "wine"]],
@@ -127,27 +145,46 @@ function mapCategory(text: string, categoryPath: string | null) {
 
   return (categoryPath ? matchIn(categoryPath) : null) ?? matchIn(text);
 }
+function normalizedAttributeText(text: string) {
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function containsPhrase(haystack: string, phrase: string) {
+  const text = " " + normalizedAttributeText(haystack) + " ";
+  const needle = " " + normalizedAttributeText(phrase) + " ";
+  return text.includes(needle);
+}
+
+function isImitationMaterial(haystack: string, term: string) {
+  const text = " " + normalizedAttributeText(haystack) + " ";
+  const material = " " + normalizedAttributeText(term) + " ";
+  const prefixes = ["faux", "vegan", "imitation", "artificial", "pu", "bonded"];
+  const suffixes = ["effect", "look", "lookalike"];
+  return prefixes.some((prefix) => text.includes(" " + prefix + material))
+    || suffixes.some((suffix) => text.includes(material + suffix + " "));
+}
+
 function inferMaterials(text: string) {
-  const haystack = text.toLowerCase().replace(/bouclé/g, "boucle");
-  return MATERIALS.filter((material) => haystack.includes(material));
+  return MATERIAL_TERMS
+    .filter(([, terms]) => terms.some((term) => containsPhrase(text, term) && !isImitationMaterial(text, term)))
+    .map(([slug]) => slug);
 }
 
 function inferColours(text: string) {
-  const haystack = text.toLowerCase();
-  return COLOURS.filter(([, terms]) => terms.some((term) => haystack.includes(term))).map(([slug]) => slug);
+  return COLOURS.filter(([, terms]) => terms.some((term) => containsPhrase(text, term))).map(([slug]) => slug);
 }
 
 function inferStyles(text: string) {
-  const haystack = text.toLowerCase();
   const styles = new Set<string>();
-  if (/mid[- ]?century|retro|1960|1970|tapered leg/.test(haystack)) styles.add("mid-century");
-  if (/scandi|scandinavian|nordic|pale oak|light oak/.test(haystack)) styles.add("scandi");
-  if (/industrial|black steel|metal frame|reclaimed/.test(haystack)) styles.add("industrial");
-  if (/traditional|classic|chesterfield|button back|wingback/.test(haystack)) styles.add("classic");
-  if (/contemporary|modern|clean line|sleek/.test(haystack)) styles.add("contemporary");
-  if (/boucle|bouclé|warm neutral|natural texture|soft beige|minimal/.test(haystack)) styles.add("warm-minimal");
-  if (/colourful|colorful|statement colour|statement color|bold colour|bold color/.test(haystack)) styles.add("colourful");
-  if (/heritage|british|tailored|turned leg/.test(haystack)) styles.add("modern-british");
+  const matches = (...terms: string[]) => terms.some((term) => containsPhrase(text, term));
+  if (matches("mid century", "midcentury", "retro", "1960", "1960s", "1970", "1970s", "tapered leg")) styles.add("mid-century");
+  if (matches("japandi", "scandi", "scandinavian", "nordic", "pale oak", "light oak", "minimalist")) styles.add("scandi");
+  if (matches("industrial", "black steel", "metal frame", "reclaimed", "distressed metal")) styles.add("industrial");
+  if (matches("traditional", "classic", "chesterfield", "button back", "wingback", "contemporary classic", "timeless")) styles.add("classic");
+  if (matches("contemporary", "modern", "clean line", "sleek")) styles.add("contemporary");
+  if (matches("modern organic", "organic modern", "boucle", "warm neutral", "natural texture", "natural wood", "soft beige", "minimal", "rattan", "cane", "rounded", "organic shape")) styles.add("warm-minimal");
+  if (matches("colourful", "colorful", "statement colour", "statement color", "bold colour", "bold color", "bold and colourful", "bold and colorful", "vibrant colour", "vibrant color", "jewel tone")) styles.add("colourful");
+  if (matches("modern country", "country style", "cottage style", "farmhouse", "shaker", "heritage", "british", "tailored", "turned leg")) styles.add("modern-british");
   return [...styles];
 }
 
@@ -219,10 +256,12 @@ export function normalizeLegacyAwinRow(row: Record<string, unknown>): FeedCandid
 
   const description = first(row.description, row.product_short_description) || null;
   const categoryPath = first(row.merchant_product_category_path, row.merchant_category, row.category_name) || null;
-  const colourText = first(row.colour) || null;
-  const materialText = first(row.material, row.specifications) || null;
+  const colourText = first(row.colour, row.color, row.colour_name, row.color_name) || null;
+  const materialText = first(row.material, row.material_description, row.specifications) || null;
   const dimensionsText = first(row.dimensions, row.specifications) || null;
-  const searchText = [title, description, categoryPath, colourText, materialText, first(row.keywords)].filter(Boolean).join(" ");
+  const styleText = [title, description, categoryPath, first(row.keywords), first(row.style, row.style_name, row.design_style)].filter(Boolean).join(" ");
+  const colourEvidence = [title, colourText].filter(Boolean).join(" ");
+  const materialEvidence = [title, materialText].filter(Boolean).join(" ");
   const dimensions = parseDimensions(dimensionsText);
 
   const base = {
@@ -250,9 +289,9 @@ export function normalizeLegacyAwinRow(row: Record<string, unknown>): FeedCandid
     mpn: first(row.mpn, row.model_number) || null,
     sourceUpdatedAt: first(row.last_updated) || null,
     normalizedCategorySlug: mapCategory([title, categoryPath].filter(Boolean).join(" "), categoryPath),
-    inferredStyleSlugs: inferStyles(searchText),
-    inferredMaterialSlugs: inferMaterials(searchText),
-    inferredColourSlugs: inferColours(searchText),
+    inferredStyleSlugs: inferStyles(styleText),
+    inferredMaterialSlugs: inferMaterials(materialEvidence),
+    inferredColourSlugs: inferColours(colourEvidence),
   };
 
   return { ...base, qualityScore: qualityScore(base), raw: row };
