@@ -321,10 +321,14 @@ export async function recoverStaleGenerations(designId: string, ownerKey: string
       where coalesce((metadata->>'siteCreditExempt')::boolean,false)=false
       on conflict (idempotency_key) do nothing
       returning wallet_id
+    ), refund_totals as (
+      select wallet_id,count(*)::integer as refund_count
+      from refunds
+      group by wallet_id
     )
     update public.design_credit_wallets w
-    set balance=w.balance+1,updated_at=now()
-    from refunds r
+    set balance=w.balance+r.refund_count,updated_at=now()
+    from refund_totals r
     where w.id=r.wallet_id`,
     [designId, ownerKey],
   );
