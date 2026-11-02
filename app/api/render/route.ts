@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getCurrentAccount } from "@/lib/auth";
@@ -33,126 +34,6 @@ type RenderRequest = {
   parentGenerationId?: string;
   correction?: string;
 };
-
-type ImageMetadata = { format: "jpeg" | "png" | "webp"; width: number; height: number; orientation: number };
-
-function readTiffOrientation(bytes: Uint8Array, start: number, end: number): number {
-  if (start + 8 > end) return 1;
-  const little = bytes[start] === 0x49 && bytes[start + 1] === 0x49;
-  const big = bytes[start] === 0x4d && bytes[start + 1] === 0x4d;
-  if (!little && !big) return 1;
-  const read16 = (offset: number) => little
-    ? bytes[offset] + bytes[offset + 1] * 256
-    : bytes[offset] * 256 + bytes[offset + 1];
-  const read32 = (offset: number) => little
-    ? bytes[offset] + bytes[offset + 1] * 256 + bytes[offset + 2] * 65536 + bytes[offset + 3] * 16777216
-    : bytes[offset] * 16777216 + bytes[offset + 1] * 65536 + bytes[offset + 2] * 256 + bytes[offset + 3];
-  const directory = start + read32(start + 4);
-  if (directory + 2 > end) return 1;
-  const entries = read16(directory);
-  for (let index = 0; index < entries; index += 1) {
-    const entry = directory + 2 + index * 12;
-    if (entry + 12 > end) break;
-    if (read16(entry) === 0x0112 && read16(entry + 2) === 3 && read32(entry + 4) >= 1) {
-      const orientation = read16(entry + 8);
-      return orientation >= 1 && orientation <= 8 ? orientation : 1;
-    }
-  }
-  return 1;
-}
-
-function readImageMetadata(bytes: Uint8Array): ImageMetadata {
-  const ascii = (offset: number, length: number) => {
-    let value = "";
-    for (let index = 0; index < length; index += 1) value += String.fromCharCode(bytes[offset + index] || 0);
-    return value;
-  };
-  const read16be = (offset: number) => bytes[offset] * 256 + bytes[offset + 1];
-  const read32be = (offset: number) => bytes[offset] * 16777216 + bytes[offset + 1] * 65536 + bytes[offset + 2] * 256 + bytes[offset + 3];
-  const read24le = (offset: number) => bytes[offset] + bytes[offset + 1] * 256 + bytes[offset + 2] * 65536;
-  const read32le = (offset: number) => bytes[offset] + bytes[offset + 1] * 256 + bytes[offset + 2] * 65536 + bytes[offset + 3] * 16777216;
-
-  if (bytes.length >= 24 && ascii(0, 8) === "\x89PNG\r\n\x1a\n") {
-    const width = read32be(16);
-    const height = read32be(20);
-    let orientation = 1;
-    for (let offset = 8; offset + 12 <= bytes.length;) {
-      const chunkLength = read32be(offset);
-      const chunkType = ascii(offset + 4, 4);
-      const dataStart = offset + 8;
-      const dataEnd = dataStart + chunkLength;
-      if (dataEnd + 4 > bytes.length) break;
-      if (chunkType === "eXIf") orientation = readTiffOrientation(bytes, dataStart, dataEnd);
-      if (chunkType === "IEND") break;
-      offset = dataEnd + 4;
-    }
-    if (width && height) return { format: "png", width, height, orientation };
-  }
-
-  if (bytes.length >= 4 && ascii(0, 2) === "\xff\xd8") {
-    const sofMarkers = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
-    let width = 0;
-    let height = 0;
-    let orientation = 1;
-    let offset = 2;
-    while (offset + 4 <= bytes.length) {
-      if (bytes[offset] !== 0xff) {
-        offset += 1;
-        continue;
-      }
-      while (offset < bytes.length && bytes[offset] === 0xff) offset += 1;
-      const marker = bytes[offset];
-      offset += 1;
-      if (marker === 0xd9 || marker === 0xda) break;
-      if (marker === 0x00 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
-      if (offset + 2 > bytes.length) break;
-      const segmentLength = read16be(offset);
-      if (segmentLength < 2 || offset + segmentLength > bytes.length) break;
-      const dataStart = offset + 2;
-      const dataEnd = offset + segmentLength;
-      if (marker === 0xe1 && ascii(dataStart, 6) === "Exif\x00\x00") {
-        orientation = readTiffOrientation(bytes, dataStart + 6, dataEnd);
-      }
-      if (sofMarkers.has(marker) && dataStart + 5 <= dataEnd) {
-        height = read16be(dataStart + 1);
-        width = read16be(dataStart + 3);
-      }
-      offset += segmentLength;
-    }
-    if (width && height) return { format: "jpeg", width, height, orientation };
-  }
-
-  if (bytes.length >= 30 && ascii(0, 4) === "RIFF" && ascii(8, 4) === "WEBP") {
-    let width = 0;
-    let height = 0;
-    let orientation = 1;
-    for (let offset = 12; offset + 8 <= bytes.length;) {
-      const chunkType = ascii(offset, 4);
-      const chunkLength = read32le(offset + 4);
-      const dataStart = offset + 8;
-      const dataEnd = dataStart + chunkLength;
-      if (dataEnd > bytes.length) break;
-      if (chunkType === "VP8X" && chunkLength >= 10) {
-        width = 1 + read24le(dataStart + 4);
-        height = 1 + read24le(dataStart + 7);
-      } else if (chunkType === "VP8L" && chunkLength >= 5 && bytes[dataStart] === 0x2f) {
-        const b1 = bytes[dataStart + 1], b2 = bytes[dataStart + 2], b3 = bytes[dataStart + 3], b4 = bytes[dataStart + 4];
-        width = 1 + (((b2 & 0x3f) << 8) | b1);
-        height = 1 + (((b4 & 0x0f) << 10) | (b3 << 2) | ((b2 & 0xc0) >> 6));
-      } else if (chunkType === "VP8 " && chunkLength >= 10 && bytes[dataStart + 3] === 0x9d && bytes[dataStart + 4] === 0x01 && bytes[dataStart + 5] === 0x2a) {
-        width = (bytes[dataStart + 6] | (bytes[dataStart + 7] << 8)) & 0x3fff;
-        height = (bytes[dataStart + 8] | (bytes[dataStart + 9] << 8)) & 0x3fff;
-      } else if (chunkType === "EXIF") {
-        const prefix = ascii(dataStart, 6) === "Exif\x00\x00" ? 6 : 0;
-        orientation = readTiffOrientation(bytes, dataStart + prefix, dataEnd);
-      }
-      if (width && height) return { format: "webp", width, height, orientation };
-      offset = dataEnd + (chunkLength % 2);
-    }
-  }
-
-  throw new Error("The uploaded or generated image has an unsupported or unreadable file header.");
-}
 
 type OpenAIImageResponse = {
   data?: Array<{ b64_json?: string }>;
@@ -213,7 +94,7 @@ async function getRoomAsset(designId: string, ownerKey: string) {
   const imageUrl = asset.external_url
     ? asset.external_url
     : asset.base64
-      ? `data:${asset.mime_type};base64,${asset.base64.replace(/\s/g, "")}`
+      ? `data:${asset.mime_type};base64,${asset.base64}`
       : null;
 
   return imageUrl ? { ...asset, imageUrl } : null;
@@ -259,7 +140,12 @@ async function existingGeneration(generationId: string) {
       result_asset_id::text as result_asset_id,
       failure_message,
       cost_usd_micros,
-      duration_ms
+      duration_ms,
+      exists (
+        select 1 from public.design_credit_ledger l
+        where l.generation_id=public.render_generations.id
+          and l.event_type='render_refund'
+      ) as credit_refunded
      from public.render_generations
      where id=$1::uuid
      limit 1`,
@@ -270,6 +156,7 @@ async function existingGeneration(generationId: string) {
     failure_message: string | null;
     cost_usd_micros: number | null;
     duration_ms: number | null;
+    credit_refunded: boolean;
   }>;
   return rows[0] ?? null;
 }
@@ -299,10 +186,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "The room design choices are incomplete." }, { status: 400 });
   }
 
-  if (body.selection.products.length === 0) {
-    return NextResponse.json({ error: "Choose and approve at least one reviewed retailer product before creating a room visual.", code: "PRODUCT_SELECTION_REQUIRED" }, { status: 409 });
-  }
-
   if (body.selection.products.length > 6) {
     return NextResponse.json({ error: "The first living-room pilot is limited to six product references." }, { status: 409 });
   }
@@ -325,7 +208,6 @@ export async function POST(request: Request) {
   try {
     const candidates = await getLiveSelectionCandidates();
     const refreshed = applySelectionChoices(buildProductSelection(body.intake, body.brief, candidates), body.selection.products.map(item => ({ slot: item.slot, variantId: item.selected.variantId, quantity: item.quantity })));
-    if (!refreshed.products.length) return NextResponse.json({ error: 'No reviewed retailer products match this room. Adjust your choices before creating a room visual.', code: 'PRODUCT_SELECTION_REQUIRED' }, { status: 409 });
     if (approvalSnapshot(refreshed) !== approvalSnapshot(body.selection)) return NextResponse.json({ error: 'The approved collection has changed. Review the products again before generating.', code: 'SELECTION_CHANGED' }, { status: 409 });
     body.selection = refreshed;
     const roomAsset = await getRoomAsset(designId, ownerKey);
@@ -336,7 +218,7 @@ export async function POST(request: Request) {
     }
 
     if (!roomAsset.base64) return NextResponse.json({ error: 'Upload the actual room photograph for the pilot rather than using an example-room link.' }, { status: 409 });
-    const imageMetadata = readImageMetadata(Buffer.from(roomAsset.base64, 'base64'));
+    const imageMetadata = await sharp(Buffer.from(roomAsset.base64, 'base64')).metadata();
     const rotated = (imageMetadata.orientation || 1) >= 5;
     const sourceWidth = (rotated ? imageMetadata.height : imageMetadata.width) || 0;
     const sourceHeight = (rotated ? imageMetadata.width : imageMetadata.height) || 0;
@@ -377,9 +259,9 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    if (wallet.balance < 1 && !wallet.siteCreditExempt) {
+    if (wallet.balance < 1) {
       return NextResponse.json({
-        error: "You have used your free image. Buy 10 more image credits for £2 from your account page.",
+        error: "You do not have enough design credits for another render.",
         code: "NO_RENDER_CREDIT",
         balance: wallet.balance,
       }, { status: 402 });
@@ -403,7 +285,7 @@ export async function POST(request: Request) {
       productIds: products.map((product) => product.productId),
       quality,
       outputSize,
-      metadata: { snapshot: { intake: body.intake, brief: body.brief, selection: body.selection, placements: body.placements, roomAssetId: roomAsset.asset_id }, products, correctionAttempt, parentGenerationId: body.parentGenerationId || null, correction: body.correction || null, costBasis: IMAGE_COST_BASIS, humanReview: null },
+      metadata: { requestId, snapshot: { intake: body.intake, brief: body.brief, selection: body.selection, placements: body.placements, roomAssetId: roomAsset.asset_id }, products, correctionAttempt, parentGenerationId: body.parentGenerationId || null, correction: body.correction || null, costBasis: IMAGE_COST_BASIS, humanReview: null },
     });
 
     generationId = spend.generation_id;
@@ -422,11 +304,14 @@ export async function POST(request: Request) {
         });
       }
 
+      const safelyRetryable = prior?.status === "failed" && prior.credit_refunded;
       return NextResponse.json({
         error: prior?.status === "processing"
-          ? "This render request is already processing."
-          : "This render attempt has already finished. Start a new render request.",
-        code: "DUPLICATE_RENDER_REQUEST",
+          ? "This render is still processing. Its status will refresh automatically."
+          : safelyRetryable
+            ? "The previous render failed and your credit has been returned. You can safely start it again."
+            : "This render attempt has already finished. Check your balance before trying again.",
+        code: safelyRetryable ? "RENDER_FAILED_REFUNDED" : "DUPLICATE_RENDER_REQUEST",
         generationId,
         balance: spend.balance,
       }, { status: 409 });
@@ -461,7 +346,13 @@ export async function POST(request: Request) {
     });
 
     providerRequestId = response.headers.get("x-request-id");
-    const payload = await response.json() as OpenAIImageResponse;
+    const responseText = await response.text();
+    let payload: OpenAIImageResponse;
+    try {
+      payload = JSON.parse(responseText) as OpenAIImageResponse;
+    } catch {
+      throw new Error(`Image service returned an unreadable response (HTTP ${response.status}).`);
+    }
     measuredUsage = calculateImageCost(payload.usage, model);
     gbpCost = snapshotGbpCost(measuredUsage.costUsdMicros);
 
@@ -475,7 +366,7 @@ export async function POST(request: Request) {
     }
 
     const bytes = Buffer.from(resultBase64, "base64");
-    const resultMetadata = readImageMetadata(bytes);
+    const resultMetadata = await sharp(bytes).metadata();
     if (resultMetadata.format !== "jpeg" || !resultMetadata.width || !resultMetadata.height) throw new Error("Provider returned an invalid image file.");
     const sha256 = createHash("sha256").update(bytes).digest("hex");
     const durationMs = Date.now() - startedAt;
