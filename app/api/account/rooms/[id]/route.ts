@@ -75,6 +75,7 @@ export async function GET(
     selection: row.product_selection,
     resultAssetId: row.result_asset_id,
     hotspots: checkedHotspots(row.metadata?.hotspots,row.generation_id,row.result_asset_id,row.product_selection as any),
+    hotspotsPrepared: !!(row.metadata?.hotspots && row.metadata.hotspots.generationId === row.generation_id && row.metadata.hotspots.resultAssetId === row.result_asset_id),
     originalAssetId: row.original_room_asset_id,
     originalUrl: row.original_room_asset_id ? `/api/assets/${row.original_room_asset_id}` : null,
     generationId: row.generation_id,
