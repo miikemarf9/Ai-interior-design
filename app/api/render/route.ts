@@ -235,7 +235,7 @@ async function persistApprovedState(
        product_selection=$5::jsonb,
        approved_brief_at=coalesce(approved_brief_at, now()),
        approved_products_at=now(),
-       status='render_ready',
+       status=case when status='rendered' then 'rendered' else 'render_ready' end,
        updated_at=now()
      where id=$1::uuid and owner_key=$2
      returning id::text as id`,
@@ -530,12 +530,6 @@ export async function POST(request: Request) {
         from asset a
         where g.id=$5::uuid
         returning a.id
-      ),
-      design as (
-        update public.room_designs
-        set status='rendered', updated_at=now()
-        where id=$1::uuid
-        returning id
       )
       select id::text as asset_id from generation`,
       [

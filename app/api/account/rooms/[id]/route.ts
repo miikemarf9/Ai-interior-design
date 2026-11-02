@@ -85,6 +85,36 @@ export async function GET(
   });
 }
 
+export async function POST(
+  _request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const account = await getCurrentAccount();
+  if (!account) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+
+  const { id } = await context.params;
+  if (!validUuid(id)) return NextResponse.json({ error: "Room not found." }, { status: 404 });
+
+  const sql = getCatalogDb();
+  const rows = await sql.query(
+    `update public.room_designs d
+     set status='rendered',updated_at=now()
+     where d.id=$1::uuid
+       and d.account_id=$2::uuid
+       and exists (
+         select 1 from public.render_generations g
+         where g.design_id=d.id
+           and g.status='succeeded'
+           and g.result_asset_id is not null
+       )
+     returning d.id::text as id`,
+    [id,account.id],
+  ) as Array<{ id:string }>;
+
+  if (!rows[0]) return NextResponse.json({ error: "A finished room image is required before saving to My Rooms." }, { status: 409 });
+  return NextResponse.json({ saved:true });
+}
+
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> },
