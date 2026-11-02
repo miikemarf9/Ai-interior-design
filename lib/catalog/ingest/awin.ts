@@ -150,18 +150,18 @@ function normalizedAttributeText(text: string) {
 }
 
 function containsPhrase(haystack: string, phrase: string) {
-  const text = \` \${normalizedAttributeText(haystack)} \`;
-  const needle = \` \${normalizedAttributeText(phrase)} \`;
+  const text = " " + normalizedAttributeText(haystack) + " ";
+  const needle = " " + normalizedAttributeText(phrase) + " ";
   return text.includes(needle);
 }
 
 function isImitationMaterial(haystack: string, term: string) {
-  const text = \` \${normalizedAttributeText(haystack)} \`;
-  const material = \` \${normalizedAttributeText(term)} \`;
+  const text = " " + normalizedAttributeText(haystack) + " ";
+  const material = " " + normalizedAttributeText(term) + " ";
   const prefixes = ["faux", "vegan", "imitation", "artificial", "pu", "bonded"];
   const suffixes = ["effect", "look", "lookalike"];
-  return prefixes.some((prefix) => text.includes(\` \${prefix}\${material}\`))
-    || suffixes.some((suffix) => text.includes(\`\${material}\${suffix} \`));
+  return prefixes.some((prefix) => text.includes(" " + prefix + material))
+    || suffixes.some((suffix) => text.includes(material + suffix + " "));
 }
 
 function inferMaterials(text: string) {
