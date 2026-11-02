@@ -1021,6 +1021,9 @@ p { line-height: 1.65; }
 .roomProductsSection { padding:110px max(32px,6vw) 125px; background:#ede6da; color:var(--ink); }
 .roomProductsIntro { max-width:720px; margin-bottom:45px; }
 .roomProductsIntro > p:last-child { max-width:600px; color:var(--muted); }
+.roomPurchaseNote { max-width:720px !important; margin:18px 0 0; padding:14px 18px; border-left:2px solid var(--clay); background:rgba(255,255,255,.48); color:var(--ink) !important; font-size:11px; }
+.roomProductRetailer { display:block; margin-top:9px; color:var(--ink); font-size:10px !important; font-weight:700; }
+.roomProductShop { display:block; margin-top:7px; color:var(--clay); font-size:9px !important; font-weight:700; text-decoration:underline; }
 .roomProductRail { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(220px,310px); gap:14px; overflow-x:auto; padding-bottom:20px; scroll-snap-type:x proximity; }
 .roomProductCard { min-width:0; scroll-snap-align:start; border:0; background:transparent; padding:0; text-align:left; }
 .roomProductImage { aspect-ratio:1/1.08; position:relative; overflow:hidden; background:#ddd4c6; }
