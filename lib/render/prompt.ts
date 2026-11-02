@@ -3,7 +3,7 @@ import type { ProductSelection } from "@/lib/catalog/selection";
 
 import type { Placement } from "@/lib/render/pilot";
 
-export const RENDER_PROMPT_VERSION = "living-room-residential-v4";
+export const RENDER_PROMPT_VERSION = "living-room-residential-v5";
 
 export type RenderProductReference = {
   quantity?: number;
@@ -30,13 +30,17 @@ export function buildRoomRenderPrompt(
 ) {
   if (intake.roomType && intake.roomType !== 'living_room') throw new Error('Only the living-room pilot is enabled.');
   const { budget: _budget, ...visualBrief } = brief;
-  const productLines = products.map((product, index) => {
+  const productLines = products.map((product) => {
     const dimensions = [product.widthMm, product.depthMm, product.heightMm]
       .map((value) => value ? `${Math.round(value / 10)}cm` : "?")
       .join(" × ");
+    const selected = selection.products.find((item) => item.selected.variantId === product.variantId)?.selected;
+    const colours = selected?.colours.length ? selected.colours.join(", ") : "not confirmed in the feed";
+    const materials = selected?.materials.length ? selected.materials.join(", ") : "not confirmed in the feed";
 
     return [
       `Style cue: ${product.categoryName} — ${product.brandName ? `${product.brandName} ` : ""}${product.name}${product.variantName ? ` / ${product.variantName}` : ""}.`,
+      `Supplier colour tags: ${colours}. Supplier material tags: ${materials}. Treat these as broad palette cues only, not proof of the exact product finish.`,
       `Intended placement: ${placements.find(item => item.variantId === product.variantId)?.instruction || "Not supplied — do not infer an approved position"}. Quantity: ${product.quantity ?? 1}. Use this only as a broad visual cue; the generated room is illustrative, not an exact product match. Dimensions W × D × H: ${dimensions}.`,
     ].join(" ");
   });
@@ -59,6 +63,12 @@ THE FEEL OF THE ROOM
 - Integrate selected furniture into the overall room composition. Do not isolate products, line them up like a catalogue, give every item its own spotlight, or make any one product dominate the room.
 - Prefer relaxed, natural placement over rigid symmetry or showroom staging. Keep lighting inviting and photographic rather than dramatic or commercial.
 - The room should feel settled and welcoming while remaining faithful to the customer's actual room, approved brief, practical needs and dislikes. Do not invent people, personal photographs, pets, or possessions.
+
+COLOUR AND MATERIAL COORDINATION
+- Treat all selected pieces as one considered assortment, not independent products. The sofa or first selected item is the palette anchor; carry at least one colour family or compatible neutral through the other large pieces.
+- Keep colour undertones deliberate. Use neutrals as bridges, and add a contrasting accent only when it relates to the approved palette or repeats elsewhere. Avoid unrelated strong colours and competing wood tones.
+- Make different materials feel intentional: repeat a key timber or metal finish where it appears, and pair wood naturally with textiles, natural fibres, stone or glass. A coordinated room does not need an identical matching set.
+- Follow the approved customer palette first. Supplier colour/material tags below are broad cues and may be incomplete; never invent an exact finish when the feed has not confirmed one.
 
 APPROVED DESIGN BRIEF
 ${JSON.stringify(visualBrief)}
