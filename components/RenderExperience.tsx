@@ -100,12 +100,22 @@ export function RenderExperience() {
             selectionCheckMessage = 'We could not confirm your saved furniture prices. Please review the collection again; no image use has been charged.';
           }
         }
+        const savedSuccessForRoom = history.attempts?.find((item: Attempt) => item.status === 'succeeded'
+          && item.resultUrl
+          && item.metadata?.snapshot?.roomAssetId === savedRuntime.roomAssetId
+          && stableJson([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === stableJson([savedRoom, savedBrief.brief]));
         if (!nextSelection.products.length) {
-          setBlocked(selectionCheckMessage || 'Your room details are saved, but your furniture collection still needs approval. Review the collection before continuing. No image use has been charged.');
-          return;
+          if (savedSuccessForRoom?.metadata.snapshot.selection?.products?.length) {
+            // Keep a completed visual accessible even when its retailer prices have since changed.
+            nextSelection = savedSuccessForRoom.metadata.snapshot.selection;
+            setError(selectionCheckMessage || 'Furniture prices have changed since this visual was created. Your saved room visual is shown; review current prices before buying.');
+          } else {
+            setBlocked(selectionCheckMessage || 'Your room details are saved, but your furniture collection still needs approval. Review the collection before continuing. No image use has been charged.');
+            return;
+          }
         }
         setSelection(nextSelection);
-        const prior = history.attempts?.find((item: Attempt) => item.status === 'succeeded' && item.metadata?.snapshot?.roomAssetId === savedRuntime.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(nextSelection) && stableJson([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === stableJson([savedRoom, savedBrief.brief]));
+        const prior = history.attempts?.find((item: Attempt) => item.status === 'succeeded' && item.resultUrl && item.metadata?.snapshot?.roomAssetId === savedRuntime.roomAssetId && approvalSnapshot(item.metadata.snapshot.selection) === approvalSnapshot(nextSelection) && stableJson([item.metadata.snapshot.intake, item.metadata.snapshot.brief]) === stableJson([savedRoom, savedBrief.brief]));
         const savedPlan: Placement[] = prior?.metadata.snapshot.placements || JSON.parse(localStorage.getItem(`roomfound-placements:${savedRuntime.designId}`) || '[]') as Placement[];
         const nextPlacements: Placement[] = nextSelection.products.map((p: any) => ({
           variantId: p.selected.variantId,
