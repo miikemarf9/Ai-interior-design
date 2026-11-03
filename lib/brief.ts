@@ -5,7 +5,7 @@ export type IntakeForBrief = {
   keep: string[];
   change: string[];
   styles: string[];
-  furniturePair?: { id: string; title: string; variantIds: string[]; styles: string[]; colours: string[]; materials: string[] };
+  furniturePair?: { id: string; title: string; itemLabels?: string[]; variantIds: string[]; styles: string[]; colours: string[]; materials: string[] };
   colours: string[];
   materials: string[];
   dislikes: string;
