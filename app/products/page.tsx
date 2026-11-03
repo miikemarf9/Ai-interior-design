@@ -8,7 +8,7 @@ export default function ProductsPage() {
       <header className="designHeader shellWide">
         <Brand />
         <span className="designHeaderNote">Step 3 of 4 · Free</span>
-        <Link className="textLink" href="/design?step=1">Back to style and budget</Link>
+        <Link className="textLink" href="/design?step=1">Change furniture group</Link>
       </header>
       <ProductSelectionExperience />
     </main>
