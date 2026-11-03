@@ -155,7 +155,6 @@ export function DesignIntake() {
   const [state, setState] = useState<IntakeState>(initialState);
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoName, setPhotoName] = useState('');
-  const [complete, setComplete] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState('');
@@ -172,7 +171,6 @@ export function DesignIntake() {
   const [pairError, setPairError] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
   const savedAnswers = useRef('');
-  const roomName = state.roomType === 'bedroom' ? 'bedroom' : 'living room';
   const eligibleFurniturePairs = furniturePairs.filter(pair => pair.totalMinor <= state.budget * 100 && !pair.itemCategories.some(label => state.keep.includes(label)));
   const selectedFurniturePair = eligibleFurniturePairs.find(pair => pair.id === state.furniturePair?.id);
   const groupBudget = groupBudgetRange(furniturePairs);
@@ -346,9 +344,11 @@ export function DesignIntake() {
   }
 
   function skipStyle() {
-    setState(current => ({ ...current, styles: selectedFurniturePair ? current.furniturePair?.styles || [] : [], furniturePair: selectedFurniturePair ? current.furniturePair : undefined }));
-    setComplete(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const nextState = { ...state, styles: selectedFurniturePair ? state.furniturePair?.styles || [] : [], furniturePair: selectedFurniturePair ? state.furniturePair : undefined };
+    window.localStorage.removeItem('roomfound-brief-v1');
+    window.localStorage.removeItem('roomfound-product-selection-v1');
+    window.localStorage.setItem('roomfound-intake-v1', JSON.stringify({ state: nextState, step: 1 }));
+    window.location.assign('/products');
   }
 
   function surpriseMe() {
@@ -473,8 +473,8 @@ export function DesignIntake() {
     }
 
     if (step === 1) {
-      setComplete(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.localStorage.setItem('roomfound-intake-v1', JSON.stringify({ state, step: 1 }));
+      window.location.assign('/products');
       return;
     }
 
@@ -483,91 +483,14 @@ export function DesignIntake() {
   }
 
   function back() {
-    if (complete) {
-      setComplete(false);
-      setStep(1);
-      return;
-    }
     setStep(value => Math.max(0, value - 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function reset() {
-    if (photoUrl.startsWith('blob:')) URL.revokeObjectURL(photoUrl);
-    setState(initialState);
-    setPhotoUrl('');
-    setPhotoName('');
-    setComplete(false);
-    setStep(0);
-    window.localStorage.removeItem('roomfound-intake-v1');
-    window.localStorage.removeItem('roomfound-brief-v1');
-    window.localStorage.removeItem('roomfound-product-selection-v1');
-    const key = ownerKey || crypto.randomUUID();
-    window.localStorage.setItem('roomfound-design-runtime-v1', JSON.stringify({ ownerKey: key }));
-    setDesignId('');
-    setRoomAssetId('');
-    setPhotoError('');
-  }
 
   return (
     <div className="designIntake">
 
-      {complete ? (
-        <section className="intakeReview">
-          <div className="reviewHeading">
-            <p className="eyebrow">Your room direction</p>
-            <h1>Your room plan is ready.</h1>
-            <p>Check the essentials below. You can still refine the written design direction before choosing products or generating an image.</p>
-          </div>
-
-          <div className="reviewGrid">
-            <div className="reviewPhoto">
-              {photoUrl ? <img src={photoUrl} alt={'Your uploaded ' + roomName} /> : null}
-              <span>{photoName || 'Your room'}</span>
-            </div>
-            <div className="reviewFacts">
-              <ReviewRow label="Room" value={roomName + ' · ' + (state.projectGoal === 'furnish' ? 'Furnishing' : 'Refreshing')} />
-              {state.furniturePair ? <ReviewRow label="Furniture group" value={state.furniturePair.title} /> : <ReviewRow label="Style" value={state.styles.join(', ') || 'Open to recommendations'} />}
-              {state.keep.length ? <ReviewRow label="Keeping" value={state.keep.join(', ')} /> : null}
-              {state.retainedFurniture?.some(item => item.intent !== 'place') ? <ReviewRow label="Photo · keep" value={state.retainedFurniture.filter(item => item.intent !== 'place').map(item => item.label).join(', ')} /> : null}
-              {state.retainedFurniture?.some(item => item.intent === 'place') ? <ReviewRow label="Photo · place" value={state.retainedFurniture.filter(item => item.intent === 'place').map(item => item.label).join(', ')} /> : null}
-              <ReviewRow label="New furniture" value={state.change.join(', ') || 'Open to recommendations'} />
-              <ReviewRow label="Furniture budget" value={formatBudget(state.budget)} />
-              {state.colours.length ? <ReviewRow label="Colour preferences" value={state.colours.join(', ')} /> : null}
-              {state.materials.length ? <ReviewRow label="Materials" value={state.materials.join(', ')} /> : null}
-              {state.uses.length ? <ReviewRow label="Room needs" value={state.uses.join(', ')} /> : null}
-              {state.dislikes.trim() ? <ReviewRow label="Avoid" value={state.dislikes} /> : null}
-              {state.measurements.width || state.measurements.length || state.measurements.height ? (
-                <ReviewRow
-                  label="Measurements"
-                  value={
-                    (state.measurements.accuracy === 'measured' ? 'Customer measured' : 'Approximate / unconfirmed') +
-                    ': ' + (state.measurements.width || '?') + ' W × ' +
-                    (state.measurements.length || '?') + ' L × ' +
-                    (state.measurements.height || '?') + ' H cm'
-                  }
-                />
-              ) : null}
-              {state.measurements.notes ? <ReviewRow label="Room notes" value={state.measurements.notes} /> : null}
-              {state.freedom !== 'Balanced' ? <ReviewRow label="Design approach" value={state.freedom} /> : null}
-            </div>
-          </div>
-
-          <div className="briefBoundary">
-            <div>
-              <span className="microLabel">Next step · free</span>
-              <h2>Review your design direction.</h2>
-              <p>We’ll turn your choices into a concise written brief. You can make changes before any image is generated.</p>
-            </div>
-            <button className="button buttonPrimary" type="button" onClick={() => window.location.assign('/brief')}>Continue to design brief</button>
-          </div>
-
-          <div className="intakeReviewActions">
-            <button className="textButton" type="button" onClick={back}>← Edit my choices</button>
-            <button className="textButton" type="button" onClick={reset}>Start again</button>
-          </div>
-        </section>
-      ) : (
         <div className="intakeLayout">
         <section className="intakeStep">
           {step === 0 ? (
@@ -857,34 +780,20 @@ export function DesignIntake() {
         </section>
 
         </div>
-      )}
       <JourneyAssistant
         visible={true}
         defaultOpen={Boolean(roomAssetId)}
-        currentStep={complete ? 3 : step + 1}
-        nextTitle={complete ? 'Choose real furniture' : step === 0 ? 'Choose a furniture group' : 'Review your room'}
-        nextDescription={complete
-          ? 'Your room and style choices are saved. Next, choose real furniture.'
-          : step === 0
-            ? 'Your room photograph is the starting point. Continue when it has been saved.'
-            : step === 1
-              ? state.furniturePair ? 'We will keep your chosen furniture group and coordinate the room around it.' : state.styles.length ? 'We will use your ' + state.styles[0] + ' direction and budget to prepare your design brief.' : 'A style is optional. Continue with your budget and we will create a balanced direction.'
-              : 'Your room, style and furniture preferences are ready to review.'}
-        nextLabel={complete ? 'Choose real furniture' : step === 0 ? 'Continue to furniture groups' : step === 1 ? 'Review my room' : 'Review my room'}
-        nextHref={complete ? '/products' : undefined}
-        onNext={complete ? undefined : next}
-        nextDisabled={!complete && !canContinue}
+        currentStep={step + 1}
+        nextTitle={step === 0 ? 'Choose a furniture group' : 'Review your furniture'}
+        nextDescription={step === 0
+          ? 'Your room photograph is the starting point. Continue when it has been saved.'
+          : 'Check the products in your chosen group and add anything else you need.'}
+        nextLabel={step === 0 ? 'Continue to furniture groups' : 'Review your furniture'}
+        onNext={next}
+        nextDisabled={!canContinue}
         ownerKey={ownerKey}
         intake={{ ...state, furniturePair: state.furniturePair ? { ...state.furniturePair, itemLabels: selectedFurniturePair?.itemCategories || state.furniturePair.itemLabels } : undefined }}
-        onStageClick={(stage) => {
-          if (complete) {
-            setComplete(false);
-            setStep(stage - 1);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
-          }
-          goToStep(stage - 1);
-        }}
+        onStageClick={(stage) => goToStep(stage - 1)}
       />
     </div>
   );
@@ -927,6 +836,3 @@ function MeasurementField({ label, value, onChange }: { label: string; value: st
   );
 }
 
-function ReviewRow({ label, value }: { label: string; value: string }) {
-  return <div className="reviewRow"><span>{label}</span><strong>{value}</strong></div>;
-}
