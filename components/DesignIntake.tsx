@@ -13,6 +13,14 @@ type CatalogueItemChoice = { label: string; recommended: boolean; available: boo
 type CatalogueStyleChoice = { name: string; available: boolean };
 type FurniturePair = { id: string; title: string; note: string; itemCategories: string[]; styles: string[]; colours: string[]; materials: string[]; totalMinor: number; items: Array<{ variantId: string; category: string; name: string; variantName: string | null; retailerName: string; priceMinor: number; availability: string; lastCheckedAt: string; imageUrl: string; imageAlt: string }> };
 
+function groupBudgetRange(pairs: FurniturePair[]) {
+  const prices = pairs.map(pair => pair.totalMinor / 100).filter(price => Number.isFinite(price) && price > 0);
+  const min = prices.length ? Math.ceil(Math.min(...prices) / 50) * 50 : 500;
+  const max = prices.length ? Math.max(min + 50, Math.ceil(Math.max(...prices) / 50) * 50) : 1200;
+  const presets = [...new Set(Array.from({ length: 4 }, (_, index) => Math.round((min + (max - min) * index / 3) / 50) * 50))];
+  return { min, max, presets };
+}
+
 const initialState: IntakeState = {
   roomType: 'living_room', projectGoal: 'refresh', retainedFurniture: [],
   keep: [],
@@ -22,7 +30,7 @@ const initialState: IntakeState = {
   materials: [],
   dislikes: '',
   uses: [],
-  budget: 2500,
+  budget: 1200,
   measurements: { width: '', length: '', height: '', notes: '', accuracy: 'unknown' },
   freedom: 'Balanced',
 };
@@ -167,6 +175,14 @@ export function DesignIntake() {
   const roomName = state.roomType === 'bedroom' ? 'bedroom' : 'living room';
   const eligibleFurniturePairs = furniturePairs.filter(pair => pair.totalMinor <= state.budget * 100 && !pair.itemCategories.some(label => state.keep.includes(label)));
   const selectedFurniturePair = eligibleFurniturePairs.find(pair => pair.id === state.furniturePair?.id);
+  const groupBudget = groupBudgetRange(furniturePairs);
+  useEffect(() => {
+    if (!hydrated || pairLoading || !furniturePairs.length) return;
+    setState(current => current.budget < groupBudget.min || current.budget > groupBudget.max
+      ? { ...current, budget: Math.max(groupBudget.min, Math.min(groupBudget.max, current.budget)) }
+      : current);
+  }, [hydrated, pairLoading, furniturePairs.length, groupBudget.min, groupBudget.max]);
+
   const uses = state.roomType === 'bedroom' ? [
     { name: 'Sleeping', detail: 'A calm, comfortable place to rest' },
     { name: 'Storage', detail: 'Clothes, bedding and everyday belongings' },
@@ -638,7 +654,7 @@ export function DesignIntake() {
                       const active = state.furniturePair?.id === pair.id;
                       return <button key={pair.id} type="button" className={ui.pairCard + (active ? ' ' + ui.pairSelected : '')} aria-pressed={active} onClick={() => setState(current => ({
                         ...current,
-                        furniturePair: { id: pair.id, title: pair.title, variantIds: pair.items.map(item => item.variantId), styles: pair.styles, colours: pair.colours, materials: pair.materials },
+                        furniturePair: { id: pair.id, title: pair.title, variantIds: pair.items.map(item => item.variantId), itemLabels: pair.itemCategories, styles: pair.styles, colours: pair.colours, materials: pair.materials },
                         styles: pair.styles,
                         colours: pair.colours,
                         materials: pair.materials,
@@ -655,8 +671,8 @@ export function DesignIntake() {
                 ) : null}
               </div>
               {state.furniturePair && !pairLoading && !selectedFurniturePair ? <p className={ui.error} role="status">That group is above the current budget or no longer available. Please choose another group.</p> : null}
-              <details className={ui.styleOptions} open={!pairLoading && !eligibleFurniturePairs.length}>
-                <summary>Prefer choosing a style? Browse style options</summary>
+              <details className="advancedSettings">
+                <summary><span>Advanced settings</span><i>＋</i></summary>
                                 <div className="styleDiscoveryGrid">
                   {styles.map(style => {
                     const active = state.styles.includes(style.name);
@@ -683,40 +699,39 @@ export function DesignIntake() {
                     );
                   })}
                 </div>
-              </details>
+
               {catalogueLoading ? <p aria-live="polite" className="choiceHint">Checking styles against the reviewed furniture collection…</p> : null}
               {catalogueError ? <p className={ui.error} role="alert">{catalogueError} <button className="textButton" type="button" onClick={() => setCatalogueRetry(value => value + 1)}>Try again</button></p> : null}
               {!catalogueLoading && !catalogueError && !catalogueStyles.some(style => style.available) ? (
                 <p className={ui.note} role="status">
                   No reviewed furniture matches these filters yet. Increase the budget or remove optional filters.
-                  <button className="textButton" type="button" onClick={() => setState(current => ({ ...current, budget: 10000, dislikes: '', measurements: { ...current.measurements, width: '', length: '', height: '' } }))}>Show all reviewed options</button>
+                  <button className="textButton" type="button" onClick={() => setState(current => ({ ...current, budget: groupBudget.max, dislikes: '', measurements: { ...current.measurements, width: '', length: '', height: '' } }))}>Show all reviewed options</button>
                 </p>
               ) : null}
 
               <section className="budgetInline">
                 <div className="budgetInlineHeading">
                   <div>
-                    <span className="microLabel">Furniture budget</span>
-                    <p>How much would you like to spend on new furniture and accessories?</p>
+                    <span className="microLabel">Budget for the furniture group</span>
+                    <p>Maximum total for all pieces in the group together.</p>
                   </div>
                   <strong>{formatBudget(state.budget)}</strong>
                 </div>
                 <input
                   type="range"
-                  min="750"
-                  max="10000"
-                  step="250"
+                  min={groupBudget.min}
+                  max={groupBudget.max}
+                  step="50"
                   value={state.budget}
                   onChange={event => setState(current => ({ ...current, budget: Number(event.target.value) }))}
-                  aria-label="Maximum furniture and accessories budget"
+                  aria-label="Maximum total budget for the whole furniture group"
                 />
-                <div className="budgetRangeLabels"><span>£750</span><span>£10,000</span></div>
+                <div className="budgetRangeLabels"><span>{formatBudget(groupBudget.min)}</span><span>{formatBudget(groupBudget.max)}</span></div>
                 <div className="budgetPresets">
-                  {[1500, 2500, 5000, 7500].map(budget => (
+                  {groupBudget.presets.map(budget => (
                     <button className={state.budget === budget ? 'isSelected' : ''} key={budget} type="button" onClick={() => setState(current => ({ ...current, budget }))}>{formatBudget(budget)}</button>
                   ))}
                 </div>
-                <p>Set a guide for the new pieces. Anything you keep is excluded; delivery and design charges are separate.</p>
               </section>
 
               <div className="styleQuickActions">
@@ -727,12 +742,6 @@ export function DesignIntake() {
                 </div>
               </div>
 
-              <details className="advancedSettings">
-                <summary>
-                  <span>Advanced settings</span>
-                  <small>Optional · colours, materials, room details and more</small>
-                  <i>＋</i>
-                </summary>
                 <div className="advancedSettingsBody">
                   <section className="advancedGroup">
                     <h2>Colour and materials</h2>
@@ -866,6 +875,7 @@ export function DesignIntake() {
         onNext={complete ? undefined : next}
         nextDisabled={!complete && !canContinue}
         ownerKey={ownerKey}
+        intake={{ ...state, furniturePair: state.furniturePair ? { ...state.furniturePair, itemLabels: selectedFurniturePair?.itemCategories || state.furniturePair.itemLabels } : undefined }}
         onStageClick={(stage) => {
           if (complete) {
             setComplete(false);

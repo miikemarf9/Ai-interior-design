@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useId, useState } from 'react';
 
-type JourneyIntake = { roomType?: string; projectGoal?: string; styles?: string[]; budget?: number; colours?: string[]; materials?: string[]; dislikes?: string; uses?: string[]; keep?: string[]; change?: string[]; retainedFurniture?: Array<{ label?: string }> };
+type JourneyIntake = { furniturePair?: { title: string; itemLabels?: string[] }; roomType?: string; projectGoal?: string; styles?: string[]; budget?: number; colours?: string[]; materials?: string[]; dislikes?: string; uses?: string[]; keep?: string[]; change?: string[]; retainedFurniture?: Array<{ label?: string }> };
 
 type CreditStatus = {
   balance: number;
@@ -14,6 +14,7 @@ type CreditStatus = {
 };
 
 type JourneyAssistantProps = {
+  intake?: JourneyIntake;
   visible?: boolean;
   defaultOpen?: boolean;
   currentStep: number;
@@ -68,6 +69,7 @@ export function JourneyAssistant({
   ownerKey,
   refreshKey,
   onStageClick,
+  intake: currentIntake,
 }: JourneyAssistantProps) {
   const panelId = useId();
   const [open, setOpen] = useState(false);
@@ -166,12 +168,20 @@ export function JourneyAssistant({
   if (!visible) return null;
 
   const isChoosingProducts = currentStep === 3 && Boolean(nextDisclaimer);
+  const chosenIntake = currentIntake || intakeSummary;
+  const readable = (value: string) => value.replace(/[_-]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase());
   const stageSummaries = [
-    intakeSummary
-      ? [intakeSummary.roomType === 'living_room' ? 'Living room' : intakeSummary.roomType, photoName ? 'Photo added' : ''].filter(Boolean).join(' · ')
+    chosenIntake
+      ? [chosenIntake.roomType === 'living_room' ? 'Living room' : chosenIntake.roomType, photoName ? 'Photo added' : ''].filter(Boolean).join(' · ')
       : '',
-    intakeSummary
-      ? [(intakeSummary.styles || []).join(', ') || 'Style not chosen', typeof intakeSummary.budget === 'number' ? new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(intakeSummary.budget) : ''].filter(Boolean).join(' · ')
+    chosenIntake
+      ? [
+          chosenIntake.furniturePair ? 'Group: ' + (chosenIntake.furniturePair.itemLabels?.join(' + ') || chosenIntake.furniturePair.title)
+            : chosenIntake.styles?.length ? 'Style: ' + chosenIntake.styles.map(readable).join(', ') : 'Style: Open to recommendations',
+          chosenIntake.colours?.length ? 'Colours: ' + chosenIntake.colours.map(readable).join(', ') : '',
+          chosenIntake.materials?.length ? 'Materials: ' + chosenIntake.materials.map(readable).join(', ') : '',
+          typeof chosenIntake.budget === 'number' ? 'Group budget: ' + new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(chosenIntake.budget) : '',
+        ].filter(Boolean).join('\n')
       : '',
     productSummary,
     '',
