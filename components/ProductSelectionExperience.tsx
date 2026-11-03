@@ -51,6 +51,8 @@ export function ProductSelectionExperience() {
   const [selection, setSelection] = useState<ProductSelection | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [navigating, setNavigating] = useState(false);
+  const continuing = useRef(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [approved, setApproved] = useState(false);
@@ -121,8 +123,29 @@ export function ProductSelectionExperience() {
         totalMinor: data.selection.totalMinor,
       });
       if (data.warning) setAcknowledged(false);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Please try again.'); }
+      return Boolean(data.approved);
+    } catch (err) { setError(err instanceof Error ? err.message : 'Please try again.'); return false; }
     finally { setLoading(false); setBusy(false); }
+  }
+  async function continueToRender() {
+    if (continuing.current || busy || !intake || !brief || !selection || !selection.products.length || (!approved && !acknowledged)) return;
+    continuing.current = true;
+    setNavigating(true);
+    let leaving = false;
+    try {
+      const accepted = approved || await loadSelection(intake, brief, selection, true);
+      if (accepted) {
+        window.location.assign('/render');
+        leaving = true;
+      }
+    } catch {
+      setError('We could not open image generation. Please try again.');
+    } finally {
+      if (!leaving) {
+        continuing.current = false;
+        setNavigating(false);
+      }
+    }
   }
   function toggleProduct(product: ProposedProduct, include: boolean) {
     if (!selection) return;
@@ -146,7 +169,7 @@ export function ProductSelectionExperience() {
   if (loading) return <section className="selectionLoading shell"><p className="eyebrow">Your furniture collection</p><h1>Checking products for your room.</h1><div className="briefLoadingLine"><i /></div><p>No image-generation credit is used.</p></section>;
   if (!intake || !brief) return <section className="selectionMissing shell"><p className="eyebrow">Your furniture collection</p><h1>Start with your room.</h1><p>We use your preferences and the furniture you are keeping to recommend a small collection.</p><Link className="button buttonPrimary" href="/design?step=1">Choose your room and furniture</Link></section>;
   if (intake.roomType === 'bedroom') return <section className="selectionMissing shell"><h1>Your bedroom brief is saved.</h1><p>Bedroom furniture selection is not available yet.</p><Link className="button buttonPrimary" href="/design?step=1">Back to furniture groups</Link></section>;
-  if (error) return <section className="selectionMissing shell"><h1>We couldn’t check your collection.</h1><p role="alert">{error}</p><button className="button buttonPrimary" disabled={busy} onClick={() => loadSelection(intake, brief, selection || undefined)}>Try again</button><p><Link href="/design?step=1">Back to my brief</Link></p></section>;
+  if (error) return <section className="selectionMissing shell"><h1>We couldn’t check your collection.</h1><p role="alert">{error}</p><button className="button buttonPrimary" disabled={busy || navigating} onClick={() => loadSelection(intake, brief, selection || undefined)}>Try again</button><p><Link href="/design?step=1">Back to my brief</Link></p></section>;
   if (!selection || (!selection.products.length && !excludedProducts.length)) return <section className="selectionEmpty shell">
     <p className="eyebrow">Your furniture collection</p><h1>No reviewed products match this combination yet.</h1>
     <p>We checked the selected item types against your style, budget and room measurements. A room design is only available when it includes at least one reviewed retailer product.</p>
@@ -155,9 +178,9 @@ export function ProductSelectionExperience() {
     {selection?.notes.filter(note => note.includes('missing or invalid prices')).map(note => <p key={note}>{note}</p>)}
     <Link className="button buttonPrimary" href="/design">Adjust my style, budget or item choices</Link>
     <Link className="textButton" href="/design?step=1">Change my choices</Link>
-    <button className="textButton" disabled={busy} onClick={() => loadSelection(intake, brief)}>Check collection again</button>
+    <button className="textButton" disabled={busy || navigating} onClick={() => loadSelection(intake, brief)}>Check collection again</button>
   </section>;
-  return <div className={"productSelectionExperience shell " + styles.experience} aria-busy={busy}>
+  return <div className={"productSelectionExperience shell " + styles.experience} aria-busy={busy || navigating}>
     <section className={"selectionHero " + styles.hero}><div><h1>Choose the products you want to see in your room</h1><p>Check your selected products below. Swap or remove pieces, or add more before creating your room image.</p></div></section>
     <figure className={styles.roomPhoto}>
       {roomPhotoUrl ? <img src={roomPhotoUrl} alt="Your uploaded room photograph" /> : <p><Link href="/design?step=0">Add your room photo</Link></p>}
@@ -167,10 +190,10 @@ export function ProductSelectionExperience() {
     {selection.remainingMinor < 0 ? <p className="productBudgetNotice" role="status">This collection is {money(Math.abs(selection.remainingMinor))} over your furniture budget. You can still continue if these are the products you want to see in your room design.</p> : null}
     {notice && <div className={styles.notice} role="status">{notice}</div>}
     <section className="selectedProducts" aria-label="Your selected products">
-      {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onToggle={() => toggleProduct(product, false)} onBrowse={() => setBrowseProduct(product)} retailerHref={retailerHref} />)}
+      {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy || navigating} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onToggle={() => toggleProduct(product, false)} onBrowse={() => setBrowseProduct(product)} retailerHref={retailerHref} />)}
     </section>
     <section className={styles.addCatalogue}>
-      <button type="button" className={styles.addCatalogueButton} disabled={busy} onClick={() => setAddProductOpen(true)}>
+      <button type="button" className={styles.addCatalogueButton} disabled={busy || navigating} onClick={() => setAddProductOpen(true)}>
         <span aria-hidden="true">＋</span><strong>Add products</strong><small>Browse furniture by category</small>
       </button>
     </section>
@@ -191,7 +214,7 @@ export function ProductSelectionExperience() {
         </section>
       </div>
     ) : null}
-    {excludedProducts.length ? <section className="excludedProducts" aria-label="Products not included"><p className="microLabel">Not included in your room</p><ul>{excludedProducts.map(product => <li key={product.slot}><span>{product.slotLabel}</span><button type="button" className="textButton" disabled={busy} onClick={() => toggleProduct(product, true)}>Add back · {money(product.selected.offer.priceMinor * product.quantity)}</button></li>)}</ul></section> : null}
+    {excludedProducts.length ? <section className="excludedProducts" aria-label="Products not included"><p className="microLabel">Not included in your room</p><ul>{excludedProducts.map(product => <li key={product.slot}><span>{product.slotLabel}</span><button type="button" className="textButton" disabled={busy || navigating} onClick={() => toggleProduct(product, true)}>Add back · {money(product.selected.offer.priceMinor * product.quantity)}</button></li>)}</ul></section> : null}
     {(browseProduct || addingCategory) && intake && brief && selection ? <InventoryPicker
       category={addingCategory?.category || browseProduct!.slot}
       categoryLabel={addingCategory?.label || browseProduct!.slotLabel}
@@ -217,25 +240,22 @@ export function ProductSelectionExperience() {
       visible={Boolean(intake && brief && selection)}
       currentStep={3}
       intake={intake}
-      nextTitle={approved ? 'Create your room image' : 'Ready to see your room?'}
-      nextDescription={approved
-        ? 'The next page creates your room image using these products. This uses one image use, which is returned if generation fails. No furniture is purchased.'
-        : 'Check your products and the furniture total, then save your choices to continue.'}
+      nextTitle="Generate your room image"
+      nextDescription={'Furniture total: ' + money(selection.totalMinor) + '. The next page starts generating your room image using one image use. No furniture is purchased here.'}
       nextDisclaimer={approved ? undefined : {
         text: selection.remainingMinor < 0
-          ? `This collection is ${money(Math.abs(selection.remainingMinor))} over your furniture budget. Continuing saves it for your room design only; it does not place an order, reserve stock or charge you. Check fit, retailer prices, stock, delivery costs and any missing products before you buy.`
+          ? `This collection is ${money(Math.abs(selection.remainingMinor))} over your furniture budget. Continuing uses these products for your room image. No furniture is purchased or reserved. Check measurements, retailer prices, stock, delivery costs and any missing products before buying.`
           : 'Check measurements, retailer prices, stock and delivery before buying. Saving these products creates no order or furniture payment.',
         label: selection.remainingMinor < 0
           ? `I understand this collection is ${money(Math.abs(selection.remainingMinor))} over budget and needs checking before I buy.`
           : 'I’ll check measurements, prices and delivery before buying.',
         checked: acknowledged,
         onChange: setAcknowledged,
-        disabled: busy,
+        disabled: busy || navigating,
       }}
-      nextLabel={approved ? 'Create my room image' : 'Save these products · ' + money(selection.totalMinor)}
-      nextHref={approved ? '/render' : undefined}
-      onNext={!approved ? () => loadSelection(intake, brief, selection, true) : undefined}
-      nextDisabled={!approved && (busy || !acknowledged || !selection.products.length)}
+      nextLabel={navigating ? 'Opening image generation…' : 'Generate image · furniture ' + money(selection.totalMinor)}
+      onNext={continueToRender}
+      nextDisabled={busy || navigating || !selection.products.length || (!approved && !acknowledged)}
       refreshKey={`${selection.totalMinor}:${selection.products.map(product => product.slot + ':' + product.quantity).join(',')}`} 
     />
     <p className="affiliateDisclosure"><strong>Partner links · Ad.</strong> We connect you with products selected for your room. We earn commission on qualifying purchases through retailer links, at no extra cost to you. This helps fund the product research and room-planning tools behind your recommendations.</p>
