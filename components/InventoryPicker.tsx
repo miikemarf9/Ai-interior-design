@@ -115,11 +115,11 @@ export function InventoryPicker({
       <section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="inventory-picker-title">
         <header className={styles.header}>
           <div>
-            <p className={styles.eyebrow}>Choose from the cleared catalogue</p>
-            <h2 id="inventory-picker-title">Search the cleared catalogue.</h2>
-            <p>Browse approved items in the {categoryLabel.toLowerCase()} category. Each item has current product details and is cleared for room design use.</p>
+            <p className={styles.eyebrow}>Add furniture</p>
+            <h2 id="inventory-picker-title">Find a product for your room.</h2>
+            <p>Browse {categoryLabel.toLowerCase()} and choose the product you’d like to add.</p>
           </div>
-          <button className={styles.close} type="button" onClick={onClose} aria-label="Close inventory">×</button>
+          <button className={styles.close} type="button" onClick={onClose} aria-label="Close product search">×</button>
         </header>
 
         <div className={styles.filters}>
