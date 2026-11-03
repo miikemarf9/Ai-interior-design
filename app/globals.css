@@ -4782,3 +4782,30 @@ button.journeyAssistantStep:hover strong {
   font-size: 13px;
   line-height: 1.5;
 }
+
+/* Compact image balance at the top right of the journey panel. */
+.journeyAssistantHeader { gap: 8px; }
+.journeyAssistantHeader > div:first-child { display: grid; gap: 4px; min-width: 0; }
+.journeyAssistantBalance {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  max-width: 130px;
+  padding: 8px 10px;
+  border: 1px solid #c9d9cc;
+  border-radius: 999px;
+  background: #eff5ed;
+  color: var(--forest);
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+.journeyAssistantBalance:hover { border-color: var(--forest); }
+.journeyAssistantBalance:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; }
+.journeyAssistantBalance strong { display: block; animation: imageBalanceUpdate .25s ease-out; }
+@keyframes imageBalanceUpdate { from { opacity: .35; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .journeyAssistantBalance strong { animation: none; } }

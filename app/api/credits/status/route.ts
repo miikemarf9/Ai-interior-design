@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       renderCreditCost:1,
       briefCreditCost:0,
       accountVerified:account ? Boolean(account.emailVerifiedAt) : false,
-    });
+    }, { headers: { 'Cache-Control': 'private, no-store' } });
   }catch{
     return NextResponse.json({error:"Credit status unavailable."},{status:500});
   }

@@ -39,29 +39,19 @@ const stages = [
 ];
 
 function creditSummary(status: CreditStatus | null) {
-  if (!status) return 'Image uses';
-  if (status.siteCreditExempt) return 'API allowance';
-  if (status.verifiedRequired || status.freeCreditAvailable) return '1 free use';
-  if (status.balance > 0) return status.balance + (status.balance === 1 ? ' use' : ' uses');
-  return '0 uses';
-}
-
-function creditTitle(status: CreditStatus | null) {
-  if (!status) return 'Checking your balance';
-  if (status.siteCreditExempt) return 'Image API allowance';
-  if (status.verifiedRequired) return '1 free use';
-  if (status.freeCreditAvailable && status.balance === 1) return '1 free use remaining';
-  if (status.balance > 0) return status.balance + (status.balance === 1 ? ' use remaining' : ' uses remaining');
-  return 'No image uses remaining';
+  if (!status) return 'Images · …';
+  if (status.siteCreditExempt) return 'Owner access';
+  if (status.verifiedRequired) return 'Free image · verify';
+  if (status.freeCreditAvailable && status.balance === 1) return '1 free image';
+  return status.balance + (status.balance === 1 ? ' image left' : ' images left');
 }
 
 function creditDescription(status: CreditStatus | null) {
-  if (!status) return 'Your image-use balance will appear here once your room session is ready.';
-  if (status.siteCreditExempt) return 'Your account uses the connected image API allowance rather than customer credits.';
-  if (status.verifiedRequired) return 'Verify your email to activate your free room image.';
-  if (status.freeCreditAvailable) return 'Your first room image is included. Each successful generation uses one credit.';
-  if (status.balance > 0) return 'One credit is used for each successful room image. Technical failures are refunded.';
-  return 'You have no image uses remaining. You can buy 10 more for £2.';
+  if (!status) return 'Checking your image balance.';
+  if (status.siteCreditExempt) return 'Owner access: image generation does not deduct customer image uses.';
+  if (status.verifiedRequired) return 'Verify your email to activate your free image.';
+  if (status.balance > 0) return 'One image use is deducted when generation starts and returned if it fails. View your balance or buy more.';
+  return 'No images left. Add more from your account.';
 }
 
 export function JourneyAssistant({
@@ -120,6 +110,7 @@ export function JourneyAssistant({
   useEffect(() => {
     if (!visible) return;
     let cancelled = false;
+    let loading = false;
 
     async function loadCredits() {
       let key = ownerKey || '';
@@ -132,8 +123,8 @@ export function JourneyAssistant({
           key = '';
         }
       }
-      if (!key) return;
-
+      if (!key || loading) return;
+      loading = true;
       try {
         const response = await fetch('/api/credits/status?ownerKey=' + encodeURIComponent(key), { cache: 'no-store' });
         if (!response.ok) return;
@@ -141,17 +132,23 @@ export function JourneyAssistant({
         if (!cancelled) setCreditStatus(data);
       } catch {
         // Keep the last known balance visible if a refresh is temporarily unavailable.
-      }
+      } finally { loading = false; }
     }
 
     void loadCredits();
     const refresh = () => { void loadCredits(); };
+    const timer = window.setInterval(() => { if (!document.hidden) refresh(); }, currentStep === 4 ? 1500 : 15000);
     window.addEventListener('focus', refresh);
+    window.addEventListener('storage', refresh);
+    window.addEventListener('roomfound-credit-balance-changed', refresh);
     return () => {
       cancelled = true;
+      window.clearInterval(timer);
       window.removeEventListener('focus', refresh);
+      window.removeEventListener('storage', refresh);
+      window.removeEventListener('roomfound-credit-balance-changed', refresh);
     };
-  }, [visible, ownerKey, refreshKey]);
+  }, [visible, ownerKey, refreshKey, currentStep]);
 
   function closePanel() {
     setOpen(false);
@@ -193,6 +190,9 @@ export function JourneyAssistant({
                 <p className="eyebrow">Your progress</p>
                 <span>{String(Math.min(4, Math.max(1, currentStep))).padStart(2, '0')} / 04</span>
               </div>
+              <Link href="/account" className="journeyAssistantBalance" title={creditDescription(creditStatus)} aria-label={creditSummary(creditStatus) + '. ' + creditDescription(creditStatus)}>
+                <span role="status" aria-live="polite" aria-atomic="true"><strong key={creditSummary(creditStatus)}>{creditSummary(creditStatus)}</strong></span>
+              </Link>
               {currentStep !== 3 ? <button type="button" className="journeyAssistantClose" aria-label="Close progress panel" onClick={closePanel}>×</button> : null}
             </div>
 
@@ -232,18 +232,6 @@ export function JourneyAssistant({
               })}
             </ol>
 
-            <section className="journeyAssistantCredits" aria-label="Image-use balance">
-              <div className="journeyAssistantCreditHeading">
-                <span>Image uses</span>
-                <strong>{creditTitle(creditStatus)}</strong>
-              </div>
-              <p>{creditDescription(creditStatus)}</p>
-              {creditStatus?.verifiedRequired ? (
-                <Link href="/account" className="journeyAssistantCreditLink">Verify email to unlock your free use</Link>
-              ) : creditStatus && !creditStatus.siteCreditExempt && creditStatus.balance === 0 ? (
-                <Link href="/account" className="journeyAssistantCreditLink">Buy 10 more uses · £2</Link>
-              ) : null}
-            </section>
 
             <section className="journeyAssistantNext" aria-live="polite">
               <p className="microLabel">Up next</p>

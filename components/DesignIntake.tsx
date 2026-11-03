@@ -317,9 +317,6 @@ export function DesignIntake() {
     if (photoUrl.startsWith('blob:')) URL.revokeObjectURL(photoUrl);
   }, [photoUrl]);
 
-  const progress = complete ? 100 : ((step + 1) / 2) * 100;
-  const stepLabels = ['Your room', 'Choose a furniture group'];
-  const stepLabel = stepLabels[step] || 'Your room';
   // Only the room photograph is required. Style, budget refinements, measurements,
   // retained-item markers and product-category choices are all optional.
   const canContinue = step === 0
@@ -498,14 +495,6 @@ export function DesignIntake() {
 
   return (
     <div className="designIntake">
-      <div className="intakeProgress" aria-label="Design intake progress">
-        <div className="intakeProgressMeta">
-          <span>Step {complete ? '2' : step + 1} of 2</span>
-          <strong>{complete ? 'Ready to review' : stepLabel}</strong>
-          
-        </div>
-        <div className="progressTrack"><i style={{ width: progress + '%' }} /></div>
-      </div>
 
       {complete ? (
         <section className="intakeReview">
@@ -567,7 +556,7 @@ export function DesignIntake() {
         <section className="intakeStep">
           {step === 0 ? (
             <>
-              <StepIntro eyebrow="01 / 03 · Your room" title="Upload a photo of your current room" copy="See your room reimagined with a fresh new layout." />
+              <StepIntro title="Upload a photo of your current room" />
               <div className="roomSetupFields">
                 <label className={ui.field}>Room
                   <select value={state.roomType} disabled={uploadingPhoto} onChange={event => changeRoomType(event.target.value as 'living_room' | 'bedroom')}>
@@ -891,14 +880,14 @@ export function DesignIntake() {
   );
 }
 
-function StepIntro({ eyebrow, title, copy }: { eyebrow: string; title: string; copy: string }) {
+function StepIntro({ eyebrow, title, copy }: { eyebrow?: string; title: string; copy?: string }) {
   return (
     <div className="intakeIntro">
-      <div className="intakeIntroMeta">
+      {eyebrow && <div className="intakeIntroMeta">
         <p className="eyebrow">{eyebrow}</p>
-      </div>
+      </div>}
       <h1>{title}</h1>
-      <p>{copy}</p>
+      {copy && <p>{copy}</p>}
     </div>
   );
 }

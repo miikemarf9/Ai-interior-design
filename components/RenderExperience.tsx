@@ -131,7 +131,7 @@ export function RenderExperience() {
   async function loadCredits(context: Runtime) {
     const response = await fetch(`/api/credits/status?ownerKey=${encodeURIComponent(context.ownerKey)}`, { cache: 'no-store' });
     const data = await response.json();
-    if (response.ok) { setBalance(data.balance); setSiteCreditExempt(Boolean(data.siteCreditExempt)); setVerified(!data.verifiedRequired); }
+    if (response.ok) { setBalance(data.balance); setSiteCreditExempt(Boolean(data.siteCreditExempt)); setVerified(!data.verifiedRequired); window.dispatchEvent(new Event('roomfound-credit-balance-changed')); }
   }
   async function readHistory(context: Runtime) {
     const response = await fetch(`/api/render/pilot?designId=${context.designId}&ownerKey=${encodeURIComponent(context.ownerKey)}`, { cache: 'no-store' });
