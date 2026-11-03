@@ -645,7 +645,7 @@ export function DesignIntake() {
           {step === 1 ? (
             <>
               <div className={ui.pairSection}>
-                <StepIntro eyebrow="02 / 03 · Furniture pairing" title={pairLoading ? "Finding furniture pairs…" : eligibleFurniturePairs.length ? "Choose a group of furniture that works together." : "No current furniture pairs fit this budget yet."} copy={pairLoading ? "Checking the current approved catalogue for coordinated pairs." : eligibleFurniturePairs.length ? "Pick a small, ready-matched pair from the approved catalogue. We’ll use its colours and materials to coordinate the rest." : "You can still choose a style below, and we’ll use the reviewed products available."} />
+                <StepIntro title={pairLoading ? "Finding furniture groups…" : eligibleFurniturePairs.length ? "Choose the furniture group you’d like to see in your room visual." : "No current furniture groups fit this budget yet."} copy={pairLoading ? "Checking the current catalogue for coordinated furniture groups." : eligibleFurniturePairs.length ? "Each group brings together carefully chosen pieces with complementary colours, materials and style." : "Open Advanced settings to explore styles or adjust your group budget."} />
                 {pairLoading ? <p aria-live="polite">Checking current furniture matches…</p> : null}
                 {pairError ? <p className={ui.error} role="alert">{pairError}</p> : null}
                 {!pairLoading && eligibleFurniturePairs.length ? (
