@@ -2498,17 +2498,17 @@ p { line-height: 1.58; }
   transform: translateY(0);
 }
 
-.siteHeader.isAtTop {
+.homePage .siteHeader.isAtTop {
   background: transparent;
   color: #fff;
   box-shadow: none;
 }
 
-.siteHeader.isAtTop .brandMark,
-.siteHeader.isAtTop .brandWord,
-.siteHeader.isAtTop .desktopNav,
-.siteHeader.isAtTop .desktopNav a,
-.siteHeader.isAtTop .headerAccountLink {
+.homePage .siteHeader.isAtTop .brandMark,
+.homePage .siteHeader.isAtTop .brandWord,
+.homePage .siteHeader.isAtTop .desktopNav,
+.homePage .siteHeader.isAtTop .desktopNav a,
+.homePage .siteHeader.isAtTop .headerAccountLink {
   color: #fff;
 }
 
@@ -2789,7 +2789,7 @@ p { line-height: 1.58; }
 .brand { color: var(--ink); flex-shrink: 0; }
 .seemoriWordmark { display: block; width: 174px; height: auto; }
 .siteHeaderInner { grid-template-columns: 1fr auto; }
-.siteHeader.isAtTop .brand { color: var(--ivory); }
+.homePage .siteHeader.isAtTop .brand { color: var(--ivory); }
 .siteHeader.isScrolled .brand { color: var(--ink); }
 @media (max-width: 680px) {
   .siteHeader .shellWide { width: calc(100% - 32px); }
@@ -4811,3 +4811,9 @@ button.journeyAssistantStep:hover strong {
 @media (prefers-reduced-motion: reduce) { .journeyAssistantBalance strong { animation: none; } }
 
 .journeyAssistantStep small { white-space: pre-line; }
+
+/* Light pages need readable navigation before the first scroll. */
+.siteHeader { color: var(--ink); }
+main:not(.homePage) > .siteHeader.isAtTop { background: var(--ivory); }
+main:not(.homePage) > .siteHeader.isAtTop .brand,
+main:not(.homePage) > .siteHeader.isAtTop .headerAccountLink { color: var(--ink); }
