@@ -36,7 +36,7 @@ const stages = [
   { label: 'Your room', detail: 'Room type and photograph', href: '/design?step=0' },
   { label: 'Style and budget', detail: 'Choose the look and allowance', href: '/design?step=1' },
   { label: 'Furniture collection', detail: 'Choose real products', href: '/products' },
-  { label: 'Room visual', detail: 'Create your room design', href: '/render' },
+  { label: 'Generate image', detail: 'Create your room image', href: '/render' },
 ];
 
 function creditSummary(status: CreditStatus | null) {
