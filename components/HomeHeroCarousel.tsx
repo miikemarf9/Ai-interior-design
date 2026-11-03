@@ -86,9 +86,9 @@ export function HomeHeroCarousel() {
       }}>
       {[0, 1].map(index => (
         <div key={index} className={`heroSlide${active === index ? ' isActive' : ''}`}
-          role="group" aria-roledescription="slide" aria-label={`${index + 1} of 2: ${index === 0 ? 'Start with your living room' : 'Choose furniture for your room'}`}
+          role="group" aria-roledescription="slide" aria-label={`${index + 1} of 2: ${index === 0 ? 'Start with your living room' : 'Transform your bedroom'}`}
           aria-hidden={active !== index} inert={active !== index}>
-          <HomeHeroImage key={runs[index]} room="living"
+          <HomeHeroImage key={runs[index]} room={index === 0 ? 'living' : 'bedroom'}
             paused={paused || active !== index} onReady={index === 0 ? readyLiving : readyBedroom} />
           <div className="homeHeroShade" />
           <div key={`copy-${runs[index]}`} className="homeHeroContent shellWide">
@@ -101,7 +101,7 @@ export function HomeHeroCarousel() {
               <p className="eyebrow eyebrowLight heroLine heroLineOne">Review the furniture first</p>
               <h1 className="heroLine heroLineTwo">Choose the pieces.<br />Then see them in your room.</h1>
               <p className="heroLine heroLineThree">Check reviewed retailer products, dimensions and prices before creating a room visual from your photo.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Plan my living room</Link>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Plan my room</Link>
             </>}
           </div>
         </div>
