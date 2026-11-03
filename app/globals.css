@@ -4817,3 +4817,8 @@ button.journeyAssistantStep:hover strong {
 main:not(.homePage) > .siteHeader.isAtTop { background: var(--ivory); }
 main:not(.homePage) > .siteHeader.isAtTop .brand,
 main:not(.homePage) > .siteHeader.isAtTop .headerAccountLink { color: var(--ink); }
+
+/* Integrate the room-view logo with its dark header. */
+.roomChrome .brand.transformBrand { background: transparent; padding: 0; border-radius: 0; color: var(--ivory); }
+.roomChrome .transformBrandAccent { color: var(--ivory); }
+.roomChrome .transformBrandMark { color: #b1ddbf; }
