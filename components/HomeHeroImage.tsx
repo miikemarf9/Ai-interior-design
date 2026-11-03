@@ -141,13 +141,13 @@ export function HomeHeroImage({ room = 'living', paused = false, onReady }: {
       <div ref={prices} className={`heroPrices heroRoomPrices${showPrices ? ' isVisible' : ''}`} aria-hidden={!showPrices}>
         <p className="heroPricesCaption">Illustrative furniture prices</p>
         {room === 'living' ? <>
-        <div className="heroPrice heroPricePendant" data-image-x="0.66" data-image-y="0.15">
+        <div className="heroPrice heroPricePendant" data-image-x="0.66" data-image-y="0.22" data-candidates="0.68,0.27;0.73,0.23">
           <span>Pendant light</span><strong>£165</strong>
         </div>
-        <div className="heroPrice heroPriceSofa" data-image-x="0.49" data-mobile-x="0.56" data-image-y="0.62">
+        <div className="heroPrice heroPriceSofa" data-image-x="0.49" data-mobile-x="0.56" data-image-y="0.66" data-candidates="0.53,0.69;0.57,0.65;0.58,0.71">
           <span>Three-seater sofa</span><strong>£1,295</strong>
         </div>
-        <div className="heroPrice heroPriceTable" data-image-x="0.65" data-image-y="0.74">
+        <div className="heroPrice heroPriceTable" data-image-x="0.65" data-image-y="0.79" data-candidates="0.71,0.76;0.74,0.70;0.68,0.68">
           <span>Coffee table</span><strong>£245</strong>
         </div>
         </> : <>
