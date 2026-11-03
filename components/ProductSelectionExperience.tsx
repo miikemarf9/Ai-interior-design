@@ -45,6 +45,7 @@ function getCommerceSession() {
 }
 
 export function ProductSelectionExperience() {
+  const [roomPhotoUrl, setRoomPhotoUrl] = useState('');
   const [intake, setIntake] = useState<IntakeForBrief | null>(null);
   const [brief, setBrief] = useState<DesignBrief | null>(null);
   const [selection, setSelection] = useState<ProductSelection | null>(null);
@@ -78,6 +79,10 @@ export function ProductSelectionExperience() {
     try {
       const intakeSaved = JSON.parse(localStorage.getItem('roomfound-intake-v1') || 'null');
       if (!intakeSaved?.state) { setLoading(false); return; }
+      const runtime = JSON.parse(localStorage.getItem('roomfound-design-runtime-v1') || '{}');
+      if (runtime.roomAssetId && runtime.ownerKey) {
+        setRoomPhotoUrl('/api/assets/' + encodeURIComponent(runtime.roomAssetId) + '?ownerKey=' + encodeURIComponent(runtime.ownerKey));
+      }
       const storedBrief = JSON.parse(localStorage.getItem('roomfound-brief-v1') || 'null');
       const brief = storedBrief?.brief || buildFallbackBrief(intakeSaved.state);
       const briefSaved = { ...storedBrief, brief, approved: true, source: storedBrief?.source || 'preview' };
@@ -104,7 +109,7 @@ export function ProductSelectionExperience() {
     try {
       const response = await fetch('/api/products/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ intake: room, brief: direction, choices: choiceOverride || (previous ? choices(previous) : undefined), includedSlots: previous ? Array.from(new Set([...previous.products.map(product => product.slot), ...(choiceOverride || []).map(choice => choice.slot)])) : undefined, approve, acknowledgeLimitations: acknowledged, expectedSnapshot: previous ? approvalSnapshot(previous) : undefined }) });
       const data = await response.json();
-      if (!response.ok || data.selection?.version !== 2) throw new Error(data.error || 'The collection could not be checked. Your brief is still saved.');
+      if (!response.ok || data.selection?.version !== 2) throw new Error(data.error || 'We couldn’t check these products. Your choices are still saved.');
       setSelection(data.selection); setApproved(Boolean(data.approved)); setNotice(data.warning || ''); save(data.selection, Boolean(data.approved), omitted);
       if (data.approved) trackRoomfound('products_approved', {
         roomType: room.roomType || 'living_room',
@@ -139,9 +144,9 @@ export function ProductSelectionExperience() {
   }
 
   if (loading) return <section className="selectionLoading shell"><p className="eyebrow">Your furniture collection</p><h1>Checking products for your room.</h1><div className="briefLoadingLine"><i /></div><p>No image-generation credit is used.</p></section>;
-  if (!intake || !brief) return <section className="selectionMissing shell"><p className="eyebrow">Your furniture collection</p><h1>Agree your room brief first.</h1><p>We use your preferences and the furniture you are keeping to recommend a small collection.</p><Link className="button buttonPrimary" href="/brief">Return to brief</Link></section>;
-  if (intake.roomType === 'bedroom') return <section className="selectionMissing shell"><h1>Your bedroom brief is saved.</h1><p>Bedroom furniture selection is not available yet.</p><Link className="button buttonPrimary" href="/brief">Back to my brief</Link></section>;
-  if (error) return <section className="selectionMissing shell"><h1>We couldn’t check your collection.</h1><p role="alert">{error}</p><button className="button buttonPrimary" disabled={busy} onClick={() => loadSelection(intake, brief, selection || undefined)}>Try again</button><p><Link href="/brief">Back to my brief</Link></p></section>;
+  if (!intake || !brief) return <section className="selectionMissing shell"><p className="eyebrow">Your furniture collection</p><h1>Start with your room.</h1><p>We use your preferences and the furniture you are keeping to recommend a small collection.</p><Link className="button buttonPrimary" href="/design?step=1">Choose your room and furniture</Link></section>;
+  if (intake.roomType === 'bedroom') return <section className="selectionMissing shell"><h1>Your bedroom brief is saved.</h1><p>Bedroom furniture selection is not available yet.</p><Link className="button buttonPrimary" href="/design?step=1">Back to furniture groups</Link></section>;
+  if (error) return <section className="selectionMissing shell"><h1>We couldn’t check your collection.</h1><p role="alert">{error}</p><button className="button buttonPrimary" disabled={busy} onClick={() => loadSelection(intake, brief, selection || undefined)}>Try again</button><p><Link href="/design?step=1">Back to my brief</Link></p></section>;
   if (!selection || (!selection.products.length && !excludedProducts.length)) return <section className="selectionEmpty shell">
     <p className="eyebrow">Your furniture collection</p><h1>No reviewed products match this combination yet.</h1>
     <p>We checked the selected item types against your style, budget and room measurements. A room design is only available when it includes at least one reviewed retailer product.</p>
@@ -149,26 +154,31 @@ export function ProductSelectionExperience() {
     {selection?.missingItems.length ? <p>Still to source: {selection.missingItems.join(', ')}.</p> : null}
     {selection?.notes.filter(note => note.includes('missing or invalid prices')).map(note => <p key={note}>{note}</p>)}
     <Link className="button buttonPrimary" href="/design">Adjust my style, budget or item choices</Link>
-    <Link className="textButton" href="/brief">Review my brief</Link>
+    <Link className="textButton" href="/design?step=1">Change my choices</Link>
     <button className="textButton" disabled={busy} onClick={() => loadSelection(intake, brief)}>Check collection again</button>
   </section>;
-  return <div className="productSelectionExperience shell" aria-busy={busy}>
-    <section className="selectionHero"><div><p className="eyebrow">Real products for your room</p><h1>Choose the products you want in your room</h1><p>Select the real furniture you’d like to see in your room design. Review your choices and estimated total in Your progress; you can decide whether to buy from a retailer after you see the design.</p></div></section>
+  return <div className={"productSelectionExperience shell " + styles.experience} aria-busy={busy}>
+    <section className={"selectionHero " + styles.hero}><div><h1>Choose the products you want to see in your room</h1><p>Check your selected products below. Swap or remove pieces, or add more before creating your room image.</p></div></section>
+    <figure className={styles.roomPhoto}>
+      {roomPhotoUrl ? <img src={roomPhotoUrl} alt="Your uploaded room photograph" /> : <p><Link href="/design?step=0">Add your room photo</Link></p>}
+      <figcaption><span>Your room photo</span><Link href="/design?step=0">Change photo or notes</Link></figcaption>
+    </figure>
+    <div className={styles.sectionHeading}><h2>Your selected products</h2><p>These are the pieces you’ve chosen for your room image. No furniture is purchased here.</p></div>
     {selection.remainingMinor < 0 ? <p className="productBudgetNotice" role="status">This collection is {money(Math.abs(selection.remainingMinor))} over your furniture budget. You can still continue if these are the products you want to see in your room design.</p> : null}
-    <div className={styles.notice} role="status">{notice || 'Review each item before approving. No purchase is made here.'}</div>
-    <section className="selectedProducts" aria-label="Recommended furniture">
+    {notice && <div className={styles.notice} role="status">{notice}</div>}
+    <section className="selectedProducts" aria-label="Your selected products">
       {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onToggle={() => toggleProduct(product, false)} onBrowse={() => setBrowseProduct(product)} retailerHref={retailerHref} />)}
     </section>
     <section className={styles.addCatalogue}>
       <button type="button" className={styles.addCatalogueButton} disabled={busy} onClick={() => setAddProductOpen(true)}>
-        <span aria-hidden="true">＋</span><strong>Add a product</strong><small>Search the catalogue by category</small>
+        <span aria-hidden="true">＋</span><strong>Add products</strong><small>Browse furniture by category</small>
       </button>
     </section>
     {addProductOpen ? (
       <div className={styles.categoryBackdrop} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setAddProductOpen(false); }}>
         <section className={styles.categoryDialog} role="dialog" aria-modal="true" aria-labelledby="catalogue-category-title">
           <button type="button" className={styles.categoryClose} aria-label="Close categories" onClick={() => setAddProductOpen(false)}>×</button>
-          <p className={styles.categoryEyebrow}>Cleared catalogue</p>
+          <p className={styles.categoryEyebrow}>Add products</p>
           <h2 id="catalogue-category-title">What would you like to add?</h2>
           <p>Choose a category, then search the available products.</p>
           <div className={styles.categoryGrid}>
@@ -206,22 +216,23 @@ export function ProductSelectionExperience() {
     <JourneyAssistant
       visible={Boolean(intake && brief && selection)}
       currentStep={3}
-      nextTitle={approved ? 'Create your room visual' : 'Disclaimer'}
+      intake={intake}
+      nextTitle={approved ? 'Create your room image' : 'Ready to see your room?'}
       nextDescription={approved
-        ? 'Next, your room visual starts generating automatically. It may take about 2 minutes. One image use is charged only if generation succeeds; no furniture is purchased.'
-        : 'Please review the disclaimer before saving these products for your room design.'}
+        ? 'The next page creates your room image using these products. This uses one image use, which is returned if generation fails. No furniture is purchased.'
+        : 'Check your products and the furniture total, then save your choices to continue.'}
       nextDisclaimer={approved ? undefined : {
         text: selection.remainingMinor < 0
           ? `This collection is ${money(Math.abs(selection.remainingMinor))} over your furniture budget. Continuing saves it for your room design only; it does not place an order, reserve stock or charge you. Check fit, retailer prices, stock, delivery costs and any missing products before you buy.`
-          : 'Fit is not verified. Retailer prices, stock, delivery costs and missing products may still need checking. Approval saves this collection for your design; it does not place an order or reserve stock.',
+          : 'Check measurements, retailer prices, stock and delivery before buying. Saving these products creates no order or furniture payment.',
         label: selection.remainingMinor < 0
           ? `I understand this collection is ${money(Math.abs(selection.remainingMinor))} over budget and needs checking before I buy.`
-          : 'I understand these details need checking before I buy.',
+          : 'I’ll check measurements, prices and delivery before buying.',
         checked: acknowledged,
         onChange: setAcknowledged,
         disabled: busy,
       }}
-      nextLabel={approved ? 'Continue to room visual' : 'Review my collection · ' + money(selection.totalMinor)}
+      nextLabel={approved ? 'Create my room image' : 'Save these products · ' + money(selection.totalMinor)}
       nextHref={approved ? '/render' : undefined}
       onNext={!approved ? () => loadSelection(intake, brief, selection, true) : undefined}
       nextDisabled={!approved && (busy || !acknowledged || !selection.products.length)}
@@ -253,11 +264,11 @@ function ProductCard({ product, index, disabled, onChange, onToggle, onBrowse, r
         <p>Delivery: {item.offer.deliveryPriceMinor === null || item.commercial!.deliveryBasis === 'unknown' ? 'Price to confirm' : `${money(item.offer.deliveryPriceMinor)} ${item.commercial!.deliveryBasis === 'per_order' ? 'per retailer order' : 'per pack'}`}. {item.commercial!.deliveryDetails || 'Timing, postcode eligibility and assembly to confirm.'}</p>
         <p className="selectedProductWhy">{product.reasons.filter(reason => !reason.includes('stock') && !reason.includes('orderable')).slice(0, 2).join(' ')}</p>
         <label className={styles.quantity}>Quantity of {item.commercial!.unitLabel}<select aria-label={`Quantity for ${product.slotLabel}`} disabled={disabled} value={product.quantity} onChange={event => onChange(item.variantId, Number(event.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>
-        <div className={`selectedProductActions ${styles.actions}`}><button type="button" className="textButton" disabled={disabled} aria-expanded={open} aria-controls={`alternatives-${product.slot}`} onClick={() => setOpen(!open)}>{open ? 'Hide alternatives' : 'Swap this item'}</button><button type="button" className="textButton" disabled={disabled} onClick={onBrowse}>Browse cleared inventory</button><a className="textButton" href={retailerHref(item.offer.id)} target="_blank" rel="sponsored noopener noreferrer">Ad · View exact variant at retailer ↗</a></div>
+        <div className={`selectedProductActions ${styles.actions}`}><button type="button" className="textButton" disabled={disabled} aria-expanded={open} aria-controls={`alternatives-${product.slot}`} onClick={() => setOpen(!open)}>{open ? 'Hide alternatives' : 'Swap this item'}</button><button type="button" className="textButton" disabled={disabled} onClick={onBrowse}>Find another product</button><a className="textButton" href={retailerHref(item.offer.id)} target="_blank" rel="sponsored noopener noreferrer">Ad · View at retailer ↗</a></div>
         {open && <div id={`alternatives-${product.slot}`} className={styles.alternatives}>
-          {!product.alternatives.length && <p>No other cleared variants match this brief yet.</p>}
+          {!product.alternatives.length && <p>No other products match your choices yet.</p>}
           {product.alternatives.map((alternative: ProductAlternative) => <div className={styles.alternative} key={alternative.candidate.variantId}>
-            <ProductPhoto item={alternative.candidate} /><div><strong>{name(alternative.candidate)}</strong><p>{money(alternative.candidate.offer.priceMinor)} per {alternative.candidate.commercial!.unitLabel} · {alternative.candidate.commercial!.packSize} item(s) per pack</p><p>W × D × H: {dimensions(alternative.candidate)}</p><button type="button" disabled={disabled} className="textButton" onClick={() => { onChange(alternative.candidate.variantId, product.quantity); setOpen(false); }}>Use this variant</button></div>
+            <ProductPhoto item={alternative.candidate} /><div><strong>{name(alternative.candidate)}</strong><p>{money(alternative.candidate.offer.priceMinor)} per {alternative.candidate.commercial!.unitLabel} · {alternative.candidate.commercial!.packSize} item(s) per pack</p><p>W × D × H: {dimensions(alternative.candidate)}</p><button type="button" disabled={disabled} className="textButton" onClick={() => { onChange(alternative.candidate.variantId, product.quantity); setOpen(false); }}>Choose this product</button></div>
           </div>)}
         </div>}
       </details>
