@@ -4809,3 +4809,5 @@ button.journeyAssistantStep:hover strong {
 .journeyAssistantBalance strong { display: block; animation: imageBalanceUpdate .25s ease-out; }
 @keyframes imageBalanceUpdate { from { opacity: .35; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .journeyAssistantBalance strong { animation: none; } }
+
+.journeyAssistantStep small { white-space: pre-line; }
