@@ -139,26 +139,26 @@ export function HomeHeroImage({ room = 'living', paused = false, onReady }: {
         </div>
       </div>
       <div ref={prices} className={`heroPrices heroRoomPrices${showPrices ? ' isVisible' : ''}`} aria-hidden={!showPrices}>
-        <p className="heroPricesCaption">Style cues · not retailer product listings</p>
+        <p className="heroPricesCaption">Illustrative furniture prices</p>
         {room === 'living' ? <>
         <div className="heroPrice heroPricePendant" data-image-x="0.66" data-image-y="0.15">
-          <span>Pendant lighting</span><strong>Style cue</strong>
+          <span>Pendant light</span><strong>£165</strong>
         </div>
         <div className="heroPrice heroPriceSofa" data-image-x="0.49" data-mobile-x="0.56" data-image-y="0.62">
-          <span>Soft seating</span><strong>Style cue</strong>
+          <span>Three-seater sofa</span><strong>£1,295</strong>
         </div>
         <div className="heroPrice heroPriceTable" data-image-x="0.65" data-image-y="0.74">
-          <span>Natural wood</span><strong>Material cue</strong>
+          <span>Coffee table</span><strong>£245</strong>
         </div>
         </> : <>
           <div className="heroPrice heroBedroomBed" data-image-x="0.66" data-image-y="0.72" data-candidates="0.70,0.77;0.58,0.74">
-            <span>Upholstered bed</span><strong>Style cue</strong>
+            <span>Upholstered king-size bed frame</span><strong>£795</strong>
           </div>
           <div className="heroPrice heroBedroomBedside" data-image-x="0.85" data-image-y="0.59" data-candidates="0.85,0.65;0.47,0.48">
-            <span>Bedside tables</span><strong>Style cue</strong>
+            <span>Bedside tables (pair)</span><strong>£395</strong>
           </div>
           <div className="heroPrice heroBedroomChest" data-image-x="0.09" data-image-y="0.70" data-candidates="0.09,0.76;0.10,0.60">
-            <span>Warm wood finish</span><strong>Material cue</strong>
+            <span>Walnut chest of drawers</span><strong>£495</strong>
           </div>
         </>}
       </div>
