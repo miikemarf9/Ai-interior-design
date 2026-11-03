@@ -157,7 +157,7 @@ export function HomeHeroImage({ room = 'living', paused = false, onReady }: {
           <div className="heroPrice heroBedroomBedside" data-image-x="0.85" data-image-y="0.59" data-candidates="0.85,0.65;0.47,0.48">
             <span>Bedside tables (pair)</span><strong>£395</strong>
           </div>
-          <div className="heroPrice heroBedroomChest" data-image-x="0.09" data-image-y="0.70" data-candidates="0.16,0.79;0.20,0.78;0.09,0.76;0.10,0.60">
+          <div className="heroPrice heroBedroomChest" data-image-x="0.09" data-image-y="0.70" data-candidates="0.28,0.77;0.16,0.79;0.20,0.78;0.09,0.76;0.10,0.60">
             <span>Walnut chest of drawers</span><strong>£495</strong>
           </div>
         </>}
