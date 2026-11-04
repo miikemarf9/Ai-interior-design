@@ -56,11 +56,11 @@ export default async function ExploreFurniture({ searchParams }: { searchParams:
               <img src={item.image!.url} alt={item.image!.altText || item.productName} loading="lazy" width={600} height={600} />
             </div>
             <div className={styles.cardBody}><p className={styles.eyebrow}>{item.categoryName} · {item.offer.availability==='low_stock' ? 'Low stock' : 'In stock'}</p>
-              <h2>{item.productName}</h2><p className={styles.variant}>{item.variantName}</p>
+              <h2>{item.variantName || item.productName}</h2>{item.brandName && <p className={styles.variant}>{item.brandName}</p>}
               <p className={styles.price}>{money(item.offer.priceMinor)}</p><p className={styles.retailer}>{item.offer.retailerName}</p>
               <p className={styles.delivery}>{item.offer.ukDeliveryStatus==='restricted' ? 'UK delivery restrictions apply. ' : ''}{item.commercial?.deliveryDetails || 'Confirm delivery options with the retailer.'}</p>
               <a className="button buttonPrimary" href={`/go/${item.offer.id}?surface=explore_furniture`} target="_blank" rel="sponsored noopener noreferrer">Shop at {item.offer.retailerName} ↗</a>
-              <details><summary>Product details &amp; delivery</summary><p>{item.designSummary}</p><p>{[...item.materials,...item.colours].map(label).join(' · ')}</p><p>{item.styles.map(s=>styleLabels[s] || label(s)).join(' · ')}</p><p>Dimensions (W × D × H): {[item.dimensions.widthMm,item.dimensions.depthMm,item.dimensions.heightMm].map(n=>n ? `${n/10} cm` : 'Not listed').join(' × ')}</p><p>Price &amp; stock checked: {new Date(item.offer.lastCheckedAt).toLocaleDateString('en-GB',{timeZone:'Europe/London'})}. Confirm the final price and delivery at checkout.</p></details>
+              <details><summary>Product details &amp; delivery</summary><p>{item.productName}</p><p>{item.designSummary}</p><p>{[...item.materials,...item.colours].map(label).join(' · ')}</p><p>{item.styles.map(s=>styleLabels[s] || label(s)).join(' · ')}</p><p>Dimensions (W × D × H): {[item.dimensions.widthMm,item.dimensions.depthMm,item.dimensions.heightMm].map(n=>n ? `${n/10} cm` : 'Not listed').join(' × ')}</p><p>Price &amp; stock checked: {new Date(item.offer.lastCheckedAt).toLocaleDateString('en-GB',{timeZone:'Europe/London'})}. Confirm the final price and delivery at checkout.</p></details>
             </div>
           </article>)}
         </div>}
