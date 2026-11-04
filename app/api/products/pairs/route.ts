@@ -4,6 +4,8 @@ import type { SelectionCandidate } from "@/lib/catalog/selection";
 
 export const runtime = "nodejs";
 
+const PAIR_OPTION_LIMIT = 6;
+
 const pairCategories = [
   { first: "sofas", second: "coffee-tables", labels: ["Sofa", "Coffee table"] },
   { first: "sofas", second: "armchairs", labels: ["Sofa", "Armchairs"] },
@@ -74,20 +76,50 @@ export async function GET() {
       .sort((a, b) => b.score - a.score || a.items.reduce((sum, value) => sum + value.offer.priceMinor, 0) - b.items.reduce((sum, value) => sum + value.offer.priceMinor, 0));
 
     const pairs: Array<(typeof ranked)[number]> = [];
-    const usedPrimary = new Set<string>();
-    const usedCategories = new Set<string>();
-    for (const pair of ranked) {
-      const category = pair.items[1].category;
-      if (usedPrimary.has(pair.items[0].productId) || usedCategories.has(category)) continue;
+    const usedPairIds = new Set<string>();
+    const primaryCounts = new Map<string, number>();
+    const companionCounts = new Map<string, number>();
+    const primaryCompanions = new Set<string>();
+    const addPair = (pair: (typeof ranked)[number]) => {
+      const primaryId = pair.items[0].productId;
+      const companionId = pair.items[1].productId;
+      if (usedPairIds.has(pair.id)) return false;
       pairs.push(pair);
-      usedPrimary.add(pair.items[0].productId);
-      usedCategories.add(category);
-      if (pairs.length === 3) break;
+      usedPairIds.add(pair.id);
+      primaryCounts.set(primaryId, (primaryCounts.get(primaryId) || 0) + 1);
+      companionCounts.set(companionId, (companionCounts.get(companionId) || 0) + 1);
+      primaryCompanions.add(`${primaryId}:${companionId}`);
+      return true;
+    };
+
+    // First show the best match for each distinct sofa, paired with a different
+    // type of companion furniture where the live catalogue allows it.
+    for (const pair of ranked) {
+      const primaryId = pair.items[0].productId;
+      if ((primaryCounts.get(primaryId) || 0) > 0) continue;
+      if (pairs.some(existing => existing.items[1].category === pair.items[1].category)) continue;
+      addPair(pair);
+      if (pairs.length === Math.min(PAIR_OPTION_LIMIT, new Set(ranked.map(option => option.items[0].productId)).size)) break;
     }
+
+    // Fill the remaining options with a second, distinct combination per sofa
+    // and keep companion pieces balanced across the set.
+    const primaryIds = [...new Set(ranked.map(pair => pair.items[0].productId))];
+    for (const primaryId of primaryIds) {
+      if (pairs.length >= PAIR_OPTION_LIMIT) break;
+      const next = ranked.find(pair => pair.items[0].productId === primaryId
+        && !usedPairIds.has(pair.id)
+        && !primaryCompanions.has(`${primaryId}:${pair.items[1].productId}`)
+        && (primaryCounts.get(primaryId) || 0) < 2
+        && (companionCounts.get(pair.items[1].productId) || 0) < 2);
+      if (next) addPair(next);
+    }
+
+    // If stock or compatibility limits leave fewer than six after balancing,
+    // use the remaining distinct high-scoring combinations.
     for (const pair of ranked) {
-      if (pairs.length === 3) break;
-      if (pairs.some(existing => existing.id === pair.id)) continue;
-      pairs.push(pair);
+      if (pairs.length >= PAIR_OPTION_LIMIT) break;
+      if (!usedPairIds.has(pair.id)) addPair(pair);
     }
 
     return NextResponse.json({
