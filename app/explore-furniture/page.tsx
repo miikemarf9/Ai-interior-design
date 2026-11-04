@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
-import { getLiveSelectionCandidates } from '@/lib/catalog/repository';
+import { getLiveBrowseCandidates } from '@/lib/catalog/repository';
 import { exploreCatalogue, label, styleLabels } from '@/lib/catalog/explore';
 import styles from './page.module.css';
 
@@ -20,7 +20,7 @@ export default async function ExploreFurniture({ searchParams }: { searchParams:
     const value=raw[key]; if (typeof value==='string') params.set(key,value.slice(0,100));
   }
   let catalogue: ReturnType<typeof exploreCatalogue> | null = null;
-  try { catalogue=exploreCatalogue(await getLiveSelectionCandidates(), params); }
+  try { catalogue=exploreCatalogue(await getLiveBrowseCandidates(), params); }
   catch (error) { console.error('Explore furniture catalogue unavailable', error); }
   const pageUrl = (page: number) => { const next=new URLSearchParams(params); next.set('page',String(page)); return '/explore-furniture?'+next.toString()+'#results'; };
   const select = (name: string, title: string, options: string[][]) => <label>{title}<select name={name} defaultValue={params.get(name) || ''}><option value="">All {title.toLowerCase()}</option>{options.map(([value,text])=><option key={value} value={value}>{text}</option>)}</select></label>;

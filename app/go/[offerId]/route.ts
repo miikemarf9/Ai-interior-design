@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getCatalogDb } from "@/lib/catalog/neon";
 import { addAwinClickRef } from "@/lib/commerce/awin";
-import { getLiveSelectionCandidates } from "@/lib/catalog/repository";
+import { getLiveBrowseCandidates } from "@/lib/catalog/repository";
 import { eligibleForExplore } from "@/lib/catalog/explore";
 
 export const runtime = "nodejs";
@@ -41,7 +41,7 @@ export async function GET(
   // Recheck browse offers at click time; the room design journey keeps its existing rules.
   if (surface === "explore_furniture") {
     try {
-      const candidates = await getLiveSelectionCandidates();
+      const candidates = await getLiveBrowseCandidates();
       if (!candidates.some(item => item.offer.id === offerId && eligibleForExplore(item))) {
         return NextResponse.redirect(new URL("/explore-furniture?unavailable=1", request.url), 302);
       }
