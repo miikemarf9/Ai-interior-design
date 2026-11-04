@@ -62,8 +62,21 @@ export function ProductSelectionExperience() {
   const [addingCategory, setAddingCategory] = useState<{ category: string; label: string } | null>(null);
   const [catalogueCategories, setCatalogueCategories] = useState(fallbackCatalogueCategories);
   const [excludedProducts, setExcludedProducts] = useState<ProposedProduct[]>([]);
+  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const started = useRef(false);
   const fingerprint = useRef('');
+
+  useEffect(() => {
+    if (!groupDialogOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setGroupDialogOpen(false); };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [groupDialogOpen]);
 
   useEffect(() => {
     let active = true;
@@ -200,7 +213,10 @@ export function ProductSelectionExperience() {
       <figcaption><span>Your room photo</span><Link href="/design?step=0">Change photo or notes</Link></figcaption>
     </figure>
     <div className={styles.sectionHeading}><h2>Your selected products</h2><p>These are the pieces you’ve chosen for your room image. No furniture is purchased here.</p></div>
-    {selection.remainingMinor < 0 ? <p className="productBudgetNotice" role="status">This collection is {money(Math.abs(selection.remainingMinor))} over your furniture budget. You can still continue if these are the products you want to see in your room design.</p> : null}
+    {selection.remainingMinor < 0 ? <div className="productBudgetNotice" role="alert" aria-live="assertive">
+      <span className="productBudgetNoticeIcon" aria-hidden="true">!</span>
+      <div><strong>Over your furniture budget by {money(Math.abs(selection.remainingMinor))}</strong><p>Remove or swap items to bring the collection back within budget. You can still continue after confirming the warning below.</p></div>
+    </div> : null}
     {notice && <div className={styles.notice} role="status">{notice}</div>}
     <section className="selectedProducts" aria-label="Your selected products">
       {selection.products.map((product, index) => <ProductCard key={product.slot} product={product} index={index} disabled={busy || navigating} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onToggle={() => toggleProduct(product, false)} onBrowse={() => setBrowseProduct(product)} retailerHref={retailerHref} />)}
@@ -210,6 +226,40 @@ export function ProductSelectionExperience() {
         <span aria-hidden="true">＋</span><strong>Add products</strong><small>Browse furniture by category</small>
       </button>
     </section>
+    {groupDialogOpen ? (
+      <div className={styles.groupDialogBackdrop} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setGroupDialogOpen(false); }} onKeyDown={event => { if (event.key === 'Escape') setGroupDialogOpen(false); }}>
+        <section className={styles.groupDialog} role="dialog" aria-modal="true" aria-labelledby="group-dialog-title" tabIndex={-1} autoFocus>
+          <button type="button" className={styles.categoryClose} aria-label="Close style and furniture choices" onClick={() => setGroupDialogOpen(false)}>×</button>
+          <p className={styles.categoryEyebrow}>Step 2 · Your choices</p>
+          <h2 id="group-dialog-title">Your style &amp; furniture choices</h2>
+          <p className={styles.groupDialogIntro}>Everything selected for this room, including the products in your collection. You can remove or restore pieces here.</p>
+          <dl className={styles.groupChoiceDetails}>
+            <div><dt>Furniture group</dt><dd>{intake.furniturePair?.title || intake.furniturePair?.itemLabels?.join(' + ') || intake.change.join(', ') || 'Open furniture selection'}</dd></div>
+            <div><dt>Style</dt><dd>{intake.styles.length ? intake.styles.map(value => value.replace(/[-_]/g, ' ')).join(', ') : 'Open to recommendations'}</dd></div>
+            <div><dt>Colours</dt><dd>{intake.colours.length ? intake.colours.join(', ') : 'Designer’s choice'}</dd></div>
+            <div><dt>Materials</dt><dd>{intake.materials.length ? intake.materials.join(', ') : 'Designer’s choice'}</dd></div>
+            <div><dt>Furniture budget</dt><dd>{money(intake.budget * 100)}</dd></div>
+            {intake.uses.length ? <div><dt>How you use the room</dt><dd>{intake.uses.join(', ')}</dd></div> : null}
+            {intake.keep.length ? <div><dt>Keep</dt><dd>{intake.keep.join(', ')}</dd></div> : null}
+            {intake.change.length ? <div><dt>Change</dt><dd>{intake.change.join(', ')}</dd></div> : null}
+            {intake.dislikes.trim() ? <div><dt>Avoid</dt><dd>{intake.dislikes}</dd></div> : null}
+            {intake.measurements.width || intake.measurements.length || intake.measurements.height ? <div><dt>Room measurements</dt><dd>{[intake.measurements.width && `Width ${intake.measurements.width} cm`, intake.measurements.length && `Length ${intake.measurements.length} cm`, intake.measurements.height && `Ceiling ${intake.measurements.height} cm`].filter(Boolean).join(' · ')}</dd></div> : null}
+          </dl>
+          <div className={styles.groupDialogCollectionHeading}><h3>Products in your collection</h3><span>{selection.products.length} selected</span></div>
+          {selection.products.length ? <section className={styles.groupDialogProducts} aria-label="Selected products in this furniture group">
+            {selection.products.map((product, index) => <ProductCard key={product.slot} idPrefix="group" product={product} index={index} disabled={busy || navigating} onChange={(variantId, quantity) => change(product.slot, variantId, quantity)} onToggle={() => toggleProduct(product, false)} onBrowse={() => { setGroupDialogOpen(false); setBrowseProduct(product); }} retailerHref={retailerHref} />)}
+          </section> : <p className={styles.groupDialogEmpty}>No products are currently selected. Restore a removed product below or browse the catalogue.</p>}
+          {excludedProducts.length ? <section className={styles.groupDialogRemoved} aria-label="Removed products">
+            <h3>Removed from this room</h3>
+            {excludedProducts.map(product => <div key={product.slot}><span>{product.slotLabel} · {product.selected.productName}</span><button type="button" className="textButton" disabled={busy || navigating} onClick={() => toggleProduct(product, true)}>Add back · {money(product.selected.offer.priceMinor * product.quantity)}</button></div>)}
+          </section> : null}
+          <div className={styles.groupDialogActions}>
+            <button type="button" className="button buttonSecondary" onClick={() => setGroupDialogOpen(false)}>Done</button>
+            <button type="button" className="button buttonPrimary" onClick={() => { setGroupDialogOpen(false); setAddProductOpen(true); }}>Browse full catalogue</button>
+          </div>
+        </section>
+      </div>
+    ) : null}
     {addProductOpen ? (
       <div className={styles.categoryBackdrop} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setAddProductOpen(false); }}>
         <section className={styles.categoryDialog} role="dialog" aria-modal="true" aria-labelledby="catalogue-category-title">
@@ -270,6 +320,8 @@ export function ProductSelectionExperience() {
       onNext={continueToRender}
       nextDisabled={busy || navigating || !selection.products.length || (!approved && !acknowledged)}
       refreshKey={`${selection.totalMinor}:${selection.products.map(product => product.slot + ':' + product.quantity).join(',')}`} 
+      onStagePopup={2}
+      onStageClick={(stage) => { if (stage === 2) setGroupDialogOpen(true); else if (stage === 1) window.location.assign('/design?step=0'); }}
     />
     <p className="affiliateDisclosure"><strong>Partner links · Ad.</strong> We connect you with products selected for your room. We earn commission on qualifying purchases through retailer links, at no extra cost to you. This helps fund the product research and room-planning tools behind your recommendations.</p>
   </div>;
@@ -279,7 +331,7 @@ function ProductPhoto({ item }: { item: SelectionCandidate }) {
   const [failed, setFailed] = useState(false);
   return !failed && item.image ? <img src={item.image.url} alt={item.image.altText || name(item)} loading="lazy" decoding="async" onError={() => setFailed(true)} /> : <div className="imagePending">Product photograph unavailable. Check the retailer before deciding.</div>;
 }
-function ProductCard({ product, index, disabled, onChange, onToggle, onBrowse, retailerHref }: { product: ProposedProduct; index: number; disabled: boolean; onChange: (variantId: string, quantity: number) => void; onToggle: () => void; onBrowse: () => void; retailerHref: (offerId: string) => string }) {
+function ProductCard({ product, index, idPrefix = '', disabled, onChange, onToggle, onBrowse, retailerHref }: { product: ProposedProduct; index: number; idPrefix?: string; disabled: boolean; onChange: (variantId: string, quantity: number) => void; onToggle: () => void; onBrowse: () => void; retailerHref: (offerId: string) => string }) {
   const [open, setOpen] = useState(false);
   const item = product.selected;
   return <article className="selectedProductCard">
@@ -297,8 +349,8 @@ function ProductCard({ product, index, disabled, onChange, onToggle, onBrowse, r
         <p>Delivery: {item.offer.deliveryPriceMinor === null || item.commercial!.deliveryBasis === 'unknown' ? 'Price to confirm' : `${money(item.offer.deliveryPriceMinor)} ${item.commercial!.deliveryBasis === 'per_order' ? 'per retailer order' : 'per pack'}`}. {item.commercial!.deliveryDetails || 'Timing, postcode eligibility and assembly to confirm.'}</p>
         <p className="selectedProductWhy">{product.reasons.filter(reason => !reason.includes('stock') && !reason.includes('orderable')).slice(0, 2).join(' ')}</p>
         <label className={styles.quantity}>Quantity of {item.commercial!.unitLabel}<select aria-label={`Quantity for ${product.slotLabel}`} disabled={disabled} value={product.quantity} onChange={event => onChange(item.variantId, Number(event.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>
-        <div className={`selectedProductActions ${styles.actions}`}><button type="button" className="textButton" disabled={disabled} aria-expanded={open} aria-controls={`alternatives-${product.slot}`} onClick={() => setOpen(!open)}>{open ? 'Hide alternatives' : 'Swap this item'}</button><button type="button" className="textButton" disabled={disabled} onClick={onBrowse}>Find another product</button><a className="textButton" href={retailerHref(item.offer.id)} target="_blank" rel="sponsored noopener noreferrer">Ad · View at retailer ↗</a></div>
-        {open && <div id={`alternatives-${product.slot}`} className={styles.alternatives}>
+        <div className={`selectedProductActions ${styles.actions}`}><button type="button" className="textButton" disabled={disabled} aria-expanded={open} aria-controls={`alternatives-${idPrefix}${product.slot}`} onClick={() => setOpen(!open)}>{open ? 'Hide alternatives' : 'Swap this item'}</button><button type="button" className="textButton" disabled={disabled} onClick={onBrowse}>Find another product</button><a className="textButton" href={retailerHref(item.offer.id)} target="_blank" rel="sponsored noopener noreferrer">Ad · View at retailer ↗</a></div>
+        {open && <div id={`alternatives-${idPrefix}${product.slot}`} className={styles.alternatives}>
           {!product.alternatives.length && <p>No other products match your choices yet.</p>}
           {product.alternatives.map((alternative: ProductAlternative) => <div className={styles.alternative} key={alternative.candidate.variantId}>
             <ProductPhoto item={alternative.candidate} /><div><strong>{name(alternative.candidate)}</strong><p>{money(alternative.candidate.offer.priceMinor)} per {alternative.candidate.commercial!.unitLabel} · {alternative.candidate.commercial!.packSize} item(s) per pack</p><p>W × D × H: {dimensions(alternative.candidate)}</p><button type="button" disabled={disabled} className="textButton" onClick={() => { onChange(alternative.candidate.variantId, product.quantity); setOpen(false); }}>Choose this product</button></div>

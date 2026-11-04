@@ -4774,13 +4774,35 @@ button.journeyAssistantStep:hover strong {
   background: #f4e9e3;
 }
 .productBudgetNotice {
-  margin: 14px 0;
-  padding: 12px 15px;
-  border-left: 3px solid #a97839;
-  background: #f8f3e8;
-  color: #554a35;
-  font-size: 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin: 16px 0 20px;
+  padding: 16px 18px;
+  border: 1px solid #d79a55;
+  border-left: 5px solid #bb642e;
+  background: #fff3e5;
+  color: #613817;
+  font-size: 14px;
   line-height: 1.5;
+}
+.productBudgetNoticeIcon {
+  display: grid;
+  flex: 0 0 25px;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  background: #9c4d25;
+  color: white;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 800;
+}
+.productBudgetNotice strong { display: block; margin-bottom: 3px; font-size: 15px; }
+.productBudgetNotice p { margin: 0; }
+@media (max-width: 600px) {
+  .productBudgetNotice { padding: 13px; font-size: 13px; }
 }
 
 /* Compact image balance at the top right of the journey panel. */
