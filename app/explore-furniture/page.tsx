@@ -35,7 +35,7 @@ export default async function ExploreFurniture({ searchParams }: { searchParams:
     <section className={styles.catalogue} aria-label="Furniture catalogue">
       {raw.unavailable === '1' && <p role="status" className={styles.disclosure}>That piece is no longer available to shop. Please choose another from the current collection below.</p>}
       {!catalogue ? <div className={styles.empty}><h2>Our collection is temporarily unavailable.</h2><p>Please try again in a moment.</p><Link href="/explore-furniture" className="button buttonPrimary">Try again</Link></div> : <>
-        <form action="/explore-furniture" method="get" className={styles.filters}>
+        <form key={params.toString()} action="/explore-furniture" method="get" className={styles.filters}>
           <label className={styles.search}>Search furniture<input type="search" name="q" maxLength={100} defaultValue={params.get('q') || ''} placeholder="Product, style, material or retailer" /></label>
           {select('category','Categories',catalogue.facets.categories)}
           {select('retailer','Retailers',catalogue.facets.retailers)}
