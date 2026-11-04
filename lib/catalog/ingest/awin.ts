@@ -37,6 +37,10 @@ export type FeedCandidate = {
 const CATEGORY_RULES: Array<{ slug: string; terms: string[] }> = [
   { slug: "home-appliances", terms: ["wine fridge", "drinks fridge", "beer fridge", "wine cooler", "beverage cooler", "mini fridge"] },
   { slug: "dressing-tables", terms: ["dressing table", "vanity table"] },
+  { slug: "bed-frames", terms: ["bed frame", "bed base", "ottoman bed", "upholstered bed"] },
+  { slug: "bedside-tables", terms: ["bedside table", "bedside cabinet", "bedside chest", "nightstand"] },
+  { slug: "chest-of-drawers", terms: ["chest of drawers", "drawer chest", "drawer dresser"] },
+  { slug: "wardrobes", terms: ["wardrobe", "wardrobe cabinet"] },
   { slug: "sofas", terms: ["sofa", "settee", "couch", "loveseat"] },
   { slug: "armchairs", terms: ["armchair", "accent chair", "lounge chair", "wing chair", "rocking chair", "swivel chair"] },
   { slug: "coffee-tables", terms: ["coffee table"] },
@@ -201,6 +205,15 @@ function unitToMm(value: number, unit: string) {
 
 export function parseDimensions(text: string | null) {
   if (!text) return { widthMm: null, heightMm: null, depthMm: null };
+
+  const lengthWidthHeight = text.match(/(\d+(?:\.\d+)?)\s*l\s*[x×]\s*(\d+(?:\.\d+)?)\s*w\s*[x×]\s*(\d+(?:\.\d+)?)\s*h\s*(mm|cm|inches|inch|in|m)\b/i);
+  if (lengthWidthHeight) {
+    return {
+      widthMm: unitToMm(Number(lengthWidthHeight[1]), lengthWidthHeight[4].toLowerCase()),
+      depthMm: unitToMm(Number(lengthWidthHeight[2]), lengthWidthHeight[4].toLowerCase()),
+      heightMm: unitToMm(Number(lengthWidthHeight[3]), lengthWidthHeight[4].toLowerCase()),
+    };
+  }
 
   const labelled = (label: string) => {
     const match = text.match(new RegExp(`${label}\\s*[:=]?\\s*(\\d+(?:\\.\\d+)?)\\s*(mm|cm|inches|inch|in|m)\\b`, "i"));
