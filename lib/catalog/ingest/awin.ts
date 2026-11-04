@@ -35,15 +35,14 @@ export type FeedCandidate = {
 };
 
 const CATEGORY_RULES: Array<{ slug: string; terms: string[] }> = [
-  { slug: "cushions", terms: ["cushion"] },
-  { slug: "throws", terms: ["throw", "blanket"] },
-  { slug: "curtains-blinds", terms: ["curtain", "blind"] },
+  { slug: "home-appliances", terms: ["wine fridge", "drinks fridge", "beer fridge", "wine cooler", "beverage cooler", "mini fridge"] },
+  { slug: "dressing-tables", terms: ["dressing table", "vanity table"] },
+  { slug: "sofas", terms: ["sofa", "settee", "couch", "loveseat"] },
+  { slug: "armchairs", terms: ["armchair", "accent chair", "lounge chair", "wing chair", "rocking chair", "swivel chair"] },
   { slug: "coffee-tables", terms: ["coffee table"] },
   { slug: "side-tables", terms: ["side table", "end table", "lamp table"] },
   { slug: "tv-units", terms: ["tv unit", "tv stand", "media unit", "media console"] },
-  { slug: "armchairs", terms: ["armchair", "accent chair", "lounge chair", "wing chair"] },
   { slug: "footstools-pouffes", terms: ["footstool", "ottoman", "pouffe"] },
-  { slug: "sofas", terms: ["sofa", "settee", "couch"] },
   { slug: "storage-cabinets", terms: ["sideboard", "cabinet", "cupboard", "storage cabinet"] },
   { slug: "shelving", terms: ["shelving", "shelf unit", "bookcase"] },
   { slug: "rugs", terms: ["rug"] },
@@ -51,6 +50,9 @@ const CATEGORY_RULES: Array<{ slug: string; terms: string[] }> = [
   { slug: "table-lamps", terms: ["table lamp", "desk lamp"] },
   { slug: "ceiling-lighting", terms: ["ceiling light", "pendant light", "chandelier"] },
   { slug: "mirrors", terms: ["mirror"] },
+  { slug: "cushions", terms: ["cushion"] },
+  { slug: "throws", terms: ["throw", "blanket"] },
+  { slug: "curtains-blinds", terms: ["curtain", "blind"] },
   { slug: "artwork", terms: ["wall art", "art print", "canvas"] },
 ];
 
@@ -130,11 +132,7 @@ function normalizeAvailability(row: Record<string, unknown>): Availability {
   return "unknown";
 }
 
-function mapCategory(text: string, categoryPath: string | null) {
-  if (categoryPath && /(?:^|[>/])\s*(animals?|pet supplies|pets|garden|outdoor|baby|toddler|office|kitchen|dining|hardware|health & beauty|personal care|sports|automotive|tools?|bathroom accessories|bathroom furniture|lawn & garden|clothing & wardrobe storage|filing cabinets|bedroom dressing tables|indoor games|radiator accessories)\b/i.test(categoryPath)) {
-    return null;
-  }
-
+export function mapCategory(text: string, categoryPath: string | null) {
   const matchIn = (value: string) => {
     const haystack = value.toLowerCase();
     return CATEGORY_RULES.find((rule) => rule.terms.some((term) => {
@@ -143,7 +141,12 @@ function mapCategory(text: string, categoryPath: string | null) {
     }))?.slug ?? null;
   };
 
-  return (categoryPath ? matchIn(categoryPath) : null) ?? matchIn(text);
+  const productCategory = matchIn(text);
+  if (productCategory) return productCategory;
+  if (categoryPath && /(?:^|[>/])\s*(animals?|pet supplies|pets|garden|outdoor|baby|toddler|office|kitchen|dining|hardware|health & beauty|personal care|sports|automotive|tools?|bathroom accessories|bathroom furniture|lawn & garden|clothing & wardrobe storage|filing cabinets|indoor games|radiator accessories)\b/i.test(categoryPath)) {
+    return null;
+  }
+  return categoryPath ? matchIn(categoryPath) : null;
 }
 function normalizedAttributeText(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();

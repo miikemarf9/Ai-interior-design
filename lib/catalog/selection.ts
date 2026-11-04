@@ -562,20 +562,22 @@ export function applySelectionChoices(
     if (!product) {
       const definition = SLOT_DEFINITIONS.find(slot => slot.category === choice.slot);
       const picked = candidatePool.find(candidate => candidate.variantId === choice.variantId);
-      if (!definition || !picked || !eligibleForSlot(picked, choice.slot)) throw new Error('That product is not currently cleared for this category. Please refresh the catalogue.');
+      if (!picked || !eligibleForSlot(picked, choice.slot)) throw new Error('That product is not currently cleared for this category. Please refresh the catalogue.');
       const totalWeight = SLOT_DEFINITIONS.reduce((sum, slot) => sum + slot.weight, 0);
       product = {
         quantity: choice.quantity,
         slot: choice.slot,
-        slotLabel: definition.label,
-        budgetMinor: Math.round(selection.budgetMinor * definition.weight / totalWeight),
+        slotLabel: definition?.label || picked.categoryName,
+        budgetMinor: definition
+          ? Math.round(selection.budgetMinor * definition.weight / totalWeight)
+          : Math.round(selection.budgetMinor * 0.05),
         selected: picked,
         score: 0,
         reasons: ['Added from the cleared catalogue. Check style, fit and delivery details before approving.'],
         alternatives: [],
       };
       selection.products.push(product);
-      selection.missingItems = selection.missingItems.filter(item => item.toLowerCase() !== definition.label.toLowerCase());
+      selection.missingItems = selection.missingItems.filter(item => item.toLowerCase() !== (definition?.label || picked.categoryName).toLowerCase());
       continue;
     }
     if (choice.variantId !== product.selected.variantId) {

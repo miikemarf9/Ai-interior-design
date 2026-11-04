@@ -1,4 +1,5 @@
 import { currentClearances } from "@/lib/catalog/clearance";
+import { mapCategory } from "@/lib/catalog/ingest/awin";
 import { getCatalogDb } from "@/lib/catalog/neon";
 import type { SelectionCandidate } from "@/lib/catalog/selection";
 
@@ -36,6 +37,29 @@ type CandidateRow = {
   last_checked_at: string;
   image_url: string | null;
   image_alt: string | null;
+};
+
+const browseCategoryLabels: Record<string, string> = {
+  "home-appliances": "Home appliances",
+  "dressing-tables": "Dressing tables",
+  "sofas": "Sofas",
+  "armchairs": "Armchairs",
+  "coffee-tables": "Coffee tables",
+  "side-tables": "Side tables",
+  "tv-units": "TV units",
+  "footstools-pouffes": "Footstools & pouffes",
+  "storage-cabinets": "Storage & cabinets",
+  "shelving": "Shelving",
+  "rugs": "Rugs",
+  "floor-lamps": "Floor lamps",
+  "table-lamps": "Table lamps",
+  "ceiling-lighting": "Ceiling lighting",
+  "mirrors": "Mirrors",
+  "cushions": "Cushions",
+  "throws": "Throws",
+  "curtains-blinds": "Curtains & blinds",
+  "artwork": "Artwork",
+  "accessories": "Accessories",
 };
 
 export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]> {
@@ -242,11 +266,14 @@ export async function getLiveBrowseCandidates(): Promise<SelectionCandidate[]> {
     limit 500`,
   ) as CandidateRow[];
 
-  return rows.map(row => ({
+  return rows.map(row => {
+    const category = mapCategory(row.product_name, row.category_name) || row.category_slug;
+    return {
     clearedForSelection: true as const,
+    commercial: { packSize: 1, unitLabel: "item", deliveryBasis: "unknown" as const, deliveryDetails: "Confirm delivery cost and availability with the retailer." },
     productId: row.product_id, variantId: row.variant_id, productName: row.product_name,
-    variantName: row.variant_name, brandName: row.brand_name, category: row.category_slug,
-    categoryName: row.category_name, designSummary: row.design_summary,
+    variantName: row.variant_name, brandName: row.brand_name, category,
+    categoryName: browseCategoryLabels[category] || row.category_name, designSummary: row.design_summary,
     dimensions: { widthMm: row.width_mm, heightMm: row.height_mm, depthMm: row.depth_mm, seatWidthMm: row.seat_width_mm, seatDepthMm: row.seat_depth_mm, seatHeightMm: row.seat_height_mm },
     styles: row.styles || [], materials: row.materials || [], colours: row.colours || [], featureTags: [],
     curationScore: row.curation_score, qualityScore: row.quality_score,
@@ -256,5 +283,6 @@ export async function getLiveBrowseCandidates(): Promise<SelectionCandidate[]> {
       deliveryPriceMinor: row.delivery_price_minor, productUrl: row.product_url,
       affiliateUrl: row.affiliate_url, lastCheckedAt: row.last_checked_at },
     image: { url: row.image_url!, altText: row.image_alt || row.product_name },
-  }));
+  };
+  });
 }

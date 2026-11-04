@@ -19,7 +19,7 @@ function dimensions(item: SelectionCandidate) {
 function checked(value: string) { const date = new Date(value); return Number.isFinite(date.getTime()) ? date.toLocaleDateString('en-GB') : 'Unknown'; }
 const choices = (selection: ProductSelection) => selection.products.map(product => ({ slot: product.slot, variantId: product.selected.variantId, quantity: product.quantity }));
 
-const catalogueCategories = [
+const fallbackCatalogueCategories = [
   { category: 'sofas', label: 'Sofas' },
   { category: 'armchairs', label: 'Armchairs' },
   { category: 'coffee-tables', label: 'Coffee tables' },
@@ -60,9 +60,22 @@ export function ProductSelectionExperience() {
   const [browseProduct, setBrowseProduct] = useState<ProposedProduct | null>(null);
   const [addProductOpen, setAddProductOpen] = useState(false);
   const [addingCategory, setAddingCategory] = useState<{ category: string; label: string } | null>(null);
+  const [catalogueCategories, setCatalogueCategories] = useState(fallbackCatalogueCategories);
   const [excludedProducts, setExcludedProducts] = useState<ProposedProduct[]>([]);
   const started = useRef(false);
   const fingerprint = useRef('');
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/products/categories?roomType=living_room&includeBrowseCategories=1', { cache: 'no-store' })
+      .then(async response => {
+        if (!response.ok) return;
+        const payload = await response.json() as { catalogueCategories?: Array<{ category: string; label: string }> };
+        if (active && Array.isArray(payload.catalogueCategories)) setCatalogueCategories(payload.catalogueCategories);
+      })
+      .catch(() => { /* Keep the local categories if live catalogue facets are unavailable. */ });
+    return () => { active = false; };
+  }, []);
 
   function retailerHref(offerId: string) {
     const params = new URLSearchParams({ surface: 'product_selection' });

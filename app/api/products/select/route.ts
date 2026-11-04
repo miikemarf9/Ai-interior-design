@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { DesignBrief, IntakeForBrief } from "@/lib/brief";
-import { getLiveSelectionCandidates } from "@/lib/catalog/repository";
+import { getLiveBrowseCandidates, getLiveSelectionCandidates } from "@/lib/catalog/repository";
 import { applySelectionChoices, approvalSnapshot, buildProductSelection, selectionTotals, type SelectionCandidate, type SelectionChoice } from "@/lib/catalog/selection";
 
 export const runtime = "nodejs";
@@ -26,6 +26,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Please review your room answers before selecting furniture.' }, { status: 400 });
     }
     const candidates = await getLiveSelectionCandidates();
+    const addOnCandidates = Array.isArray(body.choices) ? await getLiveBrowseCandidates() : [];
+    const choicePool = Array.from(new Map([...addOnCandidates, ...candidates].map(candidate => [candidate.variantId, candidate])).values());
     const pairIds = body.intake.furniturePair?.variantIds;
     const pairCandidates = Array.isArray(pairIds) && pairIds.length === 2 && pairIds.every(id => typeof id === 'string') && new Set(pairIds).size === 2
       ? pairIds.map(id => candidates.find(candidate => candidate.variantId === id))
@@ -43,8 +45,8 @@ export async function POST(request: Request) {
       : body.intake;
     let selection = buildProductSelection(selectionIntake, body.brief, candidates);
     try {
-      if (pairIsValid) selection = applySelectionChoices(selection, selectedPairCandidates.map(candidate => ({ slot: candidate.category, variantId: candidate.variantId, quantity: 1 })), candidates);
-      if (body.choices) selection = applySelectionChoices(selection, body.choices, candidates);
+      if (pairIsValid) selection = applySelectionChoices(selection, selectedPairCandidates.map(candidate => ({ slot: candidate.category, variantId: candidate.variantId, quantity: 1 })), choicePool);
+      if (body.choices) selection = applySelectionChoices(selection, body.choices, choicePool);
       if (body.includedSlots) {
         if (!Array.isArray(body.includedSlots) || body.includedSlots.length > 15 || new Set(body.includedSlots).size !== body.includedSlots.length || body.includedSlots.some(slot => typeof slot !== 'string')) {
           return NextResponse.json({ error: 'Please review which products you want to include.' }, { status: 400 });

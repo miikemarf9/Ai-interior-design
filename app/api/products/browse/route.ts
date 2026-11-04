@@ -1,19 +1,8 @@
 import { NextResponse } from "next/server";
-import { getLiveSelectionCandidates } from "@/lib/catalog/repository";
+import { getLiveBrowseCandidates } from "@/lib/catalog/repository";
 
 export const runtime="nodejs";
 
-const categories=new Set([
-  "sofas",
-  "armchairs",
-  "coffee-tables",
-  "side-tables",
-  "rugs",
-  "floor-lamps",
-  "table-lamps",
-  "storage-cabinets",
-  "tv-units",
-]);
 const styleSlugs:Record<string,string>={
   "Modern Organic":"warm-minimal",
   "Modern Country":"modern-british",
@@ -26,7 +15,6 @@ const styleSlugs:Record<string,string>={
 export async function GET(request:Request){
   const params=new URL(request.url).searchParams;
   const category=params.get("category") || "";
-  if(!categories.has(category)) return NextResponse.json({error:"Choose a furniture category."},{status:400});
 
   const query=(params.get("q") || "").trim().slice(0,80).toLowerCase();
   const style=params.get("style") || "";
@@ -41,7 +29,8 @@ export async function GET(request:Request){
   const material=(params.get("material") || "").trim().toLowerCase();
   const colour=(params.get("colour") || "").trim().toLowerCase();
   const requiredFeatures=(params.get("features") || "").split(",").map(value=>value.trim().toLowerCase()).filter(Boolean);
-  const candidates=await getLiveSelectionCandidates();
+  const candidates=await getLiveBrowseCandidates();
+  if(!candidates.some(item=>item.category===category)) return NextResponse.json({error:"Choose a current furniture category."},{status:400});
   const categoryItems=candidates.filter(item=>item.category===category && item.clearedForSelection===true && Boolean(item.image) && (!styleSlug || item.styles.includes(styleSlug)));
   const facets={
     materials:unique(categoryItems.flatMap(item=>item.materials)),

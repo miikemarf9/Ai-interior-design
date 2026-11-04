@@ -9,6 +9,8 @@ insert into public.categories (name, slug, sort_order) values
   ('Side tables', 'side-tables', 50),
   ('TV units', 'tv-units', 60),
   ('Storage & cabinets', 'storage-cabinets', 70),
+  ('Home appliances', 'home-appliances', 75),
+  ('Dressing tables', 'dressing-tables', 76),
   ('Shelving', 'shelving', 80),
   ('Rugs', 'rugs', 90),
   ('Floor lamps', 'floor-lamps', 100),

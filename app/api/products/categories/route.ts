@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getLiveSelectionCandidates } from "@/lib/catalog/repository";
+import { getLiveBrowseCandidates, getLiveSelectionCandidates } from "@/lib/catalog/repository";
 
 export const runtime = "nodejs";
 
@@ -45,6 +45,8 @@ export async function GET(request: Request) {
 
   try {
     const candidates = roomType === "living_room" ? await getLiveSelectionCandidates() : [];
+    const includeBrowseCategories = params.get("includeBrowseCategories") === "1";
+    const browseCandidates = roomType === "living_room" && includeBrowseCategories ? await getLiveBrowseCandidates() : [];
     const now = Date.now();
     const current = candidates.filter(item => item.clearedForSelection === true
       && item.image
@@ -109,7 +111,10 @@ export async function GET(request: Request) {
       name: style.name,
       available: styleCandidates.some(candidate => candidate.styles.includes(style.slug)),
     }));
-    return NextResponse.json({ roomType, items, styles });
+    const catalogueCategories = Array.from(new Map(browseCandidates.map(candidate => [candidate.category, candidate.categoryName])).entries())
+      .map(([category, label]) => ({ category, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+    return NextResponse.json({ roomType, items, styles, catalogueCategories });
   } catch (error) {
     console.error("Room product categories failed", error);
     return NextResponse.json({ error: "We could not check the reviewed product list." }, { status: 500 });

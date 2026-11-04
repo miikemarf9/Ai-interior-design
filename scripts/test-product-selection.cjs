@@ -10,7 +10,8 @@ const original = Module._load;
 let suppliedCandidates = [];
 Module._load = function(name, parent, main) {
   if (name === 'next/server') return { NextResponse: { json: (data, opts = {}) => ({ data, status: opts.status || 200 }) } };
-  if (name === '@/lib/catalog/repository') return { getLiveSelectionCandidates: async () => suppliedCandidates };
+  if (name === '@/lib/catalog/repository') return { getLiveSelectionCandidates: async () => suppliedCandidates, getLiveBrowseCandidates: async () => suppliedCandidates };
+  if (name === '@/lib/catalog/clearance') return { currentClearances: () => [] };
   if (name === '@/lib/catalog/neon') return { getCatalogDb: () => { throw Error('Database must not be accessed without clearance'); } };
   if (name.startsWith('@/')) name = path.join(root, name.slice(2));
   return original.call(this, name, parent, main);
@@ -19,6 +20,7 @@ require.extensions['.ts'] = (mod, file) => mod._compile(ts.transpileModule(fs.re
 const { buildProductSelection, applySelectionChoices, selectionTotals, approvalSnapshot } = require('../lib/catalog/selection.ts');
 const { buildFallbackBrief } = require('../lib/brief.ts');
 const { currentClearances } = require('../lib/catalog/clearance.ts');
+const { mapCategory } = require('../lib/catalog/ingest/awin.ts');
 const room = { roomType: 'living_room', projectGoal: 'refresh', keep: [], retainedFurniture: [], change: ['Sofa', 'Coffee table'], styles: ['Contemporary'], colours: ['Cream'], materials: ['Linen'], dislikes: '', uses: [], budget: 3000, measurements: { width: '500', length: '400', height: '', notes: '', accuracy: 'approximate' }, freedom: 'Balanced' };
 function candidate(id, category, price, extra = {}) {
  return { clearedForSelection: true, productId: 'product-'+id, variantId: id, productName: 'Synthetic test furniture', variantName: 'Cream / test size', brandName: null, category, categoryName: category, designSummary: null, dimensions: { widthMm: 2000, depthMm: 800, heightMm: 800 }, styles: ['contemporary'], materials: ['linen'], colours: ['cream'], curationScore: 80, qualityScore: 90, commercial: { packSize: 1, unitLabel: 'item', deliveryBasis: 'per_order', deliveryDetails: '' }, offer: { id: 'offer-'+id, retailerName: 'Test only', retailerSlug: 'test-only', priceMinor: price, compareAtPriceMinor: null, availability: 'in_stock', ukDeliveryStatus: 'available', deliveryPriceMinor: 5000, productUrl: 'https://example.invalid/product', affiliateUrl: null, lastCheckedAt: new Date().toISOString() }, image: { url: 'https://example.invalid/photo.png', altText: 'Test fixture' }, ...extra };
@@ -27,7 +29,11 @@ const sofa = candidate('sofa', 'sofas', 110000), cheaper = candidate('sofa-cheap
 const brief = buildFallbackBrief(room);
 const pick = (r = room, items = [sofa, cheaper, table]) => buildProductSelection(r, buildFallbackBrief(r), items);
 (async()=>{
- assert.equal(currentClearances().length, 0);
+ assert.equal(currentClearances().length, 6);
+ assert.equal(mapCategory('HOMCOM 3 Seater Sofa with Cushions', 'Cushions'), 'sofas');
+ assert.equal(mapCategory('HOMCOM Modern Armchair with Padded Cushion', 'Cushions'), 'armchairs');
+ assert.equal(mapCategory('HOMCOM Wine Fridge', 'Storage & cabinets'), 'home-appliances');
+ assert.equal(mapCategory('Solid Mango Wood Dressing Table with Mirror', 'Mirrors'), 'dressing-tables');
  const clearance = { productId:'p',variantId:'v',offerId:'o',imageUrl:'https://example.invalid/image',exactVariantName:'Exact',packSize:1,unitLabel:'item',displayEvidence:'display',aiReferenceEvidence:'ai',customerOutputEvidence:'output',dataEvidence:'data',reviewedAt:'2026-01-01',expiresAt:'2027-01-01',deliveryBasis:'unknown',deliveryDetails:'' };
  assert.equal(currentClearances(Date.parse('2026-10-11'),[clearance]).length,1);
  assert.equal(currentClearances(Date.parse('2026-10-11'),[{...clearance,aiReferenceEvidence:''}]).length,0);
@@ -54,7 +60,10 @@ const pick = (r = room, items = [sofa, cheaper, table]) => buildProductSelection
  const pair=structuredClone(collection.products);pair[0].selected.commercial.packSize=2;pair[0].quantity=2;assert.equal(selectionTotals(pair,300000).productSubtotalMinor,pair[0].selected.offer.priceMinor*2+pair[1].selected.offer.priceMinor);
  const {POST}=require('../app/api/products/select/route.ts');
  let result=await POST({json:async()=>({intake:room,brief})});assert.equal(result.status,200);assert.equal(result.data.selection.products.length,0);assert.equal(result.data.approved,false);
- suppliedCandidates=[sofa,cheaper,table];result=await POST({json:async()=>({intake:room,brief})});const initial=result.data.selection;
+ const rug=candidate('rug','rugs',15000);
+ suppliedCandidates=[sofa,cheaper,table,rug];result=await POST({json:async()=>({intake:room,brief})});const initial=result.data.selection;
+ const added=await POST({json:async()=>({intake:room,brief,choices:[...initial.products.map(p=>({slot:p.slot,variantId:p.selected.variantId,quantity:p.quantity})),{slot:'rugs',variantId:'rug',quantity:1}]})});
+ assert.equal(added.data.selection.products.some(product=>product.slot==='rugs' && product.selected.variantId==='rug'),true);
  const body={intake:room,brief,choices:initial.products.map(p=>({slot:p.slot,variantId:p.selected.variantId,quantity:p.quantity})),approve:true,acknowledgeLimitations:true,expectedSnapshot:approvalSnapshot(initial)};
  result=await POST({json:async()=>body});assert.equal(result.data.approved,true);
  result=await POST({json:async()=>({...body,acknowledgeLimitations:false})});assert.equal(result.data.approved,false);
