@@ -83,6 +83,65 @@ export async function grantVerifiedCredits(accountId: string) {
   );
 }
 
+/** Give each verified account one free image credit for the current UK month.
+ * The verification grant covers its month of signup; subsequent months use
+ * their own ledger idempotency key. Unused credits remain in the wallet. */
+export async function grantMonthlyFreeCredits(target: { accountId?: string; ownerKey?: string } = {}) {
+  const sql = getCatalogDb();
+  const rows = await sql.query(
+    `with period as (
+      select
+        date_trunc('month',now() at time zone 'Europe/London') as local_month,
+        to_char(now() at time zone 'Europe/London','YYYY-MM') as month_key
+    ), eligible as (
+      select
+        w.id as wallet_id,
+        w.account_id,
+        p.month_key,
+        p.local_month at time zone 'Europe/London' as period_start,
+        (p.local_month + interval '1 month') at time zone 'Europe/London' as period_end
+      from public.design_credit_wallets w
+      join public.customer_accounts a on a.id=w.account_id
+      cross join period p
+      where a.status='active'
+        and a.email_verified_at is not null
+        and w.verification_status='verified'
+        and ($1::uuid is null or w.account_id=$1::uuid)
+        and ($2::text is null or w.owner_key=$2::text)
+    ), grants as (
+      insert into public.design_credit_ledger (
+        wallet_id,event_type,amount,idempotency_key,metadata
+      )
+      select
+        e.wallet_id,
+        'monthly_free_grant',
+        1,
+        'verified-monthly-free:' || e.account_id::text || ':' || e.month_key,
+        jsonb_build_object('grant','verified_monthly_free','month',e.month_key,'timezone','Europe/London')
+      from eligible e
+      where not exists (
+        select 1
+        from public.design_credit_ledger signup
+        where signup.wallet_id=e.wallet_id
+          and signup.event_type='signup_grant'
+          and signup.created_at >= e.period_start
+          and signup.created_at < e.period_end
+      )
+      on conflict (idempotency_key) do nothing
+      returning wallet_id
+    ), credited as (
+      update public.design_credit_wallets w
+      set balance=w.balance+1,updated_at=now()
+      from grants g
+      where w.id=g.wallet_id
+      returning w.id
+    )
+    select count(*)::int as credited_accounts from credited`,
+    [target.accountId ?? null, target.ownerKey ?? null],
+  ) as Array<{ credited_accounts: number }>;
+  return Number(rows[0]?.credited_accounts ?? 0);
+}
+
 export async function claimAnonymousRooms(
   accountId: string,
   anonymousOwnerKey?: string | null,
@@ -136,6 +195,7 @@ export async function enqueueCrmEvent(
 }
 
 export async function accountCreditBalance(accountId: string) {
+  await grantMonthlyFreeCredits({ accountId });
   const sql = getCatalogDb();
   const rows = await sql.query(
     `select w.balance, w.verification_status,a.email,a.email_verified_at::text as email_verified_at

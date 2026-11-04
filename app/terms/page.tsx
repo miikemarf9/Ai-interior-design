@@ -36,7 +36,7 @@ export default function TermsPage(){
 
         <section>
           <h2>Design credits</h2>
-          <p>Each verified customer account receives one free image generation. After that, a one-time £2 payment buys 10 image credits. There is no recurring subscription. Each image generation or correction uses one credit. If Transform My Room records a generation as failed, the credit is returned. Paid credits are added after payment confirmation and have no cash withdrawal value.</p>
+          <p>Each active account with a verified email receives one free image credit when the email is verified, then one additional credit at the start of each UK calendar month. Unused credits remain in the account balance. A one-time £2 payment buys 10 additional image credits; there is no recurring subscription. Each image generation or correction uses one credit. If Transform My Room records a generation as failed, the credit is returned. Paid credits are added after payment confirmation and have no cash withdrawal value.</p>
         </section>
 
         <section>

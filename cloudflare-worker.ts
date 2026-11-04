@@ -8,18 +8,24 @@ type WorkerExecutionContext = { waitUntil(promise: Promise<unknown>): void };
 
 export default {
   fetch: app.fetch,
-  scheduled(_event: ScheduledEvent, env: Env, ctx: WorkerExecutionContext) {
+  scheduled(event: ScheduledEvent, env: Env, ctx: WorkerExecutionContext) {
     const task = (async () => {
       if (!env.CATALOG_IMPORT_SECRET) throw new Error("CATALOG_IMPORT_SECRET is not configured.");
+      const path = event.cron === "0 0 1 * *"
+        ? "/api/credits/monthly-grant"
+        : event.cron === "0 * * * *"
+          ? "/api/catalog/prices/sync"
+          : null;
+      if (!path) return;
       const response = await app.fetch(
-        new Request("https://transformmyroom.com/api/catalog/prices/sync", {
+        new Request(`https://transformmyroom.com${path}`, {
           method: "POST",
           headers: { authorization: `Bearer ${env.CATALOG_IMPORT_SECRET}` },
         }),
         env,
         ctx,
       );
-      if (!response.ok) throw new Error(`Aosom price sync returned HTTP ${response.status}: ${(await response.text()).slice(0, 500)}`);
+      if (!response.ok) throw new Error(`Scheduled task ${path} returned HTTP ${response.status}: ${(await response.text()).slice(0, 500)}`);
     })();
     ctx.waitUntil(task);
   },

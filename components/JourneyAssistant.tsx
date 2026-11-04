@@ -43,14 +43,14 @@ function creditSummary(status: CreditStatus | null) {
   if (!status) return 'Images · …';
   if (status.siteCreditExempt) return 'Owner access';
   if (status.verifiedRequired) return 'Free image · verify';
-  if (status.freeCreditAvailable && status.balance === 1) return '1 free image';
+  if (status.freeCreditAvailable && status.balance === 1) return 'Monthly free image';
   return status.balance + (status.balance === 1 ? ' image left' : ' images left');
 }
 
 function creditDescription(status: CreditStatus | null) {
   if (!status) return 'Checking your image balance.';
   if (status.siteCreditExempt) return 'Owner access: image generation does not deduct customer image uses.';
-  if (status.verifiedRequired) return 'Verify your email to activate your free image.';
+  if (status.verifiedRequired) return 'Verify your email to activate this month’s free image.';
   if (status.balance > 0) return 'One image use is deducted when generation starts and returned if it fails. View your balance or buy more.';
   return 'No images left. Add more from your account.';
 }

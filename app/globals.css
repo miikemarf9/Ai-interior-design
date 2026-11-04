@@ -4853,3 +4853,15 @@ main:not(.homePage) > .siteHeader.isAtTop .headerAccountLink { color: var(--ink)
   .siteHeader .headerAccountLink { display:inline-flex; min-height:44px; align-items:center; white-space:nowrap; grid-row:2; justify-content:center; }
   .siteHeader .buttonCompact { min-height:44px; grid-row:1; grid-column:3; padding-inline:8px; font-size:9px; }
 }
+
+.homeHeroContent .heroOfferNote {
+  max-width: 490px;
+  margin: 14px 0 0;
+  color: rgba(255,255,255,.88);
+  font-size: 12px;
+  line-height: 1.45;
+  letter-spacing: .01em;
+}
+@media (max-width: 680px) {
+  .homeHeroContent .heroOfferNote { max-width: 340px; font-size: 11px; }
+}

@@ -159,7 +159,7 @@ export function AccountExperience() {
       if (authMode === "signup") {
         setNotice(
           data.emailSent
-            ? "Account created. Check your email to verify it and unlock your free image."
+            ? "Account created. Check your email to verify it and unlock this month’s free image."
             : "Account created. Email delivery is not configured yet, so verification is still pending.",
         );
       }
@@ -395,7 +395,7 @@ export function AccountExperience() {
         <aside className="accountCredits">
           <span>Image credits</span>
           <strong>{payload.credits.siteCreditExempt ? "API limit" : payload.credits.balance}</strong>
-          <small>{payload.credits.siteCreditExempt ? "Image API account limit applies" : payload.account.verified ? "1 free image · then £2 for 10" : "Verify your email to unlock 1 free image"}</small>
+          <small>{payload.credits.siteCreditExempt ? "Image API account limit applies" : payload.account.verified ? "1 free room image each month · get 10 more for £2" : "Confirm your email to get this month’s free room image"}</small>
           {payload.account.verified && !payload.credits.siteCreditExempt && payload.paymentsEnabled ? <button type="button" className="button buttonSecondary buttonCompact" onClick={buyImageCredits} disabled={busy}>Buy 10 images · £2</button> : null}
           {payload.account.verified && !payload.credits.siteCreditExempt && !payload.paymentsEnabled ? <small>Payments are being set up.</small> : null}
         </aside>
