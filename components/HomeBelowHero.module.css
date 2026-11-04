@@ -78,3 +78,14 @@
 .footerLinks a { display:inline-flex; align-items:center; min-height:44px; text-decoration:none; }
 .footerLinks a:hover { text-decoration:underline; text-underline-offset:4px; }
 @media(max-width:700px){.footerLinks{gap:4px 20px;width:100%}}
+
+.retailers { padding-block:64px; border-bottom:1px solid var(--line); }
+.retailers p { max-width:660px; }
+.home .final { margin-block:0 56px; padding:56px 28px; background:var(--forest); color:var(--ivory); border-radius:12px; }
+.home .final h2 em { color:#c8dfcc; }
+.home .final p { max-width:600px; margin:12px auto; }
+.home .offerBadge { display:table; padding:7px 14px; border:1px solid #ffffff55; border-radius:30px; font-size:12px; }
+.final .button { margin-top:16px; background:var(--ivory); color:var(--forest); }
+.exploreLink { display:block; width:fit-content; margin:18px auto; color:var(--ivory); text-underline-offset:4px; }
+.home .offerNote { font-size:11px; color:#dceadf; }
+@media(max-width:700px){.retailers{padding-block:40px}.home .final{padding:36px 20px}.final .button{white-space:normal;text-align:center}}
