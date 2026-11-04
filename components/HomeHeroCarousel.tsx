@@ -93,17 +93,15 @@ export function HomeHeroCarousel() {
           <div className="homeHeroShade" />
           <div key={`copy-${runs[index]}`} className="homeHeroContent shellWide">
             {index === 0 ? <>
-              <p className="eyebrow eyebrowLight heroLine heroLineOne">One free room image every month</p>
-              <h1 className="heroLine heroLineTwo">See your room<br />reimagined.</h1>
-              <p className="heroLine heroLineThree">Sign up free, confirm your email and get one new room image each month. No furniture purchase needed.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/account">Get my free image</Link>
-              <p className="heroLine heroOfferNote">Free for every account with a confirmed email.</p>
+              <p className="eyebrow eyebrowLight heroLine heroLineOne">FREE, EVERY MONTH</p>
+              <h1 className="heroLine heroLineTwo">One free room image<br />every month.</h1>
+              <p className="heroLine heroLineThree">Sign up and confirm your email to get it. No furniture purchase needed.</p>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="/account">Sign up free</Link>
             </> : <>
-              <p className="eyebrow eyebrowLight heroLine heroLineOne">One free room image every month</p>
-              <h1 className="heroLine heroLineTwo">Choose your look.<br />See it at home.</h1>
-              <p className="heroLine heroLineThree">Sign up free, confirm your email and get one new room image each month. No furniture purchase needed.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/account">Get my free image</Link>
-              <p className="heroLine heroOfferNote">Free for every account with a confirmed email.</p>
+              <p className="eyebrow eyebrowLight heroLine heroLineOne">FREE, EVERY MONTH</p>
+              <h1 className="heroLine heroLineTwo">One free room image<br />every month.</h1>
+              <p className="heroLine heroLineThree">Sign up and confirm your email to get it. No furniture purchase needed.</p>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="/account">Sign up free</Link>
             </>}
           </div>
         </div>

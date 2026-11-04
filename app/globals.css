@@ -4865,3 +4865,14 @@ main:not(.homePage) > .siteHeader.isAtTop .headerAccountLink { color: var(--ink)
 @media (max-width: 680px) {
   .homeHeroContent .heroOfferNote { max-width: 340px; font-size: 11px; }
 }
+
+@media (max-width: 760px) {
+  .homeHeroCarousel .heroSlide { align-items: flex-start; }
+  .homeHeroCarousel .homeHeroContent { padding-top: 142px; padding-bottom: 150px; }
+  .homeHeroCarousel .homeHeroContent h1 {
+    width: min(560px, 92vw);
+    font-size: clamp(48px, 11vw, 66px);
+  }
+  .homeHeroCarousel .heroCarouselControls,
+  .homeHeroCarousel .heroCarouselPause { bottom: 30px; }
+}
