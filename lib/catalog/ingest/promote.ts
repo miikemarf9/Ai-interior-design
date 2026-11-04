@@ -1,4 +1,5 @@
 import { getCatalogDb } from "@/lib/catalog/neon";
+import { mapCategory } from "@/lib/catalog/ingest/awin";
 
 export type PromotionResult = {
   candidateId: string;
@@ -9,6 +10,17 @@ export type PromotionResult = {
 
 export async function promoteFeedCandidate(candidateId: string): Promise<PromotionResult | null> {
   const sql = getCatalogDb();
+  const categoryRows = await sql.query(
+    `select title, category_path, normalized_category_slug
+     from public.catalog_feed_candidates
+     where id = $1::uuid and candidate_status in ('pending','approved')
+     limit 1`,
+    [candidateId],
+  ) as Array<{ title: string; category_path: string | null; normalized_category_slug: string | null }>;
+  const category = categoryRows[0]
+    ? mapCategory(categoryRows[0].title, categoryRows[0].category_path) || categoryRows[0].normalized_category_slug
+    : null;
+  if (!category) return null;
 
   const rows = await sql.query(
     `with candidate as (
@@ -26,7 +38,7 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
       where c.id = $1::uuid
         and c.candidate_status in ('pending','approved')
         and c.quality_score >= 65
-        and c.normalized_category_slug is not null
+        and $2::text is not null
         and c.image_url is not null
         and c.price_minor is not null
         and c.currency = 'GBP'
@@ -163,20 +175,26 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
       where v.id = vt.id
       returning v.id
     ),
+    category_reset as (
+      update public.product_categories pc
+      set is_primary = false
+      from product_target pt
+      where pc.product_id = pt.id
+        and pc.is_primary
+        and pc.category_id <> (select id from public.categories where slug = $2 and is_active limit 1)
+      returning pc.product_id
+    ),
     category_link as (
       insert into public.product_categories (product_id, category_id, is_primary)
       select
         pt.id,
         cat.id,
-        not exists (
-          select 1
-          from public.product_categories existing
-          where existing.product_id = pt.id and existing.is_primary
-        )
+        true
       from candidate c
-      join public.categories cat on cat.slug = c.normalized_category_slug and cat.is_active
+      join public.categories cat on cat.slug = $2 and cat.is_active
       cross join product_target pt
-      on conflict (product_id, category_id) do nothing
+      cross join lateral (select count(*) from category_reset) reset
+      on conflict (product_id, category_id) do update set is_primary = true
       returning product_id
     ),
     style_links as (
@@ -310,7 +328,7 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
     cross join product_target pt
     cross join variant_target vt
     cross join offer_upsert ou`,
-    [candidateId],
+    [candidateId, category],
   ) as Array<{
     candidate_id: string;
     product_id: string;
