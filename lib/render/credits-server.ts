@@ -1,6 +1,7 @@
 import { getCatalogDb } from "@/lib/catalog/neon";
 import { creditPolicy } from "@/lib/credits";
 import { isAdminEmail } from "@/lib/auth/admin";
+import { grantMonthlyFreeCredits } from "@/lib/auth/account";
 
 export type CreditStatus = {
   balance: number;
@@ -24,6 +25,8 @@ export async function ensureRenderWallet(ownerKey: string): Promise<CreditStatus
      on conflict (owner_key) do nothing`,
     [ownerKey],
   );
+
+  await grantMonthlyFreeCredits({ ownerKey });
 
   if (allowDevelopmentWallets()) {
     await sql.query(

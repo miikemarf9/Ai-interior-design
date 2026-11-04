@@ -387,7 +387,7 @@ export async function POST(request: Request) {
 
     if (wallet.balance < 1 && !wallet.siteCreditExempt) {
       return NextResponse.json({
-        error: "You have used your free image. Buy 10 more image credits for £2 from your account page.",
+        error: "You have used this month’s free image. Your next monthly credit arrives at the start of next month, or buy 10 more image credits for £2 from your account page.",
         code: "NO_RENDER_CREDIT",
         balance: wallet.balance,
       }, { status: 402 });

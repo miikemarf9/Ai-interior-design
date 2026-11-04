@@ -14,7 +14,7 @@
     "enabled": true
   },
   "triggers": {
-    "crons": ["0 * * * *"]
+    "crons": ["0 * * * *", "0 0 1 * *"]
   },
   "workers_dev": true,
   "vars": {

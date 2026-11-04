@@ -299,7 +299,7 @@ export function RenderExperience() {
     </section>}
     {processing && <div className={styles.panel}><p>Your image is still in progress. The page will update when it is ready.</p><button className="button buttonSecondary" onClick={() => readHistory(runtime).catch(error => setError(error.message))}>Check now</button></div>}
     {!result && !processing && !busy && <button className="button buttonPrimary" disabled={!verified || (!siteCreditExempt && (balance === null || balance < 1)) || placements.some(item => item.instruction.trim().length < 5)} onClick={generate}>{`${previousResult ? 'Generate updated room design' : 'Generate room design'} · ${siteCreditExempt ? 'API allowance' : '1 credit'}`}</button>}
-    {!siteCreditExempt && verified && balance === 0 && <p>You’ve used your free image. <Link href="/account">Buy 10 more for £2</Link>.</p>}
+    {!siteCreditExempt && verified && balance === 0 && <p>You’ve used this month’s free image. Your next monthly credit arrives at the start of next month, or <Link href="/account">buy 10 more for £2</Link>.</p>}
     {!verified && <p>A verified account and available credit balance are required before generating.</p>}
     {correctionReady && <section className={styles.panel}><h2>Make a controlled correction</h2><p>Describe the specific failed checks. We reuse the original room, approved references and previous result. A correction costs one credit and must be checked again.</p><label>What needs correcting?<textarea rows={3} maxLength={2000} value={correction} onChange={event => setCorrection(event.target.value)} /></label><button className="button buttonPrimary" disabled={busy || processing || !verified || (!siteCreditExempt && !balance) || correction.trim().length < 10} onClick={generate}>{busy ? 'Correcting…' : `Generate correction · ${siteCreditExempt ? 'API allowance' : '1 credit'}`}</button></section>}
     {result && (failedCorrection || result.metadata.correctionAttempt >= MAX_CORRECTIONS) && <p>The correction limit or a technical failure has stopped this sequence. Review the saved attempts manually before authorising further work.</p>}
@@ -334,7 +334,7 @@ export function RenderExperience() {
         : !verified
           ? 'Verify your email to activate your free room image.'
           : !siteCreditExempt && balance === 0
-            ? 'Your free image has been used. Add another 10 image uses for £2.'
+            ? 'This month’s free image has been used. Your next monthly credit arrives at the start of next month, or buy 10 image uses for £2.'
             : 'Your approved furniture is ready. One image use is deducted only after a successful generation.'}
       nextLabel={busy ? 'Creating room visual…' : result
         ? reviewed?.outcome === 'visually_reviewed' ? 'Open my designed room' : 'Review generated image'

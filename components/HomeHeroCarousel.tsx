@@ -93,15 +93,17 @@ export function HomeHeroCarousel() {
           <div className="homeHeroShade" />
           <div key={`copy-${runs[index]}`} className="homeHeroContent shellWide">
             {index === 0 ? <>
-              <p className="eyebrow eyebrowLight heroLine heroLineOne">Room design & furniture selection</p>
-              <h1 className="heroLine heroLineTwo">Upload your room.<br />See it redesigned.</h1>
-              <p className="heroLine heroLineThree">Choose your style and budget. Get a design for your space, with furniture selected to work together and links to buy it.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Upload my room</Link>
+              <p className="eyebrow eyebrowLight heroLine heroLineOne">One free room image every month</p>
+              <h1 className="heroLine heroLineTwo">See your room<br />reimagined.</h1>
+              <p className="heroLine heroLineThree">Sign up free, confirm your email and get one new room image each month. No furniture purchase needed.</p>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="/account">Get my free image</Link>
+              <p className="heroLine heroOfferNote">Free for every account with a confirmed email.</p>
             </> : <>
-              <p className="eyebrow eyebrowLight heroLine heroLineOne">Review the furniture first</p>
-              <h1 className="heroLine heroLineTwo">Choose the pieces.<br />Then see them in your room.</h1>
-              <p className="heroLine heroLineThree">Check reviewed retailer products, dimensions and prices before creating a room visual from your photo.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Plan my room</Link>
+              <p className="eyebrow eyebrowLight heroLine heroLineOne">One free room image every month</p>
+              <h1 className="heroLine heroLineTwo">Choose your look.<br />See it at home.</h1>
+              <p className="heroLine heroLineThree">Sign up free, confirm your email and get one new room image each month. No furniture purchase needed.</p>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="/account">Get my free image</Link>
+              <p className="heroLine heroOfferNote">Free for every account with a confirmed email.</p>
             </>}
           </div>
         </div>

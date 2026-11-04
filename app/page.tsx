@@ -5,7 +5,7 @@ import { ScrollMotion } from '@/components/ScrollMotion';
 import { HomeBelowHero } from '@/components/HomeBelowHero';
 
 const title = 'Transform My Room — Personalised room design & furniture selection';
-const description = 'Turn your room photo into a personalised design with Transform My Room. Plan around your style, furniture budget and the pieces you want to keep.';
+const description = 'Sign up free for one room image credit every month. Plan a room around your style, furniture budget and reviewed UK retailer products.';
 
 export const metadata: Metadata = {
   title: { absolute: title },
