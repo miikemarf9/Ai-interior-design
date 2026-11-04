@@ -167,6 +167,7 @@ export function DesignIntake() {
   const [catalogueError, setCatalogueError] = useState('');
   const [catalogueRetry, setCatalogueRetry] = useState(0);
   const [furniturePairs, setFurniturePairs] = useState<FurniturePair[]>([]);
+  const [pairPreview, setPairPreview] = useState<FurniturePair | null>(null);
   const [pairLoading, setPairLoading] = useState(false);
   const [pairError, setPairError] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
@@ -174,6 +175,17 @@ export function DesignIntake() {
   const eligibleFurniturePairs = furniturePairs.filter(pair => pair.totalMinor <= state.budget * 100 && !pair.itemCategories.some(label => state.keep.includes(label)));
   const selectedFurniturePair = eligibleFurniturePairs.find(pair => pair.id === state.furniturePair?.id);
   const groupBudget = groupBudgetRange(furniturePairs);
+  useEffect(() => {
+    if (!pairPreview) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setPairPreview(null); };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [pairPreview]);
   useEffect(() => {
     if (!hydrated || pairLoading || !furniturePairs.length) return;
     setState(current => current.budget < groupBudget.min || current.budget > groupBudget.max
@@ -575,14 +587,14 @@ export function DesignIntake() {
                   <div className={ui.pairGrid}>
                     {eligibleFurniturePairs.map(pair => {
                       const active = state.furniturePair?.id === pair.id;
-                      return <button key={pair.id} type="button" className={ui.pairCard + (active ? ' ' + ui.pairSelected : '')} aria-pressed={active} onClick={() => setState(current => ({
+                      return <button key={pair.id} type="button" className={ui.pairCard + (active ? ' ' + ui.pairSelected : '')} aria-pressed={active} aria-haspopup="dialog" onClick={() => { setState(current => ({
                         ...current,
                         furniturePair: { id: pair.id, title: pair.title, variantIds: pair.items.map(item => item.variantId), itemLabels: pair.itemCategories, styles: pair.styles, colours: pair.colours, materials: pair.materials },
                         styles: pair.styles,
                         colours: pair.colours,
                         materials: pair.materials,
                         change: [...new Set([...current.change, ...pair.itemCategories])],
-                      }))}>
+                      })); setPairPreview(pair); }}>
                         <span className={ui.pairPhotos}>{pair.items.map(item => <img key={item.variantId} src={item.imageUrl} alt={item.imageAlt} loading="lazy" />)}</span>
                         <span className={ui.pairText}><strong>{pair.title}</strong><small>{pair.note}</small></span>
                         <span className={ui.pairProducts}>{pair.items.map(item => <span key={item.variantId}><b>{item.name}</b><small>{formatProductPrice(item.priceMinor)} · {item.retailerName}</small><small>{item.availability.replaceAll('_', ' ')} · checked {new Date(item.lastCheckedAt).toLocaleDateString('en-GB')}</small></span>)}</span>
@@ -767,6 +779,31 @@ export function DesignIntake() {
                 </div>
               </details>
             </>
+          ) : null}
+
+          {step === 1 && pairPreview ? (
+            <div className={ui.pairPreviewBackdrop} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setPairPreview(null); }}>
+              <section className={ui.pairPreviewDialog} role="dialog" aria-modal="true" aria-labelledby="pair-preview-title" tabIndex={-1} autoFocus>
+                <button type="button" className={ui.pairPreviewClose} aria-label="Close furniture group preview" onClick={() => setPairPreview(null)}>×</button>
+                <p className="eyebrow">Your selected furniture group</p>
+                <h2 id="pair-preview-title">{pairPreview.title}</h2>
+                <p className={ui.pairPreviewNote}>{pairPreview.note}</p>
+                <div className={ui.pairPreviewMeta}>
+                  <div><span>Style</span><strong>{pairPreview.styles.length ? pairPreview.styles.join(', ') : 'Designer’s choice'}</strong></div>
+                  <div><span>Colours</span><strong>{pairPreview.colours.length ? pairPreview.colours.join(', ') : 'Designer’s choice'}</strong></div>
+                  <div><span>Materials</span><strong>{pairPreview.materials.length ? pairPreview.materials.join(', ') : 'Designer’s choice'}</strong></div>
+                  <div><span>Group budget</span><strong>{formatBudget(state.budget)}</strong></div>
+                </div>
+                <div className={ui.pairPreviewListHeading}><h3>Everything included · {pairPreview.items.length} items</h3><span>Prices checked with UK retailers</span></div>
+                <div className={ui.pairPreviewItems}>
+                  {pairPreview.items.map(item => <article key={item.variantId} className={ui.pairPreviewItem}>
+                    <img src={item.imageUrl} alt={item.imageAlt || item.name} />
+                    <div><p className="microLabel">{item.category}</p><h4>{item.name}</h4>{item.variantName ? <p>{item.variantName}</p> : null}<strong>{formatProductPrice(item.priceMinor)}</strong><span>{item.retailerName} · {item.availability.replaceAll('_', ' ')}</span><small>Last checked {new Date(item.lastCheckedAt).toLocaleDateString('en-GB')}</small></div>
+                  </article>)}
+                </div>
+                <div className={ui.pairPreviewFooter}><strong>Group total {formatProductPrice(pairPreview.totalMinor)}</strong><p>On the next step you can remove, swap or add products from the full catalogue.</p><div><button type="button" className="button buttonSecondary" onClick={() => setPairPreview(null)}>Keep choosing</button><button type="button" className="button buttonPrimary" onClick={() => { setPairPreview(null); next(); }}>Continue with this group</button></div></div>
+              </section>
+            </div>
           ) : null}
 
 

@@ -28,7 +28,6 @@ type JourneyAssistantProps = {
   ownerKey?: string;
   refreshKey?: number | string | null;
   onStageClick?: (stage: number) => void;
-  onStagePopup?: number;
 };
 
 const DISMISS_KEY = 'transform-my-room-journey-assistant-dismissed-v1';
@@ -70,7 +69,6 @@ export function JourneyAssistant({
   ownerKey,
   refreshKey,
   onStageClick,
-  onStagePopup,
   intake: currentIntake,
 }: JourneyAssistantProps) {
   const panelId = useId();
@@ -224,7 +222,7 @@ export function JourneyAssistant({
                         <span><strong>{stage.label}</strong><small>{stageSummaries[index] || stage.detail}</small></span>
                       </Link>
                     ) : complete && onStageClick && number <= 3 ? (
-                      <button type="button" className={className} aria-haspopup={number === onStagePopup ? 'dialog' : undefined} onClick={() => onStageClick(number)}>
+                      <button type="button" className={className} onClick={() => onStageClick(number)}>
                         <span className="journeyAssistantStepNumber">✓</span>
                         <span><strong>{stage.label}</strong><small>{stageSummaries[index] || stage.detail}</small></span>
                       </button>

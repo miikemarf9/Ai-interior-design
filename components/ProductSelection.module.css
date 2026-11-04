@@ -160,63 +160,10 @@
   color: var(--forest);
 }
 .categoryGrid button span { color: var(--forest); font-size: 20px; }
-.groupDialogBackdrop {
-  position: fixed;
-  z-index: 1150;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  background: rgba(23, 30, 25, .55);
-}
-.groupDialog {
-  position: relative;
-  width: min(1120px, 100%);
-  max-height: min(90vh, 960px);
-  overflow: auto;
-  padding: clamp(22px, 4vw, 42px);
-  background: var(--chalk);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, .28);
-}
-.groupDialog h2 {
-  margin: 0 48px 10px 0;
-  font-family: var(--display);
-  font-size: clamp(30px, 4vw, 44px);
-  font-weight: 400;
-  line-height: 1.08;
-}
-.groupDialogIntro { max-width: 70ch; margin: 0 0 24px; color: var(--muted); font-size: 13px; line-height: 1.55; }
-.groupChoiceDetails {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0 22px;
-  margin: 0 0 28px;
-  border-top: 1px solid var(--line);
-}
-.groupChoiceDetails > div { padding: 13px 0; border-bottom: 1px solid var(--line); }
-.groupChoiceDetails dt { margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.groupChoiceDetails dd { margin: 0; color: var(--ink); font-size: 13px; line-height: 1.45; }
-.groupDialogCollectionHeading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 18px; margin-bottom: 15px; }
-.groupDialogCollectionHeading h3, .groupDialogRemoved h3 { margin: 0; font-size: 19px; }
-.groupDialogCollectionHeading span { color: var(--muted); font-size: 12px; }
-.groupDialogProducts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
-.groupDialogProducts :global(.selectedProductCard) { padding: 14px; border: 1px solid var(--line); background: #fff; }
-.groupDialogProducts :global(.selectedProductImage), .groupDialogProducts :global(.selectedProductImage.productPhoto) { background: #f5f2ed; }
-.groupDialogEmpty { padding: 20px; background: #f5f2ed; color: var(--muted); }
-.groupDialogRemoved { display: grid; gap: 10px; margin-top: 26px; padding: 18px; border: 1px solid rgba(125, 73, 61, .25); background: #faf6f3; }
-.groupDialogRemoved > div { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; font-size: 12px; }
-.groupDialogActions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
 @media (max-width: 520px) {
   .categoryDialog { padding: 28px 20px 22px; }
   .categoryGrid { grid-template-columns: 1fr; }
   .addCatalogueButton { padding: 15px; }
-}
-@media (max-width: 720px) {
-  .groupDialogBackdrop { align-items: end; padding: 0; }
-  .groupDialog { width: 100%; max-height: 92dvh; padding: 28px 18px calc(20px + env(safe-area-inset-bottom)); }
-  .groupChoiceDetails { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
-  .groupDialogProducts { grid-template-columns: 1fr; gap: 18px; }
-  .groupDialogActions { display: grid; grid-template-columns: 1fr; }
 }
 .experience:global(.productSelectionExperience) { padding-top: 36px; }
 .hero:global(.selectionHero) { display: block; padding: 0; margin-bottom: 24px; }
