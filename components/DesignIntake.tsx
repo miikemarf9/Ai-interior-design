@@ -580,7 +580,7 @@ export function DesignIntake() {
           {step === 1 ? (
             <>
               <div className={ui.pairSection}>
-                <StepIntro title={pairLoading ? "Finding furniture groups…" : eligibleFurniturePairs.length ? "Choose the furniture group you’d like to see in your room visual." : "No current furniture groups fit this budget yet."} copy={pairLoading ? "Checking the current catalogue for coordinated furniture groups." : eligibleFurniturePairs.length ? "Each group brings together carefully chosen pieces with complementary colours, materials and style." : "Open Advanced settings to explore styles or adjust your group budget."} />
+                <StepIntro eyebrow="STEP 2 · CHOOSE YOUR LOOK AND BUDGET" title={pairLoading ? "Finding furniture groups…" : eligibleFurniturePairs.length ? "Choose a furniture group to start with." : "No current furniture groups fit this budget yet."} copy={pairLoading ? "Checking the current catalogue for coordinated furniture groups." : eligibleFurniturePairs.length ? "Choose a coordinated starting group and set your total budget below. You can personalise every piece on the next screen." : "Open Advanced settings to explore styles or adjust your group budget."} />
                 {pairLoading ? <p aria-live="polite">Checking current furniture matches…</p> : null}
                 {pairError ? <p className={ui.error} role="alert">{pairError}</p> : null}
                 {!pairLoading && eligibleFurniturePairs.length ? (
@@ -801,7 +801,7 @@ export function DesignIntake() {
                     <div><p className="microLabel">{item.category}</p><h4>{item.name}</h4>{item.variantName ? <p>{item.variantName}</p> : null}<strong>{formatProductPrice(item.priceMinor)}</strong><span>{item.retailerName} · {item.availability.replaceAll('_', ' ')}</span><small>Last checked {new Date(item.lastCheckedAt).toLocaleDateString('en-GB')}</small></div>
                   </article>)}
                 </div>
-                <div className={ui.pairPreviewFooter}><strong>Group total {formatProductPrice(pairPreview.totalMinor)}</strong><p>On the next step you can remove, swap or add products from the full catalogue.</p><div><button type="button" className="button buttonSecondary" onClick={() => setPairPreview(null)}>Keep choosing</button><button type="button" className="button buttonPrimary" onClick={() => { setPairPreview(null); next(); }}>Continue with this group</button></div></div>
+                <div className={ui.pairPreviewFooter}><strong>Group total {formatProductPrice(pairPreview.totalMinor)}</strong><p>Next, personalise this collection: remove, swap or add products from the full catalogue. This is still Step 2.</p><div><button type="button" className="button buttonSecondary" onClick={() => setPairPreview(null)}>Keep choosing</button><button type="button" className="button buttonPrimary" onClick={() => { setPairPreview(null); next(); }}>Continue to personalise</button></div></div>
               </section>
             </div>
           ) : null}
@@ -809,9 +809,9 @@ export function DesignIntake() {
 
           <div className="intakeNav">
             <button className="textButton" type="button" onClick={back} disabled={step === 0}>← Back</button>
-            <span>Step {step + 1} of 3</span>
+            <span>Step {step + 1} of 4</span>
             <button className="button buttonPrimary" type="button" onClick={next} disabled={!canContinue}>
-              {step === 0 ? 'Choose a furniture group' : step === 1 ? (state.furniturePair ? 'Continue with this group' : state.styles.length ? 'Choose furniture' : 'Continue without a style') : 'Review my room'}
+              {step === 0 ? 'Choose a furniture group' : state.furniturePair ? 'Continue to personalise' : 'Continue to choose furniture'}
             </button>
           </div>
         </section>
@@ -821,11 +821,11 @@ export function DesignIntake() {
         visible={true}
         defaultOpen={Boolean(roomAssetId)}
         currentStep={step + 1}
-        nextTitle={step === 0 ? 'Choose a furniture group' : 'Review your furniture'}
+        nextTitle={step === 0 ? 'Choose your style and budget' : 'Personalise your furniture'}
         nextDescription={step === 0
           ? 'Your room photograph is the starting point. Continue when it has been saved.'
-          : 'Check the products in your chosen group and add anything else you need.'}
-        nextLabel={step === 0 ? 'Continue to furniture groups' : 'Review your furniture'}
+          : 'Choose a starting group, then customise the pieces and add products from the full catalogue. Both screens are part of Step 2.'}
+        nextLabel={step === 0 ? 'Continue to furniture groups' : 'Continue to personalise'}
         onNext={next}
         nextDisabled={!canContinue}
         ownerKey={ownerKey}

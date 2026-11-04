@@ -5,8 +5,8 @@ import styles from './HomeBelowHero.module.css';
 
 const steps = [
   ['Add your room photo','Upload a photo. Add optional notes to show what stays and where new pieces should go.'],
-  ['Choose your look','Pick a furniture group you like, then set a budget for your collection.'],
-  ['Make it yours','Review your room photo and furniture. Swap, remove or add pieces.'],
+  ['Choose your look and furniture','Pick a coordinated group, set a budget, then swap, remove or add pieces from the catalogue.'],
+  ['Review your room','Check your room photo and collection total before generating. You can return to Step 2 to edit your furniture.'],
   ['See your new room','Generate your room image. If you love a piece, follow its link to shop with the retailer.'],
 ];
 const faqs = [

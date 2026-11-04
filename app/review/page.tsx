@@ -7,7 +7,7 @@ export default function ReviewPage() {
     <header className="designHeader shellWide">
       <Brand />
       <span className="designHeaderNote">Step 3 of 4 · Room review</span>
-      <Link className="textLink" href="/products">Back to Step 2 · Furniture</Link>
+      <Link className="textLink" href="/products">Edit collection · Step 2</Link>
     </header>
     <RoomReviewExperience />
   </main>;

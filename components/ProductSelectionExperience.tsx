@@ -188,7 +188,7 @@ export function ProductSelectionExperience() {
     <button className="textButton" disabled={busy || navigating} onClick={() => loadSelection(intake, brief)}>Check collection again</button>
   </section>;
   return <div className={"productSelectionExperience shell " + styles.experience} aria-busy={busy || navigating}>
-    <section className={"selectionHero " + styles.hero}><div><h1>Build your furniture collection</h1><p>Choose the pieces for your room. Swap or remove items, then add anything else from the full catalogue below.</p></div></section>
+    <section className={"selectionHero " + styles.hero}><div><p className="eyebrow">{intake.furniturePair ? 'YOUR CHOSEN GROUP' : 'FURNITURE SELECTION'}</p><h1>{intake.furniturePair ? 'Personalise your furniture collection' : 'Build your furniture collection'}</h1><p>{intake.furniturePair ? 'Your chosen group is a starting point. Swap or remove pieces, then add anything else from the full catalogue below.' : 'Choose the pieces for your room. Swap or remove items, then add anything else from the full catalogue below.'}</p></div></section>
     <figure className={styles.roomPhoto}>
       {roomPhotoUrl ? <img src={roomPhotoUrl} alt="Your uploaded room photograph" /> : <p><Link href="/design?step=0">Add your room photo</Link></p>}
       <figcaption><span>Your room photo</span><Link href="/design?step=0">Change photo or notes</Link></figcaption>
