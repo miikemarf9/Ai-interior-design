@@ -10,6 +10,7 @@ export default async function sitemap():Promise<MetadataRoute.Sitemap>{
     {url:base,lastModified:new Date(),changeFrequency:"weekly",priority:1},
     {url:`${base}/design`,lastModified:new Date(),changeFrequency:"monthly",priority:.8},
     {url:`${base}/ideas`,lastModified:new Date(),changeFrequency:"weekly",priority:.8},
+    {url:`${base}/explore-furniture`,lastModified:new Date(),changeFrequency:"daily",priority:.8},
     ...growth.collections.map((item)=>({
       url:`${base}/ideas/${item.slug}`,
       lastModified:new Date(item.updated_at),

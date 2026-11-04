@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getCatalogDb } from "@/lib/catalog/neon";
 import { addAwinClickRef } from "@/lib/commerce/awin";
+import { getLiveSelectionCandidates } from "@/lib/catalog/repository";
+import { eligibleForExplore } from "@/lib/catalog/explore";
 
 export const runtime = "nodejs";
 
@@ -36,6 +38,17 @@ export async function GET(
   const generationId = validUuid(url.searchParams.get("generationId") || "") ? url.searchParams.get("generationId")! : "";
   const shareToken = validUuid(url.searchParams.get("shareToken") || "") ? url.searchParams.get("shareToken")! : "";
   const surface = (url.searchParams.get("surface") || "product_drawer").slice(0, 80);
+  // Recheck browse offers at click time; the room design journey keeps its existing rules.
+  if (surface === "explore_furniture") {
+    try {
+      const candidates = await getLiveSelectionCandidates();
+      if (!candidates.some(item => item.offer.id === offerId && eligibleForExplore(item))) {
+        return NextResponse.redirect(new URL("/explore-furniture?unavailable=1", request.url), 302);
+      }
+    } catch {
+      return NextResponse.redirect(new URL("/explore-furniture?unavailable=1", request.url), 302);
+    }
+  }
   const allowAwinTracking = hasAwinTrackingConsent(request);
 
   const sql = getCatalogDb();

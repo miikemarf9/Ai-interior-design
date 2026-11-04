@@ -4822,3 +4822,12 @@ main:not(.homePage) > .siteHeader.isAtTop .headerAccountLink { color: var(--ink)
 .roomChrome .brand.transformBrand { background: transparent; padding: 0; border-radius: 0; color: var(--ivory); }
 .roomChrome .transformBrandAccent { color: var(--ivory); }
 .roomChrome .transformBrandMark { color: #b1ddbf; }
+
+/* Keep all discovery links reachable without crowding the mobile upload action. */
+@media (max-width: 760px) {
+  .siteHeader .siteHeaderInner { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px 8px; padding-block:10px; align-items:center; }
+  .siteHeader .brand { grid-column:1 / 3; grid-row:1; }
+  .siteHeader .headerActions { display:contents; }
+  .siteHeader .headerAccountLink { display:inline-flex; min-height:44px; align-items:center; white-space:nowrap; grid-row:2; justify-content:center; }
+  .siteHeader .buttonCompact { min-height:44px; grid-row:1; grid-column:3; padding-inline:8px; font-size:9px; }
+}
