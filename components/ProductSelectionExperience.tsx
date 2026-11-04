@@ -235,9 +235,9 @@ export function ProductSelectionExperience() {
           <p className={styles.groupDialogIntro}>Everything selected for this room, including the products in your collection. You can remove or restore pieces here.</p>
           <dl className={styles.groupChoiceDetails}>
             <div><dt>Furniture group</dt><dd>{intake.furniturePair?.title || intake.furniturePair?.itemLabels?.join(' + ') || intake.change.join(', ') || 'Open furniture selection'}</dd></div>
-            <div><dt>Style</dt><dd>{intake.styles.length ? intake.styles.map(value => value.replace(/[-_]/g, ' ')).join(', ') : 'Open to recommendations'}</dd></div>
-            <div><dt>Colours</dt><dd>{intake.colours.length ? intake.colours.join(', ') : 'Designer’s choice'}</dd></div>
-            <div><dt>Materials</dt><dd>{intake.materials.length ? intake.materials.join(', ') : 'Designer’s choice'}</dd></div>
+            <div><dt>Style</dt><dd>{(intake.styles.length ? intake.styles : intake.furniturePair?.styles || []).length ? (intake.styles.length ? intake.styles : intake.furniturePair?.styles || []).map(value => value.replace(/[-_]/g, ' ')).join(', ') : 'Open to recommendations'}</dd></div>
+            <div><dt>Colours</dt><dd>{intake.colours.length ? intake.colours.join(', ') : intake.furniturePair?.colours?.join(', ') || 'Designer’s choice'}</dd></div>
+            <div><dt>Materials</dt><dd>{intake.materials.length ? intake.materials.join(', ') : intake.furniturePair?.materials?.join(', ') || 'Designer’s choice'}</dd></div>
             <div><dt>Furniture budget</dt><dd>{money(intake.budget * 100)}</dd></div>
             {intake.uses.length ? <div><dt>How you use the room</dt><dd>{intake.uses.join(', ')}</dd></div> : null}
             {intake.keep.length ? <div><dt>Keep</dt><dd>{intake.keep.join(', ')}</dd></div> : null}
