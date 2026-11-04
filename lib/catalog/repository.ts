@@ -1,5 +1,5 @@
 import { currentClearances } from "@/lib/catalog/clearance";
-import { mapCategory, parseDimensions } from "@/lib/catalog/ingest/awin";
+import { mapCategory } from "@/lib/catalog/ingest/awin";
 import { getCatalogDb } from "@/lib/catalog/neon";
 import type { SelectionCandidate } from "@/lib/catalog/selection";
 
@@ -272,14 +272,13 @@ export async function getLiveBrowseCandidates(): Promise<SelectionCandidate[]> {
 
   return rows.map(row => {
     const category = mapCategory(row.product_name, row.category_name) || row.category_slug;
-    const titleDimensions = parseDimensions(row.product_name);
     return {
     clearedForSelection: true as const,
     commercial: { packSize: 1, unitLabel: "item", deliveryBasis: "unknown" as const, deliveryDetails: "Confirm delivery cost and availability with the retailer." },
     productId: row.product_id, variantId: row.variant_id, productName: row.product_name,
     variantName: row.variant_name, brandName: row.brand_name, category,
     categoryName: browseCategoryLabels[category] || row.category_name, designSummary: row.design_summary,
-    dimensions: { widthMm: row.width_mm ?? titleDimensions.widthMm, heightMm: row.height_mm ?? titleDimensions.heightMm, depthMm: row.depth_mm ?? titleDimensions.depthMm, seatWidthMm: row.seat_width_mm, seatDepthMm: row.seat_depth_mm, seatHeightMm: row.seat_height_mm },
+    dimensions: { widthMm: row.width_mm, heightMm: row.height_mm, depthMm: row.depth_mm, seatWidthMm: row.seat_width_mm, seatDepthMm: row.seat_depth_mm, seatHeightMm: row.seat_height_mm },
     styles: row.styles || [], materials: row.materials || [], colours: row.colours || [], featureTags: [],
     curationScore: row.curation_score, qualityScore: row.quality_score,
     offer: { id: row.offer_id, retailerName: row.retailer_name, retailerSlug: row.retailer_slug,
