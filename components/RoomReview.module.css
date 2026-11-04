@@ -1,0 +1,16 @@
+.experience { padding-top: 36px; }
+.reviewLayout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr); align-items: start; gap: clamp(22px, 4vw, 48px); margin: 22px 0 40px; }
+.roomPhoto { margin: 0; }
+.roomPhoto > img { display: block; width: 100%; max-height: 620px; object-fit: contain; background: var(--bone); }
+.roomPhoto figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding-top: 10px; color: var(--muted); font-size: 12px; }
+.roomPhoto figcaption a { color: var(--forest); text-underline-offset: 3px; }
+.photoMissing { min-height: 220px; display: grid; place-content: center; gap: 8px; padding: 24px; background: var(--bone); color: var(--muted); text-align: center; font-size: 13px; }
+.photoMissing a { color: var(--forest); }
+.collectionSummary { display: grid; gap: 12px; padding: 24px; border: 1px solid var(--line); background: var(--chalk); }
+.collectionSummary > p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.collectionSummary > p.microLabel { color: var(--forest); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.collectionSummary h2 { margin: 0; font-family: var(--display); font-size: clamp(26px, 3vw, 36px); font-weight: 400; line-height: 1.1; }
+.collectionSummary .reviewBudgetWarning { padding: 12px 14px; border-left: 4px solid #bb642e; background: #fff3e5; color: #613817; font-weight: 650; }
+.collectionSummary :global(.button) { justify-self: start; margin-top: 5px; }
+.reviewError { max-width: 70ch; padding: 12px 15px; border-left: 4px solid #842f25; background: #faf0ee; color: #842f25; font-size: 13px; line-height: 1.5; }
+@media (max-width: 760px) { .reviewLayout { grid-template-columns: 1fr; } .collectionSummary { padding: 20px; } }

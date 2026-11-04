@@ -8,7 +8,7 @@ export default function RenderPage() {
       <header className="designHeader shellWide">
         <Brand />
         <span className="designHeaderNote">Step 4 of 4 · About 2 minutes · 1 image use</span>
-        <Link className="textLink" href="/products">Back to furniture</Link>
+        <Link className="textLink" href="/review">Back to room review</Link>
       </header>
       <RenderExperience />
     </main>

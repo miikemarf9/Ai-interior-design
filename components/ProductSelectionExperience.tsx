@@ -141,24 +141,17 @@ export function ProductSelectionExperience() {
     } catch (err) { setError(err instanceof Error ? err.message : 'Please try again.'); return false; }
     finally { setLoading(false); setBusy(false); }
   }
-  async function continueToRender() {
-    if (continuing.current || busy || !intake || !brief || !selection || !selection.products.length || (!approved && !acknowledged)) return;
+  function continueToReview() {
+    if (continuing.current || busy || !intake || !brief || !selection || !selection.products.length) return;
     continuing.current = true;
     setNavigating(true);
-    let leaving = false;
     try {
-      const accepted = approved || await loadSelection(intake, brief, selection, true);
-      if (accepted) {
-        window.location.assign('/render');
-        leaving = true;
-      }
+      save(selection, false);
+      window.location.assign('/review');
     } catch {
-      setError('We could not open image generation. Please try again.');
-    } finally {
-      if (!leaving) {
-        continuing.current = false;
-        setNavigating(false);
-      }
+      continuing.current = false;
+      setNavigating(false);
+      setError('We could not open your room review. Please try again.');
     }
   }
   function toggleProduct(product: ProposedProduct, include: boolean) {
@@ -195,7 +188,7 @@ export function ProductSelectionExperience() {
     <button className="textButton" disabled={busy || navigating} onClick={() => loadSelection(intake, brief)}>Check collection again</button>
   </section>;
   return <div className={"productSelectionExperience shell " + styles.experience} aria-busy={busy || navigating}>
-    <section className={"selectionHero " + styles.hero}><div><h1>Review your room photo and products</h1><p>Check your room photo and selected products. Swap, remove or add pieces below.</p></div></section>
+    <section className={"selectionHero " + styles.hero}><div><h1>Build your furniture collection</h1><p>Choose the pieces for your room. Swap or remove items, then add anything else from the full catalogue below.</p></div></section>
     <figure className={styles.roomPhoto}>
       {roomPhotoUrl ? <img src={roomPhotoUrl} alt="Your uploaded room photograph" /> : <p><Link href="/design?step=0">Add your room photo</Link></p>}
       <figcaption><span>Your room photo</span><Link href="/design?step=0">Change photo or notes</Link></figcaption>
@@ -255,24 +248,13 @@ export function ProductSelectionExperience() {
     /> : null}
     <JourneyAssistant
       visible={Boolean(intake && brief && selection)}
-      currentStep={3}
+      currentStep={2}
       intake={intake}
-      nextTitle="Generate your room image"
-      nextDescription={'Furniture total: ' + money(selection.totalMinor) + '. The next page starts generating your room image using one image use. No furniture is purchased here.'}
-      nextDisclaimer={approved ? undefined : {
-        text: selection.remainingMinor < 0
-          ? `This collection is ${money(Math.abs(selection.remainingMinor))} over your furniture budget. Continuing uses these products for your room image. No furniture is purchased or reserved. Check measurements, retailer prices, stock, delivery costs and any missing products before buying.`
-          : 'Check measurements, retailer prices, stock and delivery before buying. Saving these products creates no order or furniture payment.',
-        label: selection.remainingMinor < 0
-          ? `I understand this collection is ${money(Math.abs(selection.remainingMinor))} over budget and needs checking before I buy.`
-          : 'I’ll check measurements, prices and delivery before buying.',
-        checked: acknowledged,
-        onChange: setAcknowledged,
-        disabled: busy || navigating,
-      }}
-      nextLabel={navigating ? 'Opening image generation…' : 'Generate image · furniture ' + money(selection.totalMinor)}
-      onNext={continueToRender}
-      nextDisabled={busy || navigating || !selection.products.length || (!approved && !acknowledged)}
+      nextTitle="Review your room and collection"
+      nextDescription={`${selection.products.length} pieces · ${money(selection.totalMinor)} total. Check the room photo and collection before image generation.`}
+      nextLabel={navigating ? 'Opening your review…' : 'Continue to review'}
+      onNext={continueToReview}
+      nextDisabled={busy || navigating || !selection.products.length}
       refreshKey={`${selection.totalMinor}:${selection.products.map(product => product.slot + ':' + product.quantity).join(',')}`} 
     />
     <p className="affiliateDisclosure"><strong>Partner links · Ad.</strong> We connect you with products selected for your room. We earn commission on qualifying purchases through retailer links, at no extra cost to you. This helps fund the product research and room-planning tools behind your recommendations.</p>
