@@ -93,15 +93,19 @@ export function HomeHeroCarousel() {
           <div className="homeHeroShade" />
           <div key={`copy-${runs[index]}`} className="homeHeroContent shellWide">
             {index === 0 ? <>
-              <p className="eyebrow eyebrowLight heroLine heroLineOne">FREE, EVERY MONTH</p>
-              <h1 className="heroLine heroLineTwo">One free room image<br />every month.</h1>
-              <p className="heroLine heroLineThree">Upload a photo of your room to get started.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Create my room image</Link>
+              <h1 className="heroLine heroLineTwo">Give your living room a fresh look.</h1>
+              <p className="heroLine heroLineThree">Empty or already furnished, upload a photo, choose your style and furniture, and we’ll create a new image of your living room.</p>
+              <div className="homeHeroActions heroLine heroLineFour">
+                <Link className="button buttonPrimary" href="/design">Create my room image</Link>
+                <Link className="heroHowLink" href="#reimagined">How it works <span aria-hidden="true">↓</span></Link>
+              </div>
             </> : <>
-              <p className="eyebrow eyebrowLight heroLine heroLineOne">FREE, EVERY MONTH</p>
-              <h1 className="heroLine heroLineTwo">One free room image<br />every month.</h1>
-              <p className="heroLine heroLineThree">Upload a photo of your room to get started.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/design">Create my room image</Link>
+              <h1 className="heroLine heroLineTwo">Give your living room a fresh look.</h1>
+              <p className="heroLine heroLineThree">Empty or already furnished, upload a photo, choose your style and furniture, and we’ll create a new image of your living room.</p>
+              <div className="homeHeroActions heroLine heroLineFour">
+                <Link className="button buttonPrimary" href="/design">Create my room image</Link>
+                <Link className="heroHowLink" href="#reimagined">How it works <span aria-hidden="true">↓</span></Link>
+              </div>
             </>}
           </div>
         </div>
