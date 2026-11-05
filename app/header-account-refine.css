@@ -61,3 +61,16 @@
 @media (max-width: 1000px) and (min-width: 761px) {
   .siteHeader .headerActions { gap:10px; }
 }
+
+.homeHeroActions { display:flex; flex-wrap:wrap; align-items:center; gap:18px; }
+.homeHeroActions .heroHowLink {
+  display:inline-flex; min-height:44px; align-items:center; gap:7px;
+  color:#fffaf2; font-size:13px; font-weight:700; text-decoration:none;
+  border-bottom:1px solid rgba(255,250,242,.65);
+}
+.homeHeroActions .heroHowLink:hover { border-color:#fffaf2; }
+@media (max-width: 600px) {
+  .homeHeroActions { gap:12px; }
+  .homeHeroActions .button { min-height:46px; padding-inline:17px; }
+  .homeHeroActions .heroHowLink { font-size:12px; }
+}
