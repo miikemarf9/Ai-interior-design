@@ -2491,11 +2491,13 @@ p { line-height: 1.58; }
 }
 
 .siteHeader.isHidden {
-  transform: translateY(-105%);
+  transform: translate3d(0, -105%, 0) !important;
+  pointer-events: none;
 }
 
 .siteHeader.isVisible {
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0) !important;
+  pointer-events: auto;
 }
 
 .homePage .siteHeader.isAtTop {
