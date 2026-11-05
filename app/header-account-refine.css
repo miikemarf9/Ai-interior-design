@@ -44,3 +44,20 @@
   .home .final h2 { font-size:clamp(38px,10vw,54px); }
   .monthlySignupButton { width:100%; max-width:310px; padding:0 14px !important; font-size:12px !important; }
 }
+
+/* Center the browse links between the logo and the fixed account actions. */
+@media (min-width: 761px) {
+  .siteHeader .siteHeaderInner {
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) !important;
+    gap:0;
+  }
+  .siteHeader .headerActions {
+    justify-self:center;
+    width:max-content;
+    margin:0 auto;
+  }
+}
+@media (max-width: 1000px) and (min-width: 761px) {
+  .siteHeader .headerActions { gap:10px; }
+}
