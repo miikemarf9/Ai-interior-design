@@ -91,6 +91,10 @@ export function AccountExperience() {
 
   useEffect(() => {
     void loadAccount();
+    const requestedAuth = new URLSearchParams(window.location.search).get("auth");
+    if (requestedAuth === "signup" || requestedAuth === "login") {
+      setAuthMode(requestedAuth);
+    }
     const purchase = new URLSearchParams(window.location.search).get("purchase");
     if (purchase === "success") {
       setNotice("Payment received. Your 10 image credits should appear shortly.");
