@@ -25,9 +25,9 @@ export function Header(_props: { preview?: boolean; anchorBase?: string }) {
       } else {
         setAtTop(false);
 
-        if (currentY > previousY + 4) {
+        if (currentY > previousY) {
           setVisible(false);
-        } else if (currentY < previousY - 4) {
+        } else if (currentY < previousY) {
           setVisible(true);
         }
       }
