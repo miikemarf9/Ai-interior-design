@@ -2491,12 +2491,12 @@ p { line-height: 1.58; }
 }
 
 .siteHeader.isHidden {
-  transform: translate3d(0, -105%, 0) !important;
+  display: none !important;
   pointer-events: none;
 }
 
 .siteHeader.isVisible {
-  transform: translate3d(0, 0, 0) !important;
+  display: block !important;
   pointer-events: auto;
 }
 
