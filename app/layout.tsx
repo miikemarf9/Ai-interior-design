@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { CSSProperties, ReactNode } from 'react';
 import './globals.css';
 import './header-account.css';
+import './header-account-refine.css';
 import { site } from '@/lib/site';
 import { AnalyticsClient, CookieConsent } from '@/components/PrivacyAnalytics';
 import { LegalFooter } from '@/components/LegalFooter';

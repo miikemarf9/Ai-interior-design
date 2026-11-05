@@ -95,13 +95,13 @@ export function HomeHeroCarousel() {
             {index === 0 ? <>
               <p className="eyebrow eyebrowLight heroLine heroLineOne">FREE, EVERY MONTH</p>
               <h1 className="heroLine heroLineTwo">One free room image<br />every month.</h1>
-              <p className="heroLine heroLineThree">Sign up and confirm your email to get it. No furniture purchase needed.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/account?auth=signup">Sign up free</Link>
+              <p className="heroLine heroLineThree">Create a free account, confirm your email, then upload a photo of your room.</p>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="/account?auth=signup">Start my free room image</Link>
             </> : <>
               <p className="eyebrow eyebrowLight heroLine heroLineOne">FREE, EVERY MONTH</p>
               <h1 className="heroLine heroLineTwo">One free room image<br />every month.</h1>
-              <p className="heroLine heroLineThree">Sign up and confirm your email to get it. No furniture purchase needed.</p>
-              <Link className="button buttonPrimary heroLine heroLineFour" href="/account?auth=signup">Sign up free</Link>
+              <p className="heroLine heroLineThree">Create a free account, confirm your email, then upload a photo of your room.</p>
+              <Link className="button buttonPrimary heroLine heroLineFour" href="/account?auth=signup">Start my free room image</Link>
             </>}
           </div>
         </div>
