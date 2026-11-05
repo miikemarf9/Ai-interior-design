@@ -44,7 +44,6 @@ export function Header(_props: { preview?: boolean; anchorBase?: string }) {
           <Link className="headerAccountLink" href="/explore-furniture">Explore furniture</Link>
           <Link className="headerAccountLink" href="/community">Explore rooms</Link>
           <Link className="headerAccountLink" href="/account">My rooms</Link>
-          <Link className="button buttonPrimary buttonCompact" href="/design">Upload my room</Link>
         </nav>
         <nav className="headerAuthActions" aria-label="Account access">
           <Link className="headerCreateAccount" href="/account?auth=signup">Create account</Link>
