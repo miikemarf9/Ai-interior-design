@@ -10,7 +10,10 @@ export function Header(_props: { preview?: boolean; anchorBase?: string }) {
   const lastScrollY = useRef(0);
 
   useEffect(() => {
-    lastScrollY.current = window.scrollY;
+    const initialY = window.scrollY;
+    lastScrollY.current = initialY;
+    setAtTop(initialY <= 8);
+    setVisible(initialY <= 8);
 
     const onScroll = () => {
       const currentY = window.scrollY;
