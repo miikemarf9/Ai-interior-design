@@ -41,6 +41,7 @@ const CATEGORY_RULES: Array<{ slug: string; terms: string[] }> = [
   { slug: "bedside-tables", terms: ["bedside table", "bedside cabinet", "bedside chest", "nightstand"] },
   { slug: "chest-of-drawers", terms: ["chest of drawers", "drawer chest", "drawer dresser"] },
   { slug: "wardrobes", terms: ["wardrobe", "wardrobe cabinet"] },
+  { slug: "mattresses", terms: ["mattress"] },
   { slug: "sofas", terms: ["sofa", "settee", "couch", "loveseat"] },
   { slug: "armchairs", terms: ["armchair", "accent chair", "lounge chair", "wing chair", "rocking chair", "swivel chair"] },
   { slug: "coffee-tables", terms: ["coffee table"] },
@@ -206,6 +207,7 @@ function unitToMm(value: number, unit: string) {
 export function parseDimensions(text: string | null) {
   if (!text) return { widthMm: null, heightMm: null, depthMm: null };
 
+  // Retailer titles often label length, width and height separately (L × W × H).
   const lengthWidthHeight = text.match(/(\d+(?:\.\d+)?)\s*l\s*[x×]\s*(\d+(?:\.\d+)?)\s*w\s*[x×]\s*(\d+(?:\.\d+)?)\s*h\s*(mm|cm|inches|inch|in|m)\b/i);
   if (lengthWidthHeight) {
     return {
@@ -274,7 +276,7 @@ export function normalizeLegacyAwinRow(row: Record<string, unknown>): FeedCandid
   const categoryPath = first(row.merchant_product_category_path, row.merchant_category, row.category_name) || null;
   const colourText = first(row.colour, row.color, row.colour_name, row.color_name) || null;
   const materialText = first(row.material, row.material_description, row.specifications) || null;
-  const dimensionsText = first(row.dimensions, row.specifications) || null;
+  const dimensionsText = first(row.dimensions, row.specifications, title) || null;
   const styleText = [title, description, categoryPath, first(row.keywords), first(row.style, row.style_name, row.design_style)].filter(Boolean).join(" ");
   const colourEvidence = [title, colourText].filter(Boolean).join(" ");
   const materialEvidence = [title, materialText].filter(Boolean).join(" ");
