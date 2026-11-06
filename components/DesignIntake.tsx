@@ -321,7 +321,7 @@ export function DesignIntake() {
     const controller = new AbortController();
     setPairLoading(true);
     setPairError('');
-    const pairParams = new URLSearchParams({ roomType: state.roomType });
+    const pairParams = new URLSearchParams({ roomType: state.roomType || 'living_room' });
     fetch('/api/products/pairs?' + pairParams.toString(), { cache: 'no-store', signal: controller.signal })
       .then(async response => {
         const payload = await response.json() as { pairs?: FurniturePair[]; error?: string };
