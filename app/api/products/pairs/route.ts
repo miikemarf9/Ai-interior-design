@@ -6,6 +6,13 @@ export const runtime = "nodejs";
 
 const PAIR_OPTION_LIMIT = 6;
 
+const bedroomCollections = [
+  { id: 'bedroom-value', tier: 'Value', title: 'Warm Oak & Ivory · Value Edit', note: 'Try these five coordinated pieces in your own bedroom.' , ids: ['d252315e-c2d4-4ca6-a470-6b9a1810e309', 'c0d3a09e-5d73-4c6e-83f4-7899fb5842e0', '5ea4223d-a34c-4102-bdc2-5fc5f63e3173', 'af8a193a-e266-4483-8058-9f90645b73fa', '940efcb2-0c93-4f31-8307-6fec8678d030'] },
+  { id: 'bedroom-premium', tier: 'Premium', title: 'Warm Oak & Ivory · Premium Edit', note: 'See this coordinated oak collection in your own bedroom.', ids: ['30f26c61-b63c-4cc4-8547-5f427d56f931', 'd8c2aab9-76ed-4e61-a34d-55afe0f9f3cb', '5ec1832e-7524-466e-be46-92a574acdac5', '219a3ec4-5716-420f-bf98-0949c7ed5c42', '567ce9e4-2660-43fd-82fb-f336303841bc'] },
+] as const;
+
+
+
 const pairCategories = [
   { first: "sofas", second: "coffee-tables", labels: ["Sofa", "Coffee table"] },
   { first: "sofas", second: "armchairs", labels: ["Sofa", "Armchairs"] },
@@ -59,10 +66,31 @@ function item(candidate: SelectionCandidate) {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const now = Date.now();
     const candidates = (await getLiveSelectionCandidates()).filter(candidate => current(candidate, now));
+    if (new URL(request.url).searchParams.get('roomType') === 'bedroom') {
+      const candidateByProduct = new Map(candidates.map(candidate => [candidate.productId, candidate]));
+      const collections = bedroomCollections.map(collection => ({
+        ...collection,
+        items: collection.ids.map(id => candidateByProduct.get(id)).filter((candidate): candidate is SelectionCandidate => Boolean(candidate)),
+      })).filter(collection => collection.items.length === collection.ids.length);
+      return NextResponse.json({
+        pairs: collections.map(collection => ({
+          id: collection.id,
+          title: collection.title,
+          note: collection.note,
+          itemCategories: ['Bed', 'Bedside tables', 'Wardrobe', 'Chest of drawers', 'Dressing table'],
+          styles: [...new Set(collection.items.flatMap(candidate => candidate.styles))],
+          colours: [...new Set(collection.items.flatMap(candidate => candidate.colours))],
+          materials: [...new Set(collection.items.flatMap(candidate => candidate.materials))],
+          totalMinor: collection.items.reduce((sum, candidate) => sum + candidate.offer.priceMinor, 0),
+          items: collection.items.map(item),
+        })),
+        checkedAt: new Date(now).toISOString(),
+      }, { headers: { 'Cache-Control': 'no-store' } });
+    }
     const ranked = pairCategories.flatMap(definition => {
       const first = candidates.filter(candidate => candidate.category === definition.first);
       const second = candidates.filter(candidate => candidate.category === definition.second);

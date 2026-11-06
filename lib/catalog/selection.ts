@@ -81,6 +81,11 @@ type SlotDefinition = {
 };
 
 const SLOT_DEFINITIONS: SlotDefinition[] = [
+  { category: "bed-frames", label: "Bed", weight: 0.42, keywords: ["bed", "bed frame"] },
+  { category: "bedside-tables", label: "Bedside tables", weight: 0.10, keywords: ["bedside", "bed cabinet"] },
+  { category: "wardrobes", label: "Wardrobe", weight: 0.23, keywords: ["wardrobe"] },
+  { category: "chest-of-drawers", label: "Chest of drawers", weight: 0.15, keywords: ["chest", "drawers"] },
+  { category: "dressing-tables", label: "Dressing table", weight: 0.10, keywords: ["dressing table"] },
   { category: "sofas", label: "Sofa", weight: 0.38, keywords: ["sofa", "settee", "couch"] },
   { category: "armchairs", label: "Armchair", weight: 0.16, keywords: ["armchair", "chair"] },
   { category: "coffee-tables", label: "Coffee table", weight: 0.09, keywords: ["coffee table"] },
@@ -466,7 +471,7 @@ export function buildProductSelection(
   brief: DesignBrief,
   candidates: SelectionCandidate[],
 ): ProductSelection {
-  const eligibleSlots = intake.roomType === 'bedroom' ? [] : buildSlots(intake, brief);
+  const eligibleSlots = buildSlots(intake, brief);
   const slots = allocateSlotBudgets(eligibleSlots, candidates, intake.budget * 100);
   const usedProducts = new Set<string>();
   const products: ProposedProduct[] = [];

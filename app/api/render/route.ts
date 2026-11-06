@@ -286,7 +286,7 @@ export async function POST(request: Request) {
   let body: RenderRequest;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid render request.' }, { status: 400 }); }
   if (!body || typeof body !== 'object') return NextResponse.json({ error: 'Invalid render request.' }, { status: 400 });
-  if (body.intake?.roomType === 'bedroom') return NextResponse.json({ error: 'Bedroom image generation is not available yet. Your brief remains saved.' }, { status: 409 });
+  if (body.intake?.roomType !== 'living_room' && body.intake?.roomType !== 'bedroom') return NextResponse.json({ error: 'Choose a living room or bedroom.' }, { status: 400 });
   const account = await getCurrentAccount();
   const ownerKey = account?.ownerKey || body.ownerKey || "";
   const designId = body.designId || "";
@@ -312,7 +312,7 @@ export async function POST(request: Request) {
   }
 
   if (body.selection.products.length > 6) {
-    return NextResponse.json({ error: "The first living-room pilot is limited to six product references." }, { status: 409 });
+    return NextResponse.json({ error: "A room image can include up to six product references." }, { status: 409 });
   }
 
   if (!validPlacements(body.placements, body.selection)) return NextResponse.json({ error: 'Confirm an intended placement for every selected variant.' }, { status: 400 });

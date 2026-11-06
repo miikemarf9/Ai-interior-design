@@ -246,6 +246,13 @@ export function DesignIntake() {
           : savedStep);
       }
 
+      const requestedParams = new URLSearchParams(window.location.search);
+      const requestedRoomType = requestedParams.get('roomType');
+      if (requestedRoomType === 'bedroom') {
+        setState(current => ({ ...current, roomType: 'bedroom', furniturePair: undefined, styles: [], colours: [], materials: [], change: ['Bed', 'Bedside tables', 'Wardrobe', 'Chest of drawers', 'Dressing table'] }));
+        setStep(0);
+      }
+
       const runtimeRaw = window.localStorage.getItem('roomfound-design-runtime-v1');
       const runtime = runtimeRaw
         ? JSON.parse(runtimeRaw) as { ownerKey?: string; designId?: string; roomAssetId?: string; photoName?: string }
@@ -306,7 +313,7 @@ export function DesignIntake() {
   }, [hydrated, state.roomType, state.styles, state.budget, state.measurements.width, state.measurements.length, state.measurements.height, state.dislikes, catalogueRetry]);
 
   useEffect(() => {
-    if (!hydrated || state.roomType !== 'living_room') {
+    if (!hydrated) {
       setFurniturePairs([]);
       setPairLoading(false);
       return;
@@ -314,11 +321,30 @@ export function DesignIntake() {
     const controller = new AbortController();
     setPairLoading(true);
     setPairError('');
-    fetch('/api/products/pairs', { cache: 'no-store', signal: controller.signal })
+    const pairParams = new URLSearchParams({ roomType: state.roomType });
+    fetch('/api/products/pairs?' + pairParams.toString(), { cache: 'no-store', signal: controller.signal })
       .then(async response => {
         const payload = await response.json() as { pairs?: FurniturePair[]; error?: string };
         if (!response.ok || !Array.isArray(payload.pairs)) throw new Error(payload.error || 'Furniture matches could not be checked.');
-        if (!controller.signal.aborted) setFurniturePairs(payload.pairs);
+        if (!controller.signal.aborted) {
+          setFurniturePairs(payload.pairs);
+          if (state.roomType === 'bedroom') {
+            const requestedSet = new URLSearchParams(window.location.search).get('bedroomCollection');
+            const targetPair = payload.pairs.find(pair => pair.id === (requestedSet === 'premium' ? 'bedroom-premium' : requestedSet === 'value' ? 'bedroom-value' : ''));
+            if (targetPair) {
+              setState(current => ({
+                ...current,
+                roomType: 'bedroom',
+                budget: Math.max(current.budget, Math.ceil(targetPair.totalMinor / 100)),
+                furniturePair: { id: targetPair.id, title: targetPair.title, variantIds: targetPair.items.map(item => item.variantId), itemLabels: targetPair.itemCategories, styles: targetPair.styles, colours: targetPair.colours, materials: targetPair.materials },
+                styles: targetPair.styles,
+                colours: targetPair.colours,
+                materials: targetPair.materials,
+                change: [...new Set([...current.change, ...targetPair.itemCategories])],
+              }));
+            }
+          }
+        }
       })
       .catch(error => {
         if (error instanceof Error && error.name === 'AbortError') return;
@@ -346,7 +372,7 @@ export function DesignIntake() {
   // Only the room photograph is required. Style, budget refinements, measurements,
   // retained-item markers and product-category choices are all optional.
   const canContinue = step === 0
-    ? state.roomType === 'living_room' && Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto)
+    ? Boolean(photoUrl && designId && roomAssetId && !uploadingPhoto)
     : step === 1 && (!state.furniturePair || Boolean(selectedFurniturePair));
 
   function goToStep(target: number) {
@@ -512,7 +538,7 @@ export function DesignIntake() {
                 <label className={ui.field}>Room
                   <select value={state.roomType} disabled={uploadingPhoto} onChange={event => changeRoomType(event.target.value as 'living_room' | 'bedroom')}>
                     <option value="living_room">Living room</option>
-                    <option value="bedroom" disabled>Bedroom · coming soon</option>
+                    <option value="bedroom">Bedroom</option>
                   </select>
                 </label>
                 <label className={ui.field}>Your starting point
@@ -598,7 +624,7 @@ export function DesignIntake() {
                         <span className={ui.pairPhotos}>{pair.items.map(item => <img key={item.variantId} src={item.imageUrl} alt={item.imageAlt} loading="lazy" />)}</span>
                         <span className={ui.pairText}><strong>{pair.title}</strong><small>{pair.note}</small></span>
                         <span className={ui.pairProducts}>{pair.items.map(item => <span key={item.variantId}><b>{item.name}</b><small>{formatProductPrice(item.priceMinor)} · {item.retailerName}</small><small>{item.availability.replaceAll('_', ' ')} · checked {new Date(item.lastCheckedAt).toLocaleDateString('en-GB')}</small></span>)}</span>
-                        <span className={ui.pairTotal}>Pair total {formatProductPrice(pair.totalMinor)}</span>
+                        <span className={ui.pairTotal}>{state.roomType === 'bedroom' ? 'Set total' : 'Pair total'} {formatProductPrice(pair.totalMinor)}</span>
                         <span className={ui.pairSelect}>{active ? '✓ Selected' : 'Choose this pair'}</span>
                       </button>;
                     })}
