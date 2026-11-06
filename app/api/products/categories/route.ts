@@ -46,11 +46,17 @@ export async function GET(request: Request) {
   }
 
   try {
-    const candidates = roomType === "living_room" ? await getLiveSelectionCandidates() : [];
+    const candidates = await getLiveSelectionCandidates();
+    const bedroomCategories = new Set(["bed-frames", "bedside-tables", "wardrobes", "chest-of-drawers", "dressing-tables", "storage-cabinets"]);
+    const roomCandidates = candidates.filter(item => roomType === "living_room"
+      ? ["sofas", "armchairs", "coffee-tables", "tv-units", "side-tables", "rugs", "floor-lamps", "table-lamps", "storage-cabinets"].includes(item.category)
+      : bedroomCategories.has(item.category));
     const includeBrowseCategories = params.get("includeBrowseCategories") === "1";
-    const browseCandidates = roomType === "living_room" && includeBrowseCategories ? await getLiveBrowseCandidates() : [];
+    const browseCandidates = includeBrowseCategories
+      ? roomType === "living_room" ? await getLiveBrowseCandidates() : roomCandidates
+      : [];
     const now = Date.now();
-    const current = candidates.filter(item => item.clearedForSelection === true
+    const current = roomCandidates.filter(item => item.clearedForSelection === true
       && item.image
       && Number.isSafeInteger(item.offer.priceMinor)
       && item.offer.priceMinor > 0

@@ -45,12 +45,14 @@ export function InventoryPicker({
   category,
   categoryLabel,
   initialStyle,
+  roomType,
   onChoose,
   onClose,
 }:{
   category:string;
   categoryLabel:string;
   initialStyle:string;
+  roomType?:'living_room'|'bedroom';
   onChoose:(variantId:string)=>void;
   onClose:()=>void;
 }){
@@ -76,7 +78,7 @@ export function InventoryPicker({
     const timer=window.setTimeout(()=>{
       setLoading(true);
       setError("");
-      const params=new URLSearchParams({category});
+      const params=new URLSearchParams({category,roomType:roomType || 'living_room'});
       if(query.trim()) params.set("q",query.trim());
       if(style) params.set("style",style);
       if(appliedPriceRange?.min) params.set("minPriceMinor",String(appliedPriceRange.min));
@@ -102,7 +104,7 @@ export function InventoryPicker({
         .finally(()=>{if(!controller.signal.aborted) setLoading(false);});
     },220);
     return ()=>{window.clearTimeout(timer);controller.abort();};
-  },[category,query,style,appliedPriceRange,maxWidth,maxDepth,maxHeight,material,colour,features]);
+  },[category,query,style,roomType,appliedPriceRange,maxWidth,maxDepth,maxHeight,material,colour,features]);
 
   function toggleFeature(value:string){setFeatures(current=>current.includes(value)?current.filter(item=>item!==value):[...current,value]);}
   function applyPriceRange(){setAppliedPriceRange(priceMinMinor===0 && priceMaxMinor===maxPriceBoundMinor?null:{min:priceMinMinor,max:priceMaxMinor});}

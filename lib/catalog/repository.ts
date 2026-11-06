@@ -1,4 +1,4 @@
-import { currentClearances } from "@/lib/catalog/clearance";
+import { currentRenderClearances } from "@/lib/catalog/render-clearances";
 import { mapCategory } from "@/lib/catalog/ingest/awin";
 import { getCatalogDb } from "@/lib/catalog/neon";
 import type { SelectionCandidate } from "@/lib/catalog/selection";
@@ -68,7 +68,7 @@ const browseCategoryLabels: Record<string, string> = {
 };
 
 export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]> {
-  const clearances = currentClearances();
+  const clearances = await currentRenderClearances();
   if (!clearances.length) return [];
   const sql = getCatalogDb();
 
@@ -192,8 +192,8 @@ export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]
     productName: row.product_name,
     variantName: clearance.exactVariantName,
     brandName: row.brand_name,
-    category: row.category_slug,
-    categoryName: row.category_name,
+    category: clearance.unitLabel === "bedside cabinets" ? "bedside-tables" : row.category_slug,
+    categoryName: clearance.unitLabel === "bedside cabinets" ? "Bedside tables" : row.category_name,
     designSummary: row.design_summary,
     dimensions: {
       widthMm: row.width_mm,

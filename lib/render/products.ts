@@ -1,4 +1,4 @@
-import { currentClearances } from "@/lib/catalog/clearance";
+import { currentRenderClearances } from "@/lib/catalog/render-clearances";
 import { getCatalogDb } from "@/lib/catalog/neon";
 import type { ProductSelection } from "@/lib/catalog/selection";
 import type { RenderProductReference } from "@/lib/render/prompt";
@@ -14,7 +14,7 @@ type RequestedProduct = {
 export async function getVerifiedRenderProducts(
   selection: ProductSelection,
 ): Promise<RenderProductReference[]> {
-  const clearances = currentClearances();
+  const clearances = await currentRenderClearances();
   if (selection.version !== 2 || selection.products.some(item => !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 10 || !clearances.some(entry => entry.productId === item.selected.productId && entry.variantId === item.selected.variantId && entry.offerId === item.selected.offer.id))) {
     throw new Error('This collection contains products that are not currently cleared for use. Return to product selection.');
   }

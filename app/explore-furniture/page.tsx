@@ -82,6 +82,8 @@ export default async function ExploreFurniture({ searchParams }: { searchParams:
             <p>{collection.note}</p>
             <strong>{money(collection.totalMinor)}</strong>
             <small>Current total for five pieces · prices can change</small>
+            <Link href={`/design?roomType=bedroom&bedroomCollection=${collection.tier.toLowerCase()}`} className={styles.tryBedroomButton}>See these pieces in your room</Link>
+            <small className={styles.tryBedroomNote}>Create a room image with this set</small>
           </header>
           <ul className={styles.bedroomItems}>
             {collection.items.map(item => <li key={item.variantId}>

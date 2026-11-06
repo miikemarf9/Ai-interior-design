@@ -68,7 +68,7 @@ export function ProductSelectionExperience() {
 
   useEffect(() => {
     let active = true;
-    fetch('/api/products/categories?roomType=living_room&includeBrowseCategories=1', { cache: 'no-store' })
+    fetch('/api/products/categories?roomType=' + (intake?.roomType || 'living_room') + '&includeBrowseCategories=1', { cache: 'no-store' })
       .then(async response => {
         if (!response.ok) return;
         const payload = await response.json() as { catalogueCategories?: Array<{ category: string; label: string }> };
@@ -76,7 +76,7 @@ export function ProductSelectionExperience() {
       })
       .catch(() => { /* Keep the local categories if live catalogue facets are unavailable. */ });
     return () => { active = false; };
-  }, []);
+  }, [intake?.roomType]);
 
   function retailerHref(offerId: string) {
     const params = new URLSearchParams({ surface: 'product_selection' });
@@ -175,7 +175,6 @@ export function ProductSelectionExperience() {
 
   if (loading) return <section className="selectionLoading shell"><p className="eyebrow">Your furniture collection</p><h1>Checking products for your room.</h1><div className="briefLoadingLine"><i /></div><p>No image-generation credit is used.</p></section>;
   if (!intake || !brief) return <section className="selectionMissing shell"><p className="eyebrow">Your furniture collection</p><h1>Start with your room.</h1><p>We use your preferences and the furniture you are keeping to recommend a small collection.</p><Link className="button buttonPrimary" href="/design?step=1">Choose your room and furniture</Link></section>;
-  if (intake.roomType === 'bedroom') return <section className="selectionMissing shell"><h1>Your bedroom brief is saved.</h1><p>Bedroom furniture selection is not available yet.</p><Link className="button buttonPrimary" href="/design?step=1">Back to furniture groups</Link></section>;
   if (error) return <section className="selectionMissing shell"><h1>We couldn’t check your collection.</h1><p role="alert">{error}</p><button className="button buttonPrimary" disabled={busy || navigating} onClick={() => loadSelection(intake, brief, selection || undefined)}>Try again</button><p><Link href="/design?step=1">Back to my brief</Link></p></section>;
   if (!selection || (!selection.products.length && !excludedProducts.length)) return <section className="selectionEmpty shell">
     <p className="eyebrow">Your furniture collection</p><h1>No reviewed products match this combination yet.</h1>
@@ -228,6 +227,7 @@ export function ProductSelectionExperience() {
     {(browseProduct || addingCategory) && intake && brief && selection ? <InventoryPicker
       category={addingCategory?.category || browseProduct!.slot}
       categoryLabel={addingCategory?.label || browseProduct!.slotLabel}
+      roomType={intake.roomType}
       initialStyle={intake.styles[0] || ''}
       onClose={() => { setBrowseProduct(null); setAddingCategory(null); }}
       onChoose={(variantId) => {
