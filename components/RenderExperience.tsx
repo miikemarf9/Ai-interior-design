@@ -65,7 +65,6 @@ export function RenderExperience() {
   const [generationStartedAt, setGenerationStartedAt] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [correction, setCorrection] = useState('');
-  const [summary, setSummary] = useState<any>(null);
   const [myRoomsSaveState, setMyRoomsSaveState] = useState<'idle' | 'saving' | 'saved' | 'sign-in' | 'error'>('idle');
   const myRoomsSavesInFlight = useRef(new Set<string>());
   const started = useRef(false);
@@ -136,7 +135,7 @@ export function RenderExperience() {
     const response = await fetch(`/api/render/pilot?designId=${context.designId}&ownerKey=${encodeURIComponent(context.ownerKey)}`, { cache: 'no-store' });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Pilot history unavailable.');
-    setAttempts(data.attempts || []); setSummary(data.summary || null);
+    setAttempts(data.attempts || []);
     clearRetryableRenderRequest(context, data.attempts || []);
     return data;
   }
@@ -144,7 +143,8 @@ export function RenderExperience() {
     variantId: product.selected.variantId,
     quantity: product.quantity,
   })).sort((a, b) => a.variantId.localeCompare(b.variantId)));
-  const previousResult = attempts.find(item => item.status === 'succeeded' && item.resultUrl && item.metadata?.snapshot?.roomAssetId);
+  const previousResult = attempts.find(item => item.status === 'succeeded' && item.resultUrl
+    && item.metadata?.snapshot?.roomAssetId === runtime?.roomAssetId);
   const result = attempts.find(item => {
     const snapshot = item.metadata?.snapshot;
     return item.status === 'succeeded' && item.resultUrl
@@ -154,6 +154,7 @@ export function RenderExperience() {
       && collectionKey(snapshot.selection) === collectionKey(selection)
       && stableJson([snapshot.intake, snapshot.brief, snapshot.placements]) === stableJson([room, brief, placements]);
   });
+  const displayResult = result || previousResult;
   const processing = attempts.some(item => item.status === 'processing');
   async function addCurrentRoomToMyRooms(generationId: string) {
     if (!runtime) return;
@@ -218,7 +219,7 @@ export function RenderExperience() {
         const response = await fetch(`/api/render/pilot?designId=${runtime.designId}&ownerKey=${encodeURIComponent(runtime.ownerKey)}`, { cache: 'no-store' });
         const data = await response.json();
         if (response.ok && !stopped) {
-          setAttempts(data.attempts || []); setSummary(data.summary || null);
+          setAttempts(data.attempts || []);
           clearRetryableRenderRequest(runtime, data.attempts || []);
         }
       } catch { /* Keep the in-progress state and try again. */ }
@@ -272,14 +273,14 @@ export function RenderExperience() {
   }
   if (!ready) return <section className="renderLoading shell"><h1>Preparing your room visualisation.</h1><p>Checking your room photograph and approved brief.</p></section>;
   if (blocked || !selection || !runtime) return <section className="renderMissing shell"><p className="eyebrow">{room?.roomType === 'bedroom' ? 'Bedroom image' : 'Room image'}</p><h1>Your room visual can’t start yet.</h1><p>{blocked || 'The pilot is not ready.'}</p><Link className="button buttonPrimary" href="/products">Review furniture and prices</Link></section>;
-  const originalUrl = `/api/assets/${result?.metadata?.snapshot?.roomAssetId || runtime.roomAssetId}?ownerKey=${encodeURIComponent(runtime.ownerKey)}`;
+  const originalUrl = `/api/assets/${displayResult?.metadata?.snapshot?.roomAssetId || runtime.roomAssetId}?ownerKey=${encodeURIComponent(runtime.ownerKey)}`;
   const reviewed = result?.metadata.humanReview;
   const correctionReady = !!result && reviewed?.outcome === 'needs_correction' && result.metadata.correctionAttempt < MAX_CORRECTIONS && !failedCorrection;
   return <div className="renderExperience shell">
-    <section className="renderHero"><div className="renderHeroCopy"><p className="eyebrow">Living-room pilot</p><h1>See your room. Check the details.</h1><p>The photograph and approved brief guide an illustrative design. Furniture shown is a concept, not an exact product match or a guarantee of physical fit. Any retailer products are shown separately with their own photos and links.</p></div></section>
-    {!result && previousResult && !busy && !processing && <section className={styles.panel} role="status"><h2>Your saved image needs updating</h2><p>Your photo, furniture choices, design instructions or product-reference method have changed since that image was created. Generate an updated image below to use the current collection and product photos.</p><p>A new generation uses {siteCreditExempt ? 'your image API allowance' : 'one image use'}. Your previous image remains in My Rooms.</p></section>}
+    <section className="renderHero"><div className="renderHeroCopy"><p className="eyebrow">{room?.roomType === 'bedroom' ? 'Bedroom image' : 'Room image'}</p><h1>See your room. Check the details.</h1><p>The photograph and approved brief guide an illustrative design. Furniture shown is a concept, not an exact product match or a guarantee of physical fit. Any retailer products are shown separately with their own photos and links.</p></div></section>
+    {!result && previousResult && !busy && !processing && <section className={styles.panel} role="status"><h2>Your previous room image is shown below</h2><p>Your room photo, furniture choices or image method have changed since it was created. The successful image is still available here; generate a new one below to see your current furniture collection.</p><p>A new generation uses {siteCreditExempt ? 'your image API allowance' : 'one image use'}. Your previous image remains in My Rooms.</p></section>}
     {result && <section className={styles.generationComplete} role="status" aria-live="polite"><p><strong>Your room visual is ready.</strong><span>{myRoomsSaveState === 'saving' ? 'Adding it to My Rooms…' : myRoomsSaveState === 'saved' ? 'Saved to My Rooms.' : myRoomsSaveState === 'sign-in' ? 'Sign in to add this room to My Rooms.' : myRoomsSaveState === 'error' ? 'Could not add it to My Rooms yet.' : 'The finished image is shown below.'}</span></p>{myRoomsSaveState === 'sign-in' ? <Link href="/account">Sign in</Link> : myRoomsSaveState === 'error' ? <button type="button" className="button buttonSecondary" onClick={() => result && addCurrentRoomToMyRooms(result.generation_id)}>Try again</button> : <a href="#generated-room-image">View finished image ↓</a>}</section>}
-    <div className={styles.comparison}><figure><img src={originalUrl} alt="Original room photograph used as the architectural reference" /><figcaption>Original room</figcaption></figure>{result && <figure ref={resultFigureRef} id="generated-room-image"><img src={result.resultUrl!} alt={room?.roomType === 'bedroom' ? "Generated bedroom image awaiting or undergoing human review" : "Generated living-room image awaiting or undergoing human review"} onLoad={() => { void addCurrentRoomToMyRooms(result.generation_id); }} /><figcaption>Generated attempt · correction {result.metadata.correctionAttempt || 0} of {MAX_CORRECTIONS}</figcaption></figure>}</div>
+    <div className={styles.comparison}><figure><img src={originalUrl} alt="Original room photograph used as the architectural reference" /><figcaption>Original room</figcaption></figure>{displayResult && <figure ref={resultFigureRef} id="generated-room-image"><img src={displayResult.resultUrl!} alt={room?.roomType === 'bedroom' ? "Saved bedroom image" : "Saved living-room image"} onLoad={() => { if (result) void addCurrentRoomToMyRooms(result.generation_id); }} /><figcaption>{result ? `Generated attempt · correction ${result.metadata.correctionAttempt || 0} of ${MAX_CORRECTIONS}` : 'Previous successful image'}</figcaption></figure>}</div>
     <section className={styles.panel}><h2>Your room-design cues</h2><p>Optional guidance for selected products. The generated room is illustrative and does not promise an exact match to retailer products.</p>
       <div className={styles.products}>{selection.products.map(product => <article key={product.selected.variantId}>
         {product.selected.image && <img src={product.selected.image.url} alt={`${product.selected.productName} — ${product.selected.variantName}`} />}
@@ -315,7 +316,7 @@ export function RenderExperience() {
         <article><h3>Prices and availability</h3><p>Retailer prices and stock can change. Confirm the current details with the retailer before buying.</p></article>
       </div>
     </section>}
-    {summary && <section className={styles.panel}><h2>Pilot attempt record</h2><p>{summary.attempts} recent attempts · {summary.corrections} corrections · {Math.round(summary.knownDurationMs / 1000)} seconds recorded</p><p>Known image-generation cost estimate: ${(summary.knownCostUsdMicros / 1e6).toFixed(4)} USD. {summary.unknownCostAttempts} attempt(s) with unknown cost. This excludes human review, hosting and any unreported provider usage; it is not a final invoice.</p><ol>{attempts.map(item => <li key={item.generation_id}>{item.generation_id.slice(0, 8)} · {item.status} · correction {item.metadata.correctionAttempt || 0} · {item.cost_usd_micros === null ? 'cost unknown' : `${(item.cost_usd_micros / 1e6).toFixed(4)} estimated`} · {item.duration_ms === null ? 'time unknown' : `${Math.round(item.duration_ms / 1000)}s`}</li>)}</ol></section>}
+
     <JourneyAssistant
       visible={true}
       currentStep={4}
