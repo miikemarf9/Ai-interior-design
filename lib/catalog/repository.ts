@@ -43,6 +43,7 @@ const browseCategoryLabels: Record<string, string> = {
   "home-appliances": "Home appliances",
   "dressing-tables": "Dressing tables",
   "bed-frames": "Beds & bed frames",
+  "mattresses": "Mattresses",
   "bedside-tables": "Bedside tables",
   "chest-of-drawers": "Chest of drawers",
   "wardrobes": "Wardrobes",

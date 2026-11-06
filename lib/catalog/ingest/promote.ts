@@ -22,6 +22,16 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
     : null;
   if (!category) return null;
 
+  const categoryTypeRows = await sql.query(
+    `select room_type
+     from public.categories
+     where slug = $1 and is_active
+     limit 1`,
+    [category],
+  ) as Array<{ room_type: "living_room" | "bedroom" }>;
+  const roomType = categoryTypeRows[0]?.room_type;
+  if (!roomType) return null;
+
   const rows = await sql.query(
     `with candidate as (
       select
@@ -39,6 +49,10 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
         and c.candidate_status in ('pending','approved')
         and c.quality_score >= 65
         and $2::text is not null
+        and exists (
+          select 1 from public.categories cat
+          where cat.slug = $2 and cat.is_active and cat.room_type = $3
+        )
         and c.image_url is not null
         and c.price_minor is not null
         and c.currency = 'GBP'
@@ -62,12 +76,12 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
       left join public.brands b on b.id = p.brand_id
       cross join candidate c
       where
-        (c.ean is not null and p.ean = c.ean)
+        ((c.ean is not null and p.ean = c.ean)
         or (
           c.mpn is not null
           and p.manufacturer_product_id = c.mpn
           and (c.brand_slug is null or b.slug = c.brand_slug)
-        )
+        ))
       limit 1
     ),
     inserted_product as (
@@ -84,7 +98,7 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
         c.ean,
         c.description,
         c.description,
-        'living_room',
+        $3,
         'active',
         true,
         c.quality_score,
@@ -111,6 +125,7 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
       set
         status = 'active',
         is_curated = true,
+        room_type = $3,
         curation_score = greatest(p.curation_score, c.quality_score),
         description = coalesce(c.description, p.description),
         source_updated_at = coalesce(c.source_updated_at, p.source_updated_at),
@@ -328,7 +343,7 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
     cross join product_target pt
     cross join variant_target vt
     cross join offer_upsert ou`,
-    [candidateId, category],
+    [candidateId, category, roomType],
   ) as Array<{
     candidate_id: string;
     product_id: string;

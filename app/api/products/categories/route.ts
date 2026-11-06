@@ -32,6 +32,8 @@ const bedroomItems: ItemDefinition[] = [
   { label: "Bedside tables", categories: ["bedside-tables"], recommended: true },
   { label: "Wardrobe", categories: ["wardrobes"], recommended: true },
   { label: "Chest of drawers", categories: ["chest-of-drawers"], recommended: true },
+  { label: "Mattress", categories: ["mattresses"], recommended: false },
+  { label: "Dressing table", categories: ["dressing-tables"], recommended: false },
   { label: "Rug", categories: ["rugs"], recommended: true },
   { label: "Lighting", categories: ["floor-lamps", "table-lamps"], recommended: true },
 ];

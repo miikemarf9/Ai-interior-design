@@ -41,6 +41,7 @@ const CATEGORY_RULES: Array<{ slug: string; terms: string[] }> = [
   { slug: "bedside-tables", terms: ["bedside table", "bedside cabinet", "bedside chest", "nightstand"] },
   { slug: "chest-of-drawers", terms: ["chest of drawers", "drawer chest", "drawer dresser"] },
   { slug: "wardrobes", terms: ["wardrobe", "wardrobe cabinet"] },
+  { slug: "mattresses", terms: ["mattress"] },
   { slug: "sofas", terms: ["sofa", "settee", "couch", "loveseat"] },
   { slug: "armchairs", terms: ["armchair", "accent chair", "lounge chair", "wing chair", "rocking chair", "swivel chair"] },
   { slug: "coffee-tables", terms: ["coffee table"] },
