@@ -7,7 +7,9 @@ import { Brand } from './Brand';
 export function Header(_props: { preview?: boolean; anchorBase?: string }) {
   const [atTop, setAtTop] = useState(true);
   const [visible, setVisible] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const lastScrollY = useRef(0);
+  const mobileMenuButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const initialY = window.scrollY;
@@ -27,6 +29,7 @@ export function Header(_props: { preview?: boolean; anchorBase?: string }) {
 
         if (currentY > previousY) {
           setVisible(false);
+          setMobileMenuOpen(false);
         } else if (currentY < previousY) {
           setVisible(true);
         }
@@ -38,6 +41,19 @@ export function Header(_props: { preview?: boolean; anchorBase?: string }) {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setMobileMenuOpen(false);
+      mobileMenuButton.current?.focus();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [mobileMenuOpen]);
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
     <header className={`siteHeader ${atTop ? 'isAtTop' : 'isScrolled'} ${visible ? 'isVisible' : 'isHidden'}`}>
@@ -51,6 +67,31 @@ export function Header(_props: { preview?: boolean; anchorBase?: string }) {
         <nav className="headerAuthActions" aria-label="Account access">
           <Link className="headerCreateAccount" href="/account?auth=signup">Create account</Link>
           <Link className="headerLogin" href="/account?auth=login">Log in</Link>
+        </nav>
+        <button
+          ref={mobileMenuButton}
+          type="button"
+          className={`mobileMenuToggle${mobileMenuOpen ? ' isOpen' : ''}`}
+          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setMobileMenuOpen(open => !open)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <nav
+          id="mobile-navigation"
+          className={`mobileNavigation${mobileMenuOpen ? ' isOpen' : ''}`}
+          aria-label="Mobile navigation"
+          hidden={!mobileMenuOpen}
+        >
+          <Link href="/explore-furniture" onClick={closeMobileMenu}>Explore Collection</Link>
+          <Link href="/community" onClick={closeMobileMenu}>Community Rooms</Link>
+          <Link href="/account" onClick={closeMobileMenu}>My Rooms</Link>
+          <Link className="mobileMenuSignup" href="/account?auth=signup" onClick={closeMobileMenu}>Create account</Link>
+          <Link className="mobileMenuLogin" href="/account?auth=login" onClick={closeMobileMenu}>Log in</Link>
         </nav>
       </div>
     </header>
