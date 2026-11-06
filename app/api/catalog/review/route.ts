@@ -71,7 +71,7 @@ export async function GET(request: Request) {
      order by run.finished_at desc
      limit 1`,
     [retailerSlug],
-  ) as Array<{ next_scan_offset: number; feed_complete: boolean }>
+  ) as Array<{ next_scan_offset: number; feed_complete: boolean }>;
   const progress = progressRows[0];
 
   return NextResponse.json(
