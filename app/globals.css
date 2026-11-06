@@ -4878,3 +4878,38 @@ main:not(.homePage) > .siteHeader.isAtTop .headerAccountLink { color: var(--ink)
   .homeHeroCarousel .heroCarouselControls,
   .homeHeroCarousel .heroCarouselPause { bottom: 30px; }
 }
+
+
+/* Give the three discovery links a little more presence without changing account actions. */
+.siteHeader .headerActions { gap: clamp(15px, 2vw, 30px); }
+.siteHeader .headerActions .headerAccountLink {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 2px;
+  font-size: clamp(12px, 1vw, 14px);
+  font-weight: 700;
+  letter-spacing: .02em;
+  transform-origin: center;
+  transition: color .18s ease, transform .18s ease;
+}
+@media (hover: hover) {
+  .siteHeader .headerActions .headerAccountLink:hover {
+    color: var(--forest);
+    transform: scale(1.06);
+  }
+}
+.siteHeader .headerActions .headerAccountLink:focus-visible {
+  transform: scale(1.04);
+  outline: 2px solid var(--forest);
+  outline-offset: 4px;
+}
+@media (max-width: 760px) {
+  .siteHeader .headerActions .headerAccountLink {
+    padding-inline: 0;
+    font-size: clamp(8px, 2.5vw, 10px);
+    letter-spacing: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .siteHeader .headerActions .headerAccountLink { transition: none; }
+}
