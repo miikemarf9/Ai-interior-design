@@ -204,7 +204,7 @@ export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]
       seatHeightMm: row.seat_height_mm,
     },
     styles: Array.isArray(row.styles) ? row.styles : [],
-    materials: [...new Set([...(Array.isArray(row.materials) ? row.materials : []), ...clearance.materials])],
+    materials: Array.isArray(row.materials) ? row.materials : [],
     colours: Array.isArray(row.colours) ? row.colours : [],
     featureTags: Array.isArray(row.feature_tags) ? row.feature_tags : [],
     curationScore: row.curation_score,
@@ -217,7 +217,7 @@ export async function getLiveSelectionCandidates(): Promise<SelectionCandidate[]
       compareAtPriceMinor: row.compare_at_price_minor,
       availability: row.availability,
       ukDeliveryStatus: row.uk_delivery_status,
-      deliveryPriceMinor: row.delivery_price_minor ?? clearance.verifiedDeliveryPriceMinor,
+      deliveryPriceMinor: row.delivery_price_minor,
       productUrl: row.product_url,
       affiliateUrl: row.affiliate_url,
       lastCheckedAt: row.last_checked_at,
@@ -273,22 +273,19 @@ export async function getLiveBrowseCandidates(): Promise<SelectionCandidate[]> {
 
   return rows.map(row => {
     const category = mapCategory(row.product_name, row.category_name) || row.category_slug;
-    const clearance = currentClearances().find(item => item.productId === row.product_id && item.variantId === row.variant_id);
     return {
     clearedForSelection: true as const,
-    commercial: clearance
-      ? { packSize: clearance.packSize, unitLabel: clearance.unitLabel, deliveryBasis: clearance.deliveryBasis, deliveryDetails: clearance.deliveryDetails }
-      : { packSize: 1, unitLabel: "item", deliveryBasis: "unknown" as const, deliveryDetails: "Confirm delivery cost and availability with the retailer." },
+    commercial: { packSize: 1, unitLabel: "item", deliveryBasis: "unknown" as const, deliveryDetails: "Confirm delivery cost and availability with the retailer." },
     productId: row.product_id, variantId: row.variant_id, productName: row.product_name,
     variantName: row.variant_name, brandName: row.brand_name, category,
     categoryName: browseCategoryLabels[category] || row.category_name, designSummary: row.design_summary,
     dimensions: { widthMm: row.width_mm, heightMm: row.height_mm, depthMm: row.depth_mm, seatWidthMm: row.seat_width_mm, seatDepthMm: row.seat_depth_mm, seatHeightMm: row.seat_height_mm },
-    styles: row.styles || [], materials: [...new Set([...(row.materials || []), ...(clearance?.materials || [])])], colours: row.colours || [], featureTags: [],
+    styles: row.styles || [], materials: row.materials || [], colours: row.colours || [], featureTags: [],
     curationScore: row.curation_score, qualityScore: row.quality_score,
     offer: { id: row.offer_id, retailerName: row.retailer_name, retailerSlug: row.retailer_slug,
       priceMinor: row.price_minor, compareAtPriceMinor: row.compare_at_price_minor,
       availability: row.availability, ukDeliveryStatus: row.uk_delivery_status,
-      deliveryPriceMinor: row.delivery_price_minor ?? clearance?.verifiedDeliveryPriceMinor ?? null, productUrl: row.product_url,
+      deliveryPriceMinor: row.delivery_price_minor, productUrl: row.product_url,
       affiliateUrl: row.affiliate_url, lastCheckedAt: row.last_checked_at },
     image: { url: row.image_url!, altText: row.image_alt || row.product_name },
   };
