@@ -22,6 +22,9 @@ function unauthorized() {
 export async function GET(request: Request) {
   if (!authorized(request)) return unauthorized();
 
+  const retailerSlug = new URL(request.url).searchParams.get("retailerSlug") || "aosom-uk";
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(retailerSlug)) return NextResponse.json({ error: "A valid retailer is required." }, { status: 400 });
+
   const sql = getCatalogDb();
   const rows = await sql.query(
     `select
@@ -49,9 +52,10 @@ export async function GET(request: Request) {
      from public.catalog_feed_candidates c
      join public.retailers r on r.id = c.retailer_id
      where c.candidate_status = 'pending'
-       and r.slug = 'aosom-uk'
+       and r.slug = $1
      order by c.normalized_category_slug, c.quality_score desc, c.title
      limit 500`,
+    [retailerSlug],
   ) as Array<Record<string, unknown>>;
 
   const progressRows = await sql.query(
@@ -61,19 +65,20 @@ export async function GET(request: Request) {
      from public.catalog_sync_runs run
      join public.catalog_sources source on source.id = run.source_id
      join public.retailers retailer on retailer.id = source.retailer_id
-     where retailer.slug = 'aosom-uk'
+     where retailer.slug = $1
        and run.status = 'succeeded'
        and run.metadata ? 'scan_offset'
      order by run.finished_at desc
      limit 1`,
-  ) as Array<{ next_scan_offset: number; feed_complete: boolean }>;
+    [retailerSlug],
+  ) as Array<{ next_scan_offset: number; feed_complete: boolean }>
   const progress = progressRows[0];
 
   return NextResponse.json(
     {
       candidates: rows,
       count: rows.length,
-      nextScanOffset: progress?.next_scan_offset ?? 1_000,
+      nextScanOffset: progress?.next_scan_offset ?? 0,
       feedComplete: progress?.feed_complete ?? false,
     },
     { headers: { "Cache-Control": "no-store, private" } },
@@ -83,14 +88,16 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   if (!authorized(request)) return unauthorized();
 
-  let body: { candidateId?: string; action?: string };
+  let body: { candidateId?: string; action?: string; retailerSlug?: string };
   try {
-    body = await request.json() as { candidateId?: string; action?: string };
+    body = await request.json() as { candidateId?: string; action?: string; retailerSlug?: string };
   } catch {
     return NextResponse.json({ error: "A valid request body is required." }, { status: 400 });
   }
 
   const candidateId = body.candidateId?.trim();
+  const retailerSlug = body.retailerSlug || "aosom-uk";
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(retailerSlug)) return NextResponse.json({ error: "A valid retailer is required." }, { status: 400 });
   if (!candidateId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(candidateId)) {
     return NextResponse.json({ error: "A valid candidate ID is required." }, { status: 400 });
   }
@@ -102,13 +109,13 @@ export async function POST(request: Request) {
      join public.retailers r on r.id = c.retailer_id
      where c.id = $1::uuid
        and c.candidate_status = 'pending'
-       and r.slug = 'aosom-uk'
+       and r.slug = $2
      limit 1`,
-    [candidateId],
+    [candidateId, retailerSlug],
   ) as Array<{ id: string }>;
 
   if (!eligibleRows.length) {
-    return NextResponse.json({ error: "This Aosom item is no longer pending review." }, { status: 409 });
+    return NextResponse.json({ error: "This item is no longer pending review." }, { status: 409 });
   }
 
   if (body.action === "keep") {
@@ -132,9 +139,9 @@ export async function POST(request: Request) {
        where c.retailer_id = r.id
          and c.id = $1::uuid
          and c.candidate_status = 'pending'
-         and r.slug = 'aosom-uk'
+         and r.slug = $2
        returning c.id::text as id`,
-      [candidateId],
+      [candidateId, retailerSlug],
     ) as Array<{ id: string }>;
 
     if (!rows.length) {
