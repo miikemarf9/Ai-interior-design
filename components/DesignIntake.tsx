@@ -172,7 +172,7 @@ export function DesignIntake() {
   const [pairError, setPairError] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
   const savedAnswers = useRef('');
-  const eligibleFurniturePairs = furniturePairs.filter(pair => pair.totalMinor <= state.budget * 100 && !pair.itemCategories.some(label => state.keep.includes(label)));
+  const eligibleFurniturePairs = furniturePairs.filter(pair => (state.roomType === 'bedroom' || pair.totalMinor <= state.budget * 100) && !pair.itemCategories.some(label => state.keep.includes(label)));
   const selectedFurniturePair = eligibleFurniturePairs.find(pair => pair.id === state.furniturePair?.id);
   const groupBudget = groupBudgetRange(furniturePairs);
   useEffect(() => {
@@ -610,11 +610,12 @@ export function DesignIntake() {
                 {pairLoading ? <p aria-live="polite">Checking current furniture matches…</p> : null}
                 {pairError ? <p className={ui.error} role="alert">{pairError}</p> : null}
                 {!pairLoading && eligibleFurniturePairs.length ? (
-                  <div className={ui.pairGrid}>
+                  <div className={ui.pairGrid + (state.roomType === 'bedroom' ? ' ' + ui.bedroomPairGrid : '')}>
                     {eligibleFurniturePairs.map(pair => {
                       const active = state.furniturePair?.id === pair.id;
                       return <button key={pair.id} type="button" className={ui.pairCard + (active ? ' ' + ui.pairSelected : '')} aria-pressed={active} aria-haspopup="dialog" onClick={() => { setState(current => ({
                         ...current,
+                        budget: current.roomType === 'bedroom' ? Math.max(current.budget, Math.ceil(pair.totalMinor / 100)) : current.budget,
                         furniturePair: { id: pair.id, title: pair.title, variantIds: pair.items.map(item => item.variantId), itemLabels: pair.itemCategories, styles: pair.styles, colours: pair.colours, materials: pair.materials },
                         styles: pair.styles,
                         colours: pair.colours,
