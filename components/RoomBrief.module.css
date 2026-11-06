@@ -63,6 +63,7 @@
 
 .pairSection { margin:16px 0 22px; }
 .pairGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:14px; margin:20px 0; }
+.bedroomPairGrid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .pairCard { display:flex; flex-direction:column; align-items:stretch; min-width:0; padding:0; overflow:hidden; text-align:left; color:var(--ink,#252b25); background:var(--paper,#fff); border:1px solid var(--line,#d8d6ca); border-radius:10px; cursor:pointer; transition:border-color .18s,box-shadow .18s,transform .18s; }
 .pairCard:hover { border-color:var(--forest); transform:translateY(-2px); }
 .pairCard:focus-visible { outline:3px solid var(--forest); outline-offset:3px; }
@@ -119,4 +120,4 @@
 .pairTier { color:var(--forest,#174f34); font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
 .bedroomPairPhotos { grid-template-columns:repeat(5,minmax(0,1fr)); height:132px; }
 .bedroomPairPhotos img+img { border-left:1px solid #fff; }
-@media(max-width:600px){ .bedroomPairPhotos { height:88px; } .bedroomPairPhotos img { object-fit:cover; } }
+@media(max-width:600px){ .bedroomPairPhotos { height:88px; } .bedroomPairPhotos img { object-fit:cover; } .bedroomPairGrid { grid-template-columns:1fr; } }
