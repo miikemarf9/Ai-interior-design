@@ -436,10 +436,10 @@ export function AccountExperience({ enabledOAuthProviders = ["google", "facebook
       <header className="accountTopbar">
         <Brand />
         <div>
-          {payload.credits.siteCreditExempt ? <Link href="/admin">Admin area</Link> : null}
-          <Link href="/design">New room</Link>
-          <Link href="/account/settings">Profile &amp; settings</Link>
-          <button type="button" onClick={signOut}>Sign out</button>
+          {payload.credits.siteCreditExempt ? <Link href="/admin">Admin Area</Link> : null}
+          <Link href="/design">New Room</Link>
+          <Link href="/account/settings">Profile &amp; Settings</Link>
+          <button type="button" onClick={signOut}>Sign Out</button>
         </div>
       </header>
 
