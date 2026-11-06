@@ -76,8 +76,7 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
       left join public.brands b on b.id = p.brand_id
       cross join candidate c
       where
-        p.room_type = $3
-        and ((c.ean is not null and p.ean = c.ean)
+        ((c.ean is not null and p.ean = c.ean)
         or (
           c.mpn is not null
           and p.manufacturer_product_id = c.mpn
@@ -126,6 +125,7 @@ export async function promoteFeedCandidate(candidateId: string): Promise<Promoti
       set
         status = 'active',
         is_curated = true,
+        room_type = $3,
         curation_score = greatest(p.curation_score, c.quality_score),
         description = coalesce(c.description, p.description),
         source_updated_at = coalesce(c.source_updated_at, p.source_updated_at),
