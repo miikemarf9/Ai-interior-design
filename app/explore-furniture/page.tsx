@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { getLiveBrowseCandidates } from '@/lib/catalog/repository';
 import { exploreCatalogue, label, styleLabels } from '@/lib/catalog/explore';
+import type { SelectionCandidate } from '@/lib/catalog/selection';
 import styles from './page.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -12,6 +13,37 @@ export const metadata: Metadata = {
   alternates: { canonical: '/explore-furniture' },
 };
 const money = (minor: number) => new Intl.NumberFormat('en-GB', { style:'currency', currency:'GBP' }).format(minor/100);
+const bedroomCollectionDefinitions = [
+  {
+    tier: 'Value',
+    title: 'Warm Oak & Ivory · Value Edit',
+    note: 'A light, welcoming bedroom with warm wood finishes and soft neutral upholstery.',
+    productIds: ['d252315e-c2d4-4ca6-a470-6b9a1810e309', 'c0d3a09e-5d73-4c6e-83f4-7899fb5842e0', '5ea4223d-a34c-4102-bdc2-5fc5f63e3173', 'af8a193a-e266-4483-8058-9f90645b73fa', '940efcb2-0c93-4f31-8307-6fec8678d030'],
+  },
+  {
+    tier: 'Premium',
+    title: 'Warm Oak & Ivory · Premium Edit',
+    note: 'A coordinated oak collection with a softly upholstered centrepiece and matching Kingsley storage.',
+    productIds: ['30f26c61-b63c-4cc4-8547-5f427d56f931', 'd8c2aab9-76ed-4e61-a34d-55afe0f9f3cb', '5ec1832e-7524-466e-be46-92a574acdac5', '219a3ec4-5716-420f-bf98-0949c7ed5c42', '567ce9e4-2660-43fd-82fb-f336303841bc'],
+  },
+] as const;
+
+type FeaturedBedroomCollection = {
+  tier: string;
+  title: string;
+  note: string;
+  items: SelectionCandidate[];
+  totalMinor: number;
+};
+
+function featuredBedroomCollections(candidates: SelectionCandidate[]): FeaturedBedroomCollection[] {
+  return bedroomCollectionDefinitions.map(collection => {
+    const byProduct = new Map(candidates.map(candidate => [candidate.productId, candidate]));
+    const items = collection.productIds.map(id => byProduct.get(id)).filter((item): item is SelectionCandidate => Boolean(item));
+    return { ...collection, items, totalMinor: items.reduce((total, item) => total + item.offer.priceMinor, 0) };
+  }).filter(collection => collection.items.length === collection.productIds.length);
+}
+
 
 export default async function ExploreFurniture({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const raw = await searchParams;
@@ -20,8 +52,12 @@ export default async function ExploreFurniture({ searchParams }: { searchParams:
     const value=raw[key]; if (typeof value==='string') params.set(key,value.slice(0,100));
   }
   let catalogue: ReturnType<typeof exploreCatalogue> | null = null;
-  try { catalogue=exploreCatalogue(await getLiveBrowseCandidates(), params); }
-  catch (error) { console.error('Explore furniture catalogue unavailable', error); }
+  let bedroomCollections: FeaturedBedroomCollection[] = [];
+  try {
+    const candidates = await getLiveBrowseCandidates();
+    catalogue = exploreCatalogue(candidates, params);
+    bedroomCollections = featuredBedroomCollections(candidates);
+  } catch (error) { console.error('Explore furniture catalogue unavailable', error); }
   const pageUrl = (page: number) => { const next=new URLSearchParams(params); next.set('page',String(page)); return '/explore-furniture?'+next.toString()+'#results'; };
   const select = (name: string, title: string, options: string[][]) => <label>{title}<select name={name} defaultValue={params.get(name) || ''}><option value="">All {title.toLowerCase()}</option>{options.map(([value,text])=><option key={value} value={value}>{text}</option>)}</select></label>;
   return <main>
@@ -32,6 +68,38 @@ export default async function ExploreFurniture({ searchParams }: { searchParams:
       <p>Find the pieces that feel like you. Browse our curated collection from UK retailers, one thoughtful choice at a time.</p>
       <Link href="/design" className={styles.designLink}>See what’s possible in your room →</Link>
     </section>
+    {bedroomCollections.length ? <section className={styles.bedroomSection} aria-labelledby="bedroom-looks-title">
+      <div className={styles.bedroomHeading}>
+        <p className={styles.eyebrow}>Bedroom styles · Debenhams</p>
+        <h2 id="bedroom-looks-title">Warm Oak &amp; Ivory</h2>
+        <p>Two complete furniture edits, with the same calm palette at different price points. Each includes a bed frame, bedside cabinets, wardrobe, chest of drawers and dressing table. Mattress is not included.</p>
+      </div>
+      <div className={styles.bedroomGrid}>
+        {bedroomCollections.map(collection => <article className={styles.bedroomCard} key={collection.tier}>
+          <header className={styles.bedroomCardHeader}>
+            <span>{collection.tier} price point</span>
+            <h3>{collection.title}</h3>
+            <p>{collection.note}</p>
+            <strong>{money(collection.totalMinor)}</strong>
+            <small>Current total for five pieces · prices can change</small>
+          </header>
+          <ul className={styles.bedroomItems}>
+            {collection.items.map(item => <li key={item.variantId}>
+              <div className={styles.bedroomThumb}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.image!.url} alt={item.image!.altText || item.productName} loading="lazy" width={96} height={96} />
+              </div>
+              <div className={styles.bedroomItemInfo}>
+                <small>{item.categoryName}</small>
+                <strong>{item.variantName || item.productName}</strong>
+                <span>{money(item.offer.priceMinor)} · {item.offer.retailerName}</span>
+              </div>
+              <a href={`/go/${item.offer.id}?surface=explore_furniture_bedroom_set`} target="_blank" rel="sponsored noopener noreferrer" aria-label={`Shop ${item.variantName || item.productName} at ${item.offer.retailerName}`}>Shop ↗</a>
+            </li>)}
+          </ul>
+        </article>)}
+      </div>
+    </section> : null}
     <section className={styles.catalogue} aria-label="Furniture catalogue">
       {raw.unavailable === '1' && <p role="status" className={styles.disclosure}>That piece is no longer available to shop. Please choose another from the current collection below.</p>}
       {!catalogue ? <div className={styles.empty}><h2>Our collection is temporarily unavailable.</h2><p>Please try again in a moment.</p><Link href="/explore-furniture" className="button buttonPrimary">Try again</Link></div> : <>
