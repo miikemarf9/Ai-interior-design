@@ -4913,3 +4913,36 @@ main:not(.homePage) > .siteHeader.isAtTop .headerAccountLink { color: var(--ink)
 @media (prefers-reduced-motion: reduce) {
   .siteHeader .headerActions .headerAccountLink { transition: none; }
 }
+
+
+/* Match the login link to the refined discovery-link hover without changing signup. */
+.siteHeader .headerLogin {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 4px;
+  font-size: clamp(12px, 1vw, 14px);
+  font-weight: 700;
+  transform-origin: center;
+  transition: color .18s ease, transform .18s ease;
+}
+@media (hover: hover) {
+  .siteHeader .headerLogin:hover {
+    color: var(--forest);
+    transform: scale(1.06);
+  }
+}
+.siteHeader .headerLogin:focus-visible {
+  color: var(--forest);
+  transform: scale(1.04);
+  outline: 2px solid var(--forest);
+  outline-offset: 4px;
+}
+@media (max-width: 760px) {
+  .siteHeader .headerLogin {
+    padding-inline: 2px;
+    font-size: 11px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .siteHeader .headerLogin { transition: none; }
+}
