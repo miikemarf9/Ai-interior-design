@@ -2690,6 +2690,7 @@ p { line-height: 1.58; }
 .heroRoomPrices .heroPriceSofa { --price-delay: .2s; }
 .heroRoomPrices .heroPriceTable { --price-delay: .4s; }
 @media (max-width: 680px) {
+  .homeHeroCarousel .heroSlide { min-height: 78svh; }
   .heroRoomZoom { object-position: 61% 50%; }
   .heroRoomPrices .heroPrice span { min-width: 84px; max-width: 100px; min-height: 36px; padding: 7px; font-size: 9px; }
   .heroRoomPrices .heroPrice strong { min-width: 62px; font-size: 15px; padding: 6px 13px 6px 8px; }
@@ -4849,6 +4850,7 @@ main:not(.homePage) > .siteHeader.isAtTop .headerAccountLink { color: var(--ink)
 
 /* Keep all discovery links reachable without crowding the mobile upload action. */
 @media (max-width: 760px) {
+  .siteHeader { min-height: 74px; }
   .siteHeader .siteHeaderInner { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px 8px; padding-block:10px; align-items:center; }
   .siteHeader .brand { grid-column:1 / 3; grid-row:1; }
   .siteHeader .headerActions { display:contents; }
