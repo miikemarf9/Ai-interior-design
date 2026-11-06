@@ -115,3 +115,8 @@
 }
 .styleOptions { margin:18px 0; padding:14px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 .styleOptions summary { cursor:pointer; color:var(--forest); font-size:14px; font-weight:600; }
+
+.pairTier { color:var(--forest,#174f34); font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.bedroomPairPhotos { grid-template-columns:repeat(5,minmax(0,1fr)); height:132px; }
+.bedroomPairPhotos img+img { border-left:1px solid #fff; }
+@media(max-width:600px){ .bedroomPairPhotos { height:88px; } .bedroomPairPhotos img { object-fit:cover; } }
