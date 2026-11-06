@@ -11,7 +11,7 @@ type CreativeFreedom = 'Safe' | 'Balanced' | 'Surprise me';
 type IntakeState = IntakeForBrief;
 type CatalogueItemChoice = { label: string; recommended: boolean; available: boolean; count: number; catalogueCount: number };
 type CatalogueStyleChoice = { name: string; available: boolean };
-type FurniturePair = { id: string; title: string; note: string; itemCategories: string[]; styles: string[]; colours: string[]; materials: string[]; totalMinor: number; items: Array<{ variantId: string; category: string; name: string; variantName: string | null; retailerName: string; priceMinor: number; availability: string; lastCheckedAt: string; imageUrl: string; imageAlt: string }> };
+type FurniturePair = { id: string; tier?: string; title: string; note: string; itemCategories: string[]; styles: string[]; colours: string[]; materials: string[]; totalMinor: number; items: Array<{ variantId: string; category: string; name: string; variantName: string | null; retailerName: string; priceMinor: number; availability: string; lastCheckedAt: string; imageUrl: string; imageAlt: string }> };
 
 function groupBudgetRange(pairs: FurniturePair[]) {
   const prices = pairs.map(pair => pair.totalMinor / 100).filter(price => Number.isFinite(price) && price > 0);
@@ -606,7 +606,7 @@ export function DesignIntake() {
           {step === 1 ? (
             <>
               <div className={ui.pairSection}>
-                <StepIntro eyebrow="STEP 2 · CHOOSE YOUR LOOK AND BUDGET" title={pairLoading ? "Finding furniture groups…" : eligibleFurniturePairs.length ? "Choose a furniture group to start with." : "No current furniture groups fit this budget yet."} copy={pairLoading ? "Checking the current catalogue for coordinated furniture groups." : eligibleFurniturePairs.length ? "Choose a coordinated starting group and set your total budget below. You can personalise every piece on the next screen." : "Open Advanced settings to explore styles or adjust your group budget."} />
+                <StepIntro eyebrow="STEP 2 · CHOOSE YOUR LOOK AND BUDGET" title={pairLoading ? "Finding furniture groups…" : eligibleFurniturePairs.length ? state.roomType === 'bedroom' ? "Choose a coordinated bedroom edit." : "Choose a furniture group to start with." : "No current furniture groups fit this budget yet."} copy={pairLoading ? "Checking the current catalogue for coordinated furniture groups." : eligibleFurniturePairs.length ? state.roomType === 'bedroom' ? "Choose Value or High-end. Your selected set will be shown in the next step, where you can change pieces and check the total." : "Choose a coordinated starting group and set your total budget below. You can personalise every piece on the next screen." : "Open Advanced settings to explore styles or adjust your group budget."} />
                 {pairLoading ? <p aria-live="polite">Checking current furniture matches…</p> : null}
                 {pairError ? <p className={ui.error} role="alert">{pairError}</p> : null}
                 {!pairLoading && eligibleFurniturePairs.length ? (
@@ -621,11 +621,11 @@ export function DesignIntake() {
                         materials: pair.materials,
                         change: [...new Set([...current.change, ...pair.itemCategories])],
                       })); setPairPreview(pair); }}>
-                        <span className={ui.pairPhotos}>{pair.items.map(item => <img key={item.variantId} src={item.imageUrl} alt={item.imageAlt} loading="lazy" />)}</span>
-                        <span className={ui.pairText}><strong>{pair.title}</strong><small>{pair.note}</small></span>
+                        <span className={ui.pairPhotos + (state.roomType === 'bedroom' ? ' ' + ui.bedroomPairPhotos : '')}>{pair.items.map(item => <img key={item.variantId} src={item.imageUrl} alt={item.imageAlt} loading="lazy" />)}</span>
+                        <span className={ui.pairText}>{state.roomType === 'bedroom' ? <span className={ui.pairTier}>{pair.tier || 'Bedroom'} EDIT</span> : null}<strong>{pair.title}</strong><small>{pair.note}</small></span>
                         <span className={ui.pairProducts}>{pair.items.map(item => <span key={item.variantId}><b>{item.name}</b><small>{formatProductPrice(item.priceMinor)} · {item.retailerName}</small><small>{item.availability.replaceAll('_', ' ')} · checked {new Date(item.lastCheckedAt).toLocaleDateString('en-GB')}</small></span>)}</span>
                         <span className={ui.pairTotal}>{state.roomType === 'bedroom' ? 'Set total' : 'Pair total'} {formatProductPrice(pair.totalMinor)}</span>
-                        <span className={ui.pairSelect}>{active ? '✓ Selected' : 'Choose this pair'}</span>
+                        <span className={ui.pairSelect}>{active ? '✓ Selected' : state.roomType === 'bedroom' ? 'Use this look' : 'Choose this pair'}</span>
                       </button>;
                     })}
                   </div>
