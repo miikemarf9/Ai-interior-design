@@ -65,8 +65,8 @@ export function Header(_props: { preview?: boolean; anchorBase?: string }) {
           <Link className="headerAccountLink" href="/account">My Rooms</Link>
         </nav>
         <nav className="headerAuthActions" aria-label="Account access">
-          <Link className="headerCreateAccount" href="/account?auth=signup">Create account</Link>
-          <Link className="headerLogin" href="/account?auth=login">Log in</Link>
+          <Link className="headerCreateAccount" href="/account?auth=signup">Create Account</Link>
+          <Link className="headerLogin" href="/account?auth=login">Log In</Link>
         </nav>
         <button
           ref={mobileMenuButton}
