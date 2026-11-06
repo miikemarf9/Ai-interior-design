@@ -100,7 +100,7 @@ export function HomeHeroCarousel() {
                 <Link className="heroHowLink" href="#reimagined">How it works <span aria-hidden="true">↓</span></Link>
               </div>
             </> : <>
-              <h1 className="heroLine heroLineTwo">Give your living room a fresh look.</h1>
+              <h1 className="heroLine heroLineTwo">Your bedroom, styled in minutes.</h1>
               <p className="heroLine heroLineThree">Empty or already furnished, upload a photo, choose your style and furniture, and we’ll create a new image of your living room.</p>
               <div className="homeHeroActions heroLine heroLineFour">
                 <Link className="button buttonPrimary" href="/design">Create my room image</Link>
