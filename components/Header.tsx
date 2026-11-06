@@ -44,8 +44,8 @@ export function Header(_props: { preview?: boolean; anchorBase?: string }) {
       <div className="siteHeaderInner shellWide">
         <Brand />
         <nav className="headerActions" aria-label="Primary navigation">
-          <Link className="headerAccountLink" href="/explore-furniture">Explore furniture</Link>
-          <Link className="headerAccountLink" href="/community">Explore rooms</Link>
+          <Link className="headerAccountLink" href="/explore-furniture">Explore Collection</Link>
+          <Link className="headerAccountLink" href="/community">Community Rooms</Link>
           <Link className="headerAccountLink" href="/account">My rooms</Link>
         </nav>
         <nav className="headerAuthActions" aria-label="Account access">
