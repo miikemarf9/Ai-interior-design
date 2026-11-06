@@ -90,6 +90,14 @@ The Range:
 AWIN_FEED_URL_THE_RANGE=<secret Create-a-Feed URL>
 ```
 
+Debenhams UK:
+
+```
+AWIN_FEED_URL_DEBENHAMS_UK=<secret Debenhams TSV.GZ URL>
+```
+
+Debenhams supplied Feed ID `90945`, the English “Unisex” feed, with a £50 minimum. It is a tab-separated gzip feed; keep the URL in Cloudflare secrets and set the source's non-secret `delimiter` configuration to `tab`. The source contains many product departments, so only mapped, in-stock UK home and furniture candidates with an image and GBP price are staged for manual review. Nothing from the feed is published automatically.
+
 ## Import behaviour
 
 The protected endpoint:
