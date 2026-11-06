@@ -5050,3 +5050,17 @@ main:not(.homePage) > .siteHeader.isAtTop .headerAccountLink { color: var(--ink)
     line-height: 1.02;
   }
 }
+
+
+/* Keep the mobile menu button at the far right and match the photo and hero height. */
+@media (max-width: 760px) {
+  .siteHeader .mobileMenuToggle {
+    position: absolute;
+    top: 15px;
+    right: 16px;
+    margin: 0;
+  }
+}
+@media (max-width: 680px) {
+  .homeHeroCarousel { min-height: 78svh; }
+}
