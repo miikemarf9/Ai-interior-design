@@ -15,7 +15,6 @@ import {
 } from "@/lib/auth/account";
 import { sendVerificationEmail } from "@/lib/auth/email";
 import { getCatalogDb } from "@/lib/catalog/neon";
-import { isAdminEmail } from "@/lib/auth/admin";
 
 export const runtime = "nodejs";
 
@@ -25,13 +24,12 @@ export async function POST(request: Request) {
     password?: string;
     displayName?: string;
     ownerKey?: string;
-    inviteCode?: string;
     marketingEmails?: boolean;
   };
 
   const email = normalizeEmail(body.email || "");
   const password = body.password || "";
-  const displayName = (body.displayName || "").trim().slice(0, 80) || null;
+  const displayName = (body.displayName || "").trim().slice(0, 80);
   const marketingEmails = body.marketingEmails === true;
 
   const rate = await checkAuthRateLimit({ request, action: "signup", identity: email, limit: 5 });
@@ -42,14 +40,11 @@ export async function POST(request: Request) {
     });
   }
 
-  const controlledBeta = process.env.BETA_CONTROLLED_ACCESS === "true";
-  const expectedInviteCode = process.env.BETA_SIGNUP_CODE || "";
-  if (controlledBeta && !isAdminEmail(email) && (!expectedInviteCode || body.inviteCode !== expectedInviteCode)) {
-    return NextResponse.json({ error: "A valid beta access code is required." }, { status: 403 });
-  }
-
   if (!/^\S+@\S+\.\S+$/.test(email)) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+  }
+  if (!displayName) {
+    return NextResponse.json({ error: "Enter your name to create an account." }, { status: 400 });
   }
   if (password.length < 10 || password.length > 200) {
     return NextResponse.json({ error: "Use a password with at least 10 characters." }, { status: 400 });

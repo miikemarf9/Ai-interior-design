@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Brand } from "@/components/Brand";
 import { FormEvent, useEffect, useState } from "react";
 import ui from "./RoomBrief.module.css";
+import socialUi from "./AccountSocial.module.css";
 
 type AccountPayload = {
   account: {
@@ -59,7 +60,9 @@ function savedRuntime() {
   }
 }
 
-export function AccountExperience() {
+type OAuthProvider = "google" | "facebook" | "x";
+
+export function AccountExperience({ enabledOAuthProviders = ["google", "facebook", "x"] }: { enabledOAuthProviders?: OAuthProvider[] }) {
   const [payload, setPayload] = useState<AccountPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState<"login" | "signup" | "forgot">("login");
@@ -67,6 +70,9 @@ export function AccountExperience() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [marketingEmails, setMarketingEmails] = useState(false);
+  const [oauthName, setOauthName] = useState("");
+  const [oauthEmail, setOauthEmail] = useState("");
+  const [oauthCompletion, setOauthCompletion] = useState(false);
 
   async function loadAccount() {
     setLoading(true);
@@ -95,6 +101,12 @@ export function AccountExperience() {
     if (requestedAuth === "signup" || requestedAuth === "login") {
       setAuthMode(requestedAuth);
     }
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("oauth") === "complete") {
+      setOauthCompletion(true);
+      setAuthMode("signup");
+    }
+    if (query.has("socialError")) setError("That sign-in could not be completed. Please try again or use email and password.");
     const purchase = new URLSearchParams(window.location.search).get("purchase");
     if (purchase === "success") {
       setNotice("Payment received. Your 10 image credits should appear shortly.");
@@ -136,7 +148,7 @@ export function AccountExperience() {
       };
       if (authMode === "signup") {
         body.displayName = String(form.get("displayName") || "");
-        body.inviteCode = String(form.get("inviteCode") || "");
+        body.displayName = String(form.get("displayName") || "");
         body.marketingEmails = marketingEmails;
       }
 
@@ -183,6 +195,32 @@ export function AccountExperience() {
     const data = await response.json() as { emailSent?: boolean };
     setNotice(data.emailSent ? "Verification email sent." : "Email delivery is not configured yet.");
     setBusy(false);
+  }
+
+  function beginSocialSignIn(provider: OAuthProvider) {
+    const runtime = savedRuntime();
+    const params = new URLSearchParams({ mode: authMode === "signup" ? "signup" : "login" });
+    if (typeof runtime.ownerKey === "string") params.set("ownerKey", runtime.ownerKey);
+    window.location.assign(`/api/auth/oauth/${provider}?${params.toString()}`);
+  }
+
+  async function completeSocialSignUp(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setBusy(true);
+    try {
+      const response = await fetch("/api/auth/oauth/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ displayName: oauthName, email: oauthEmail }),
+      });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Account setup failed.");
+      window.location.assign("/account?social=connected");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Account setup failed.");
+      setBusy(false);
+    }
   }
 
   async function signOut() {
@@ -312,7 +350,17 @@ export function AccountExperience() {
             </p>
           </div>
 
-          <form className="accountAuthCard" onSubmit={submitAuth}>
+          {oauthCompletion ? (
+          <form className="accountAuthCard" onSubmit={completeSocialSignUp}>
+            <span className="microLabel">One more step</span>
+            <h2>Finish creating your account.</h2>
+            <p className={socialUi.hint}>X does not share your email address. Add your name and email so we can save your rooms and send your account verification link.</p>
+            <label><span>Name</span><input value={oauthName} onChange={event => setOauthName(event.target.value)} autoComplete="name" required maxLength={80} /></label>
+            <label><span>Email</span><input type="email" value={oauthEmail} onChange={event => setOauthEmail(event.target.value)} autoComplete="email" required /></label>
+            {error ? <p className="accountFormError" role="alert">{error}</p> : null}
+            <button className="button buttonPrimary" type="submit" disabled={busy}>{busy ? "Working…" : "Create account"}</button>
+          </form>
+          ) : <form className="accountAuthCard" onSubmit={submitAuth}>
             <div className="accountAuthTabs">
               <button type="button" className={authMode === "login" ? "isActive" : ""} onClick={() => { setMarketingEmails(false); setAuthMode("login"); }}>Sign in</button>
               <button type="button" className={authMode === "signup" ? "isActive" : ""} onClick={() => { setMarketingEmails(false); setAuthMode("signup"); }}>Create account</button>
@@ -330,13 +378,7 @@ export function AccountExperience() {
                 <h2>{authMode === "signup" ? "Keep every room in one place." : "Open your saved rooms."}</h2>
                 {authMode === "signup" ? (
                   <>
-                    <label><span>Name</span><input name="displayName" autoComplete="name" placeholder="Optional" /></label>
-                    {process.env.NEXT_PUBLIC_BETA_CONTROLLED_ACCESS === "true" ? (
-                      <label>
-                        <span>Beta access code</span>
-                        <input name="inviteCode" autoComplete="off" />
-                      </label>
-                    ) : null}
+                    <label><span>Name</span><input name="displayName" autoComplete="name" required maxLength={80} /></label>
                   </>
                 ) : null}
                 <label><span>Email</span><input name="email" type="email" autoComplete="email" required /></label>
@@ -369,8 +411,19 @@ export function AccountExperience() {
               <button className="accountTextButton" type="button" onClick={() => setAuthMode("login")}>Back to sign in</button>
             ) : null}
 
+            {authMode !== "forgot" && enabledOAuthProviders.length ? (
+              <div className={socialUi.signIn}>
+                <span>or continue with</span>
+                <div>
+                  {enabledOAuthProviders.includes("google") ? <button className={socialUi.providerButton} type="button" onClick={() => beginSocialSignIn("google")}>Google</button> : null}
+                  {enabledOAuthProviders.includes("facebook") ? <button className={socialUi.providerButton} type="button" onClick={() => beginSocialSignIn("facebook")}>Facebook</button> : null}
+                  {enabledOAuthProviders.includes("x") ? <button className={socialUi.providerButton} type="button" onClick={() => beginSocialSignIn("x")}>X</button> : null}
+                </div>
+              </div>
+            ) : null}
+
             <p className="accountSecurityNote">Verify your email once to secure saved rooms and activate your free design credits.</p>
-          </form>
+          </form>}
         </section>
       </main>
     );
