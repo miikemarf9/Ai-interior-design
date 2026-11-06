@@ -2,9 +2,9 @@
 export function heroPoint(width: number, height: number, x: number, y: number, reduced: boolean) {
   const mobile = width <= 680;
   const cover = Math.max(width / 1672, height / 941);
-  const zoom = reduced ? 1 : mobile ? 1.065 : 1.085;
-  const px = reduced ? (mobile ? .61 : .5) : mobile ? .68 : .66;
-  const py = reduced ? .5 : mobile ? .38 : .31;
+  const zoom = reduced ? 1 : mobile ? 1 : 1.085;
+  const px = reduced ? (mobile ? .61 : .5) : mobile ? .5 : .66;
+  const py = reduced ? .5 : mobile ? .5 : .31;
   const ox = width * (mobile ? .76 : .72);
   const oy = height * (mobile ? .30 : .24);
   return {
