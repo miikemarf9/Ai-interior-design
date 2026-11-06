@@ -4946,3 +4946,105 @@ main:not(.homePage) > .siteHeader.isAtTop .headerAccountLink { color: var(--ink)
 @media (prefers-reduced-motion: reduce) {
   .siteHeader .headerLogin { transition: none; }
 }
+
+
+/* Mobile header: keep the brand left and group all navigation in one menu. */
+.mobileMenuToggle { display: none; }
+.mobileNavigation[hidden] { display: none !important; }
+@media (max-width: 760px) {
+  .siteHeader .siteHeaderInner {
+    display: flex;
+    min-height: 74px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-block: 9px;
+  }
+  .siteHeader .brand { min-width: 0; }
+  .siteHeader .headerActions,
+  .siteHeader .headerAuthActions { display: none !important; }
+  .siteHeader .mobileMenuToggle {
+    display: flex;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+  .mobileMenuToggle span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transition: transform .18s ease, opacity .18s ease;
+  }
+  .mobileMenuToggle.isOpen span:first-child { transform: translateY(7px) rotate(45deg); }
+  .mobileMenuToggle.isOpen span:nth-child(2) { opacity: 0; }
+  .mobileMenuToggle.isOpen span:last-child { transform: translateY(-7px) rotate(-45deg); }
+  .siteHeader .mobileNavigation {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 16px;
+    z-index: 2;
+    display: grid;
+    width: min(340px, calc(100vw - 32px));
+    gap: 3px;
+    padding: 14px;
+    border: 1px solid rgba(32,34,29,.12);
+    background: rgba(251,250,247,.98);
+    color: var(--ink);
+    box-shadow: 0 14px 38px rgba(20,22,18,.18);
+    backdrop-filter: blur(12px);
+  }
+  .siteHeader .mobileNavigation[hidden] { display: none !important; }
+  .mobileNavigation > a {
+    display: flex;
+    min-height: 46px;
+    align-items: center;
+    padding: 0 12px;
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 650;
+    text-decoration: none;
+  }
+  .mobileNavigation > a:hover { background: #efeee8; color: var(--forest); }
+  .mobileNavigation .mobileMenuSignup {
+    justify-content: center;
+    margin-top: 7px;
+    background: var(--forest);
+    color: #fff;
+  }
+  .mobileNavigation .mobileMenuSignup:hover { background: var(--forest-dark); color: #fff; }
+  .mobileNavigation .mobileMenuLogin {
+    justify-content: center;
+    border: 1px solid rgba(32,34,29,.15);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobileMenuToggle span { transition: none; }
+}
+
+/* A calmer mobile crop keeps more of each room visible behind the hero copy. */
+@media (max-width: 680px) {
+  .heroRoomZoom {
+    --camera-start: 1;
+    --camera-end: 1;
+    --camera-from: 50% 50%;
+    --camera-to: 50% 50%;
+  }
+  .homeHeroCarousel .homeHeroContent { padding-top: 108px; padding-bottom: 142px; }
+  .homeHeroCarousel .homeHeroContent h1 {
+    width: min(560px, 92vw);
+    font-size: clamp(38px, 10vw, 50px);
+    line-height: 1.02;
+  }
+}
