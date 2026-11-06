@@ -119,7 +119,8 @@ export async function POST(request: Request) {
     }
 
     const csvBody = await decompressGzipIfNeeded(response.body);
-    for await (const row of readCsvObjects(csvBody, ",", scanOffset)) {
+    const delimiter = source.public_config.delimiter === "tab" ? "\t" : ",";
+    for await (const row of readCsvObjects(csvBody, delimiter, scanOffset)) {
       if (scanned >= SCAN_LIMIT) {
         reachedEnd = false;
         break;
